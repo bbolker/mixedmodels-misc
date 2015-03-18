@@ -1,0 +1,147 @@
+<CRANTaskView>
+  <name>MixedModels</name>
+  <topic>Mixed Models</topic>
+  <maintainer e-mail="bolker@mcmaster.ca">Ben Bolker</maintainer>
+  <version>2015-03-15</version>
+
+  <info>
+    <p>
+      <em>Mixed models</em> are a broad class of statistical models used to analyze data where observations can be assigned to discrete groups, and where the parameters describing the differences are treated as <em>random variables</em>. They are also variously described as <em>multilevel</em>, <em>hierarchical</em>, or <em>repeated measures</em>.  They can be fitted in either frequentist or Bayesian frameworks.
+    </p>
+
+    <p>
+The <em>R-SIG-mixed-models</em> mailing-list is a great place to either get help and discuss about mixed models related questions. The <em>R-SIG-mixed-models</em> mailing-list is also useful to search for information about relevant courses.
+    </p>
+
+
+
+    <h3>Fitting linear mixed models</h3>
+    <p>
+      The most commonly used packages/functions for fitting linear mixed models
+      (i.e., models with Normal residuals, predictors that are linear functions
+      of the input variables, and Normal distributions of the random effects
+      within grouping variables) are <pkg>nlme::</pkg><code>lme</code>
+      and <pkg>lme4::</pkg><code>lmer</code>. <pkg>MCMCglmm</pkg> fits 
+      linear mixed models in a Bayesian MCMC framework.
+    </p>
+    <h3>Fitting generalized linear mixed models</h3>
+    <p>
+      The most commonly used packages/functions for fitting generalized linear mixed models
+      (i.e., models with conditional distributions in the exponential family,
+       e.g. Bernoulli/binomial/Poisson/Gamma and distributions of the
+      conditional modes that are Normal on the scale of the
+      linear predictor)
+      are <pkg>MASS::</pkg><code>glmmPQL</code>
+      and <pkg>lme4::</pkg><code>glmer</code>. <pkg>MCMCglmm</pkg> fits 
+      generalized linear mixed models in a Bayesian MCMC framework.
+      <pkg>glmmML</pkg>
+      The <code>glmmADMB</code> (not on CRAN, and possibly out of
+      date on R-forge)
+      The <pkg>INLA</pkg> package, although not available through the CRAN, is also designed to construct generalized linear model through a Bayesian framework and has implemented in it an important group of conditional distributions in the exponential family.
+    </p>
+    <h3>Fitting nonlinear mixed models</h3>
+    <pkg>nlme</pkg><code>::nlme</code>, 
+    <pkg>lme4</pkg><code>::nlmer</code>. 
+
+    <h3>Model diagnostics and summaries</h3>
+    <pkg>lmerTest</pkg>, <pkg>pbkrtest</pkg>, <pkg>influence.ME</pkg>, <pkg>aods3</pkg>, <pkg>cAIC4</pkg>, <pkg>effects</pkg>, <pkg>rockchalk</pkg>, <pkg>arm</pkg> (coefficient plots)
+    <h3>Convenience wrappers</h3>
+    These functions don't necessarily add new functionality, but 
+    provide convenient frameworks for (typically) less experienced
+    users to fit and interpret mixed models.
+    <pkg>ez</pkg>, <pkg>mixlm</pkg> <pkg>afex</pkg>, <pkg>RVAideMemoire</pkg>,
+    <pkg>ZeligMultilevel</pkg>
+    <h3>Extensions</h3>
+    <h4>Spatial/temporal models</h4>
+    INLA; <code>nlme</code> with <code>corStruct</code>;  <pkg>spaMM</pkg>
+    <h4>Phylogenetic/pedigree-based models</h4>
+    <pkg>pedigreemm</pkg>; correlation structures from <pkg>ape</pkg>;
+    <pkg>MCMCglmm</pkg>
+    <h4>Generalized additive models</h4>
+    <pkg>gamm</pkg>4, <pkg>mgcv</pkg><code>::gamm</code>
+    <h4>Other</h4>
+    <pkg>blme</pkg>
+    <h3>Inference</h3>
+    <pkg>afex</pkg>, <pkg>ez</pkg>, <pkg>RLRsim</pkg>,
+    <pkg>lmerTest</pkg>, <pkg>pbkrtest</pkg>, <pkg>cAIC4</pkg>
+    <h3>Power analysis</h3>
+    <pkg>longpower</pkg>, <pkg>clusterPower</pkg>
+  </info>
+
+  <packagelist>
+    <pkg>afex</pkg>            
+    <pkg>agRee</pkg>
+    <pkg>aods3</pkg>
+    <pkg>ape</pkg>
+    <pkg>ArfimaMLM</pkg>
+    <pkg>arm</pkg> 
+    <pkg>ARTool</pkg>
+    <pkg>Bayesthresh</pkg>     
+    <pkg>BBRecapture</pkg>     
+    <pkg>blme</pkg>            
+    <pkg>blmeco</pkg>          
+    <pkg>boss</pkg>            
+    <pkg>BradleyTerry2</pkg>   
+    <pkg>cAIC4</pkg>           
+    <pkg>carcass</pkg>         
+    <pkg>climwin</pkg>         
+    <pkg>CLME</pkg>            
+    <pkg>clusterPower</pkg>    
+    <pkg>difR</pkg>            
+    <pkg>effects</pkg>         
+    <pkg>ez</pkg>              
+    <pkg>gamm4</pkg>           
+    <pkg>GWAF</pkg>            
+    <pkg>HLMdiag</pkg>         
+    <pkg>iccbeta</pkg>         
+    <pkg>inferference</pkg>    
+    <pkg>influence.ME</pkg>    
+    <pkg>JAGUAR</pkg>          
+    <pkg priority="core">lme4</pkg>
+    <pkg>LMERConvenienceFunctions</pkg>
+    <pkg>lmerTest</pkg>        
+    <pkg>lmSupport</pkg>       
+    <pkg>longpower</pkg>       
+    <pkg>marked</pkg>          
+    <pkg>mbest</pkg>
+    <pkg priority="core">MCMCglmm</pkg>           
+    <pkg>MEMSS</pkg>           
+    <pkg>metaplus</pkg>        
+    <pkg>Metatron</pkg>        
+    <pkg>mi</pkg>              
+    <pkg>miceadds</pkg>        
+    <pkg>mixAK</pkg>           
+    <pkg>mixlm</pkg>           
+    <pkg>MixMAP</pkg>          
+    <pkg>mlmRev</pkg>          
+    <pkg>multiDimBio</pkg>
+    <pkg priority="core">nlme</pkg>
+    <pkg>nonrandom</pkg>       
+    <pkg>pamm</pkg>            
+    <pkg>PBImisc</pkg>         
+    <pkg priority="core">pbkrtest</pkg>        
+    <pkg>pedigreemm</pkg>      
+    <pkg>polytomous</pkg>      
+    <pkg>predictmeans</pkg>    
+    <pkg>prLogistic</pkg>      
+    <pkg>R2STATS</pkg>         
+    <pkg>refund</pkg>          
+    <pkg>robustlmm</pkg>       
+    <pkg>rockchalk</pkg>       
+    <pkg>RVAideMemoire</pkg>   
+    <pkg>RVFam</pkg>           
+    <pkg>spacom</pkg>
+    <pkg>spaMM</pkg>
+    <pkg>Surrogate</pkg>       
+    <pkg>TcGSA</pkg>           
+    <pkg>xergm</pkg>           
+    <pkg>ZeligMultilevel</pkg> 
+  </packagelist>
+
+  <links>
+    <ul>
+      <li><a href="http://glmm.wikidot.com/faq">GLMM FAQ</a></li>
+      <li>JAGS, BUGS</li>
+    </ul>
+  </links>
+</CRANTaskView>
