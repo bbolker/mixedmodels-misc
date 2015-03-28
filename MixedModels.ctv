@@ -1,7 +1,7 @@
 <CRANTaskView>
   <name>MixedModels</name>
   <topic>Mixed Models</topic>
-  <maintainer e-mail="bolker@mcmaster.ca">Ben Bolker</maintainer>
+  <maintainer email="bolker@mcmaster.ca">Ben Bolker</maintainer>
   <version>2015-03-15</version>
 
   <info>
@@ -10,11 +10,10 @@
     </p>
 
     <p>
-The <em>R-SIG-mixed-models</em> mailing-list is a great place to either get help and discuss about mixed models related questions. The <em>R-SIG-mixed-models</em> mailing-list is also useful to search for information about relevant courses.
+The <a href="https://stat.ethz.ch/mailman/listinfo/r-sig-mixed-models">R-SIG-mixed-models mailing list</a> 
+(also available via the <a href="http://news.gmane.org/gmane.comp.lang.r.lme4.devel">Gmane web aggregator</a>)
+is an active forum for discussion of mixed-model-related questions, course announcements, etc.. <a href="http://stackoverflow.com/questions/tagged/r+mixed-models">Stack Overflow</a> and <a href="http://stats.stackexchange.com">Stack Exchange</a> also host relevant discussions.
     </p>
-
-
-
     <h3>Fitting linear mixed models</h3>
     <p>
       The most commonly used packages/functions for fitting linear mixed models
@@ -34,17 +33,25 @@ The <em>R-SIG-mixed-models</em> mailing-list is a great place to either get help
       are <pkg>MASS::</pkg><code>glmmPQL</code>
       and <pkg>lme4::</pkg><code>glmer</code>. <pkg>MCMCglmm</pkg> fits 
       generalized linear mixed models in a Bayesian MCMC framework.
-      <pkg>glmmML</pkg>
-      The <code>glmmADMB</code> (not on CRAN, and possibly out of
-      date on R-forge)
-      The <pkg>INLA</pkg> package, although not available through the CRAN, is also designed to construct generalized linear model through a Bayesian framework and has implemented in it an important group of conditional distributions in the exponential family.
+    </p>
+    <p>
+      Other, less commonly used, packages for fitting GLMMs include
+      <pkg>glmmML</pkg>; <code>glmmADMB</code> (not on CRAN, and
+      possibly out of date on R-forge); <pkg>repeated</pkg>;
+      <pkg>glmm</pkg>; <pkg>hglm</pkg>.
     </p>
     <h3>Fitting nonlinear mixed models</h3>
     <pkg>nlme</pkg><code>::nlme</code>, 
     <pkg>lme4</pkg><code>::nlmer</code>. 
-
+    <h3>Generalized estimating equations</h3>
+    <pkg>geesmv</pkg>; <pkg>geepack</pkg>
     <h3>Model diagnostics and summaries</h3>
-    <pkg>lmerTest</pkg>, <pkg>pbkrtest</pkg>, <pkg>influence.ME</pkg>, <pkg>aods3</pkg>, <pkg>cAIC4</pkg>, <pkg>effects</pkg>, <pkg>rockchalk</pkg>, <pkg>arm</pkg> (coefficient plots)
+    (See also "Inference")
+    <h4>Model diagnostics and summary statistics</h4>
+    <pkg>influence.ME</pkg>, <pkg>aods3</pkg>, <pkg>cAIC4</pkg>, <pkg>HLMdiag</pkg>,
+    <pkg>lmmfit</pkg>, <pkg>iccbeta</pkg>
+    <h4>Model presentation and prediction</h4>
+    <pkg>effects</pkg>, <pkg>rockchalk</pkg>, <pkg>arm</pkg> (coefficient plots), 
     <h3>Convenience wrappers</h3>
     These functions don't necessarily add new functionality, but 
     provide convenient frameworks for (typically) less experienced
@@ -53,12 +60,32 @@ The <em>R-SIG-mixed-models</em> mailing-list is a great place to either get help
     <pkg>ZeligMultilevel</pkg>
     <h3>Extensions</h3>
     <h4>Spatial/temporal models</h4>
-    INLA; <code>nlme</code> with <code>corStruct</code>;  <pkg>spaMM</pkg>
+    Geostatistical models (i.e. explicitly incorporating a model for continuous decay of correlation
+    with distance, either in residuals or on random effects/latent variables); models based on <em>a priori</em>
+    weights (e.g. simultaneous, conditional autoregression models)
+    <pkg>geoRglm</pkg>; <pkg>GLMMarp</pkg>;
+    <a href="http://www.r-inla.org/home">INLA</a>; <pkg>nlme</pkg> with <code>corStruct</code>;  <pkg>spaMM</pkg>;
+    <pkg>sphet</pkg>; <pkg>spacom</pkg>
+    <pkg>georob</pkg>; <pkg>geoBayes</pkg>
+    <h4>Differential equation models</h4>
+    <pkg>nlmeODE</pkg>; <pkg>insideRODE</pkg>  
     <h4>Phylogenetic/pedigree-based models</h4>
+    (See also "Phylogenetics task view"; genetics task view?)
     <pkg>pedigreemm</pkg>; correlation structures from <pkg>ape</pkg>;
     <pkg>MCMCglmm</pkg>
-    <h4>Generalized additive models</h4>
-    <pkg>gamm</pkg>4, <pkg>mgcv</pkg><code>::gamm</code>
+    <h4>Generalized additive models, splines, and quantile regression</h4>
+    <pkg>gamm</pkg>4, <pkg>mgcv</pkg><code>::gamm</code>, <pkg>lqmm</pkg>, <pkg>lmms</pkg>, <pkg>lmeSplines</pkg>;
+    <pkg>assist</pkg>
+    <h4>Multinomial and ordinal models</h4>
+    <pkg>polytomous</pkg>, <pkg>ordinal</pkg>
+    <h4>Bioinformatic applications</h4>
+    (Bioconductor links?)
+    <pkg>MCMC.qpcr</pkg>, <pkg>JAGUAR</pkg>; <pkg>GxM</pkg>; <pkg>GWAF</pkg>; <pkg>dlmap</pkg>;
+    <pkg>CpGassoc</pkg>
+    <h4>Ecological and environmental applications</h4>
+    (See also "Environmental task view")
+    <pkg>IPMpack</pkg>; <pkg>HydroME</pkg>; <pkg>dsm</pkg>; <pkg>climwin</pkg>; <pkg>cati</pkg>;
+    <pkg>carcass</pkg>; <pkg>blmeco</pkg>; <pkg>BBRecapture</pkg>; <pkg>secr</pkg>
     <h4>Other</h4>
     <pkg>blme</pkg>
     <h3>Inference</h3>

@@ -7,7 +7,7 @@ The format is described in the [Writing CRAN Task Views vignette](http://cran.r-
 To view the task view as HTML, from within R:
 ```
 library("ctv")
-x <- read.ctv("MixedModels.ctv")
-ctv2html(x)
+mm_ctv <- read.ctv("MixedModels.ctv")
+ctv2html(mm_ctv)
 browseURL("./MixedModels.html")
 ```
