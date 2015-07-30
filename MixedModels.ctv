@@ -82,6 +82,8 @@ is an active forum for discussion of mixed-model-related questions, course annou
     (Bioconductor links?)
     <pkg>MCMC.qpcr</pkg>, <pkg>JAGUAR</pkg>; <pkg>GxM</pkg>; <pkg>GWAF</pkg>; <pkg>dlmap</pkg>;
     <pkg>CpGassoc</pkg>
+    <h4>Zero-inflated models</h4>
+    The <code>glmmADMB</code> package can handle simple (intercept-only) zero-inflated mixed models.  The <pkg>cplm</pkg> provides both frequentist and Bayesian (MCMC) tools for fitting zero-inflated compound Poisson (Tweedie) mixed models.
     <h4>Ecological and environmental applications</h4>
     (See also "Environmental task view")
     <pkg>IPMpack</pkg>; <pkg>HydroME</pkg>; <pkg>dsm</pkg>; <pkg>climwin</pkg>; <pkg>cati</pkg>;
