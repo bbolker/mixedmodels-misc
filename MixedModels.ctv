@@ -86,6 +86,9 @@ is an active forum for discussion of mixed-model-related questions, course annou
     (See also "Environmental task view")
     <pkg>IPMpack</pkg>; <pkg>HydroME</pkg>; <pkg>dsm</pkg>; <pkg>climwin</pkg>; <pkg>cati</pkg>;
     <pkg>carcass</pkg>; <pkg>blmeco</pkg>; <pkg>BBRecapture</pkg>; <pkg>secr</pkg>
+    <h4>Factor analytic, latent variable, and structural equation models</h4>
+    <pkg>sem</pkg>; <pkg>lavaan</pkg>
+    (See also "Psychometrics task view")
     <h4>Other</h4>
     <pkg>blme</pkg>
     <h3>Inference</h3>
@@ -168,7 +171,12 @@ is an active forum for discussion of mixed-model-related questions, course annou
   <links>
     <ul>
       <li><a href="http://glmm.wikidot.com/faq">GLMM FAQ</a></li>
-      <li>JAGS, BUGS</li>
+      <li>General Monte Carlo based Bayesian analyses:
+	<ul>
+	  <li><a href="http://mcmc-jags.sourceforge.net/">JAGS</a></li>
+	  <li><a href="http://www.mrc-bsu.cam.ac.uk/software/bugs/">BUGS</a></li>
+	  <li><a href="http://mc-stan.org/">STAN</a></li>
+	</ul>
     </ul>
   </links>
 </CRANTaskView>
