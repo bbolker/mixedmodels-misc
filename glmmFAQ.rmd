@@ -1,0 +1,737 @@
+---
+author: Ben Bolker and others
+title: GLMM FAQ
+bibliography: glmm.bib
+date:  "`r format(Sys.time(), '%H:%M %d %B %Y')`"
+---
+
+This is a tentative draft of a FAQ list for the r-sig-mixed-models mailing list (the mailing list is at `r-sig-mixed-models@r-project.org`, with [Gmane archives](http://news.gmane.org/gmane.comp.lang.r.lme4.devel/) available as well).
+
+The most commonly used functions for mixed modeling in R are 
+- *linear mixed models*: `aov()`, `nlme::lme`, `lme4::lmer`; 
+* *generalized linear mixed models* (GLMMs): `MASS::glmmPQL`, `lme4::glmer`, `MCMCglmm::MCMCglmm`;
+- *nonlinear mixed models*: `nlme::nlme`, `lme4::nlmer`.
+
+**DISCLAIMERS:**
+
+- (G)LMMs are hard - harder than you may think based on what you may have learned in your second statistics class, which probably focused on picking the appropriate sums of squares terms and degrees of freedom for the numerator and denominator of an $F$ test. `Modern' mixed model approaches, although more powerful (they can handle more complex designs, lack of balance, crossed random factors, some kinds of non-Normally distributed responses, etc.), also require a new set of conceptual tools. In order to use these tools you should have at least a general acquaintance with classical mixed-model experimental designs but you should also, probably, read something about modern mixed model approaches. @littell_sas_2006 and @pinheiro_mixed-effects_2000 are two places to start, although Pinheiro and Bates is probably more useful if you want to use R. Other useful references include @gelman_data_2006 (focused on Bayesian methods) and @zuur_mixed_2009. If you are going to use generalized linear mixed models, you should understand generalized linear models.
+- All of the issues that arise with regular linear or generalized-linear modeling (e.g.: inadequacy of p-values alone for thorough statistical analysis; need to  understand how models are parameterized; need to understand the principle of marginality and how interactions can be treated; dangers of overfitting, which are not mitigated by stepwise procedures; the non-existence of free lunches) also apply, and can apply more severely, to mixed models.
+* When SAS (or Stata, or Genstat/AS-REML or ...) and R differ in their answers, R may not be wrong. Both SAS and R may be `right' but proceeding in a different way/answering different questions/using a different philosophical approach (or both may be wrong ...)
+- The advice in this FAQ comes with **absolutely no warranty of any sort**.
+
+## Inference on (G)LMMs
+
+### What are the p-values listed by `summary(glmerfit)` etc.?  Are they reliable?
+
+By default, in keeping with the tradition in analysis of generalized linear models, `lme4` and similar packages display the Wald Z-statistics for each parameter in the model summary. These have one big advantage: they're convenient to compute.  However, they are asymptotic approximations, assuming both that (1) the sampling distributions of the parameters are multivariate normal (or equivalently that the log-likelihood surface is quadratic) and that (2) the sampling distribution of the log-likelihood is (proportional to) $\chi^2$.  The second approximation is discussed further under "Degrees of freedom".  The first assumption usually requires an even greater leap of faith, and is known to cause problems in some contexts (for binomial models failures of this assumption are called the *Hauck-Donner effect*), especially with extreme-valued parameters.
+
+### What is the best way to test hypotheses on effects in GLMMs?
+This question is not completely answerable, but there is generally a tradeoff between computational difficulty and accuracy.
+
+#### Tests of single parameters
+
+From worst to best:
+
+- Wald $Z$-tests
+- **For balanced, nested LMMs** where degrees of freedom can be computed according to classical rules: Wald $t$-tests 
+- Likelihood ratio test, either by setting up the model so that the parameter can be isolated/dropped (via `anova` or `drop1`, or via computing likelihood profiles
+- Markov chain Monte Carlo (MCMC) or parametric bootstrap confidence intervals
+
+#### Tests of effects (i.e. testing that several parameters are simultaneously zero)
+
+From worst to best:
+
+- Wald chi-square tests (e.g. `car::Anova`)
+- Likelihood ratio test (via `anova` or `drop1`)
+- **For balanced, nested LMMs** where df can be computed: conditional F-tests 
+- **For LMMs**: conditional F-tests with df correction (e.g. Kenward-Roger in `pbkrtest` package). (@stroup_rethinking_2014 states on the basis of (unpresented) simulation results that K-R actually works reasonably well for GLMMs.  However, at present the code in `KRmodcomp` only handles LMMs.)
+- MCMC or parametric, or nonparametric, bootstrap comparisons (nonparametric bootstrapping must be implemented carefully to account for grouping factors)
+
+### Is the likelihood ratio test reliable for mixed models?
+
+- It depends.
+- Not for fixed effects in finite-size cases (see @pinheiro_mixed-effects_2000): may depend on 'denominator degrees of freedom' (number of groups) and/or total number of samples - total number of parameters
+- Conditional F-tests are preferred for LMMs, **if** denominator degrees of freedom are known
+
+### Why doesn't `lme4` display denominator degrees of freedom/p values?  What other options do I have?
+
+#### Degrees of freedom
+
+There is an [R FAQ entry](http://cran.r-project.org/doc/FAQ/R-FAQ.html#Why-are-p_002dvalues-not-displayed-when-using-lmer_0028_0029_003f) on this topic, which links to a [mailing list post](https://stat.ethz.ch/pipermail/r-help/2006-May/094765.html) by Doug Bates (there is also a voluminous [mailing list thread](http://rwiki.sciviews.org/doku.php?id=guides:lmer-tests) reproduced on the R wiki). The bottom line is 
+
+- In general it is not clear that the null distribution of the computed ratio of sums of squares is really an F distribution, for *any* choice of denominator degrees of freedom. While this is true for special cases that correspond to classical experimental designs (nested, split-plot, randomized block, etc.), it is apparently not true for more complex designs (unbalanced, GLMMs, temporal or spatial correlation, etc.).
+- For each simple degrees-of-freedom recipe that has been suggested (trace of the hat matrix, etc.) there seems to be at least one fairly simple counterexample where the recipe fails badly.
+- Other df approximation schemes that have been suggested (Satterthwaite, Kenward-Roger, etc.) would apparently be fairly hard to implement in lme4/nlme, both because of a difference in notational framework and because naive approaches would be computationally difficult in the case of large data sets. (The Kenward-Roger approach has now been implemented in the pbkrtest package (as KRmodcomp): although it was derived for LMMs, @stroup_rethinking_2014 states on the basis of (unpresented) simulation results that it actually works reasonably well for GLMMs.  However, at present the code in `KRmodcomp` only handles LMMs.)
+- Note that there are several different issues at play in finite-size (small-sample) adjustments, which apply slightly differently to LMMs and GLMMs.  
+- When the responses are normally distributed and the design is balanced, nested etc. (i.e. the classical LMM situation), the scaled deviances and differences in deviances are exactly F-distributed and looking at the experimental design (i.e., which treatments vary/are replicated at which levels) tells us what the relevant degrees of freedom are.
+- When the data are not classical (crossed, unbalanced, R-side effects), we might still guess that the deviances etc. are approximately F-distributed but that we don't know the real degrees of freedom -- this is what the Satterthwaite, Kenward-Roger, Fai-Cornelius, etc. approximations are supposed to do.  
+- When the responses are not normally distributed (as in GLMs and GLMMs), and when the scale parameter is not estimated (as in standard Poisson- and binomial-response models), then the deviance differences are only asymptotically F- or chi-square-distributed (i.e. not for our real, finite-size samples).  In standard GLM practice, we usually ignore this problem; there is some literature on finite-size corrections for GLMs under the rubrics of "Bartlett corrections" and "higher order asymptotics" (see McCullagh and Nelder, work by Cordeiro, and the cond package on CRAN [which works with GLMs, not GLMMs]), but it's rarely used.  (The bias correction/Firth approach implemented in the brglm package attempts to address the problem of finite-size bias, not finite-size non-chi-squaredness of the deviance differences.)
+    - When the scale parameter in a GLM is estimated rather than fixed (as in Gamma or quasi-likelihood models), it is sometimes recommended to use an F test to account for the uncertainty of the scale parameter (e.g. Venables and Ripley recommend `anova(...,test="F")` for quasi-likelihood models)
+    - Combining these issues, one has to look pretty hard for information on small-sample or finite-size corrections for GLMMs: @feng_small_2004 and @bell_small_2010 look like good starting points, but it's not at all trivial.
+- Because the primary authors of `lme4` are not convinced of the utility of the general approach of testing with reference to an approximate null distribution, and because of the overhead of anyone else digging into the code to enable the relevant functionality (as a patch or an add-on), this situation is unlikely to change in the future.
+
+#### Df alternatives:
+
+- use MASS::glmmPQL (uses old nlme rules approximately equivalent to SAS 'inner-outer' rules) for GLMMs, or (n)lme for LMMs
+* Guess the denominator df from standard rules (for standard designs) and apply them to t or F tests
+- Run the model in lme (if possible) and use the denominator df reported there (which follow a simple 'inner-outer' rule which should correspond to the canonical answer for simple/orthogonal designs), applied to t or F tests.  For the explicit specification of the rules that `lme` uses, see page 91 of Pinheiro and Bates -- this page is available on [Google Books](http://tinyurl.com/ntygq3) ...
+* use SAS, Genstat (AS-REML), Stata?
+- Assume infinite denominator df (i.e. Z/chi-squared test rather than t/F) if number of groups is large (>45? Various rules of thumb for how large is "approximately infinite" have been posed, including [in Angrist and Pischke's ''Mostly Harmless Econometrics''], 42 (in homage to Douglas Adams)
+
+### How can I test whether a random effect is significant?
+- perhaps you shouldn't (if the random effect is part of the experimental design, this procedure may be considered 'sacrificial pseudoreplication' (Hurlburt 1984); using stepwise approaches to eliminate non-significant terms in order to squeeze more significance out of the remaining terms is dangerous in any case)
+- **do not** compare lmer models with the corresponding lm fits, or glmer/glm; the log-likelihoods are not commensurate (i.e., they include different additive terms)
+- consider using RLRsim for simple tests
+- parametric bootstrap
+- profile likelihood (using more recent versions of lme4?) to evaluate likelihood at $\sigma^2=0$
+- keep in mind that LRT-based null hypothesis tests are conservative when the null value (such as $\sigma^2=0$) is on the boundary of the feasible space; in the simplest case (single random effect variance), the p-value is approximately twice as large as it should be [@pinheiro_mixed-effects_2000].
+
+
+### Can I use AIC for mixed models?  How do I count the number of degrees of freedom for a random effect?
+
+- Yes, with caution.
+- It depends on the "level of focus" (*sensu* @spiegelhalter_bayesian_2002) whether (e.g.) a single random-effect variance should be counted as 1 degree of freedom (i.e., the variance parameter or as a value between 1 and N-1 (where N is the number of groups): see @vaida_conditional_2005 and @greven_behaviour_2010.  If you are interested in population-level prediction/inference, then the former (called *marginal AIC* [mAIC]); if individual-level prediction/inference (i.e., using the BLUPs/conditional modes), then the latter (called *conditional AIC* [cAIC]). Greven and Kneib present results for linear models, giving a version of cAIC that is both computationally efficient and takes uncertainty in the estimation of the variances into account.  (Bob O'Hara has a very nice, illustrative [blog post](http://deepthoughtsandsilliness.blogspot.ca/2007/12/focus-on-dic.html) on this topic in the context of DIC ...)
+- in cases when testing a variance parameter, AIC may be subject to the same kinds of boundary effects as likelihood ratio test p-values (i.e., AICs may be conservative/overfit slightly when the nested parameter value is on the boundary of the feasible space). @greven_behaviour_2010 explore the problems with mAIC in this context, but do not suggest a solution (they point out that @hughes_model_2003 present a 'one-sided' AIC, but not one that deals with the non-independence of data points.  I haven't read Hughes and King, I should go do that).
+- AIC also inherits the primary problem of likelihood ratio tests in the GLMM context -- that is, that LRTs are asymptotic tests. A finite-size correction for AIC does exist (AICc) -- but it was developed in the context of linear models. As far as I know its adequacy in the GLMM case has not been established. See e.g. @richards_testing_2005 for caution about AICc in the GLM (not GLMM) case.
+- lme4 and nlme count parameters for AIC(c) as follows
+   - the number of fixed-effect parameters is straightforward (the length of the fixed-effect parameter vector beta, equal to fixef(coef(model))
+   - each random term in the model with $q$ components counts for $q(q+1)/2$ parameters -- for example, a term of the form (slope|group) has 3 parameters (intercept variance, slope variance, correlation between intercept and slope).
+   - models that use a scale parameter (e.g. the variance parameter of linear mixed models, or the scale parameter of a Gamma GLMM -- standard GLMMs such as binomial and Poisson do not) get an extra parameter counted. Whether to add nuisance parameters or not, such as the residual variance parameter (estimated based on the residual variance, rather than an explicit parameter in the optimization) is as far as I know an open question.  In the classic AIC context it doesn't matter as long as one is consistent.  In the AICc context, I don't think anyone really knows the answer ... adding +1 for the residual variance parameter (as lme4 does) would make the model selection process slightly more conservative.
+
+#### P-values: MCMC and parametric bootstrap 
+
+Abandoning the approximate F/t-statistic route, one ends up with the more general problem of estimating p values.  There is a wider range of options here, although many of them are computationally intensive ...
+
+#### Markov chain Monte Carlo sampling:
+- pseudo-Bayesian: post-hoc sampling, typically (1) assuming flat priors and (2) starting from the MLE, possibly using the approximate variance-covariance estimate to choose a candidate distribution
+    - via `mcmcsamp` (if available for your problem: i.e. LMMs with simple random effects -- not GLMMs or complex random effects)
+    - via `pvals.fnc` in the `languageR` package, a wrapper for mcmcsamp)
+    - in AD Model Builder, possibly via the `glmmADMB` package (use the `mcmc=TRUE` option) or the `R2admb` package (write your own model definition in AD Model Builder), or outside of R
+    - via the `sim` function from the `arm` package (simulates the posterior only for the beta (fixed-effect) coefficients; not yet working with development lme4; would like a better formal description of the algorithm ...?)
+- fully Bayesian approaches
+    - via the `MCMCglmm` package
+    - `glmmBUGS` (a WinBUGS wrapper/R interface)
+    - JAGS/WinBUGS/OpenBUGS etc., via the `rjags`/`r2jags`/`R2WinBUGS`/`BRugs` packages
+
+#### Status of mcmcsamp
+
+`mcmcsamp` is a function for lme4 that is supposed to sample from the posterior distribution of the parameters, based on flat/improper priors for the parameters [ed: I believe, but am not sure, that these priors are flat **on the scale of the theta (Cholesky-factor) parameters**].  At present, in the CRAN version (lme4 0.999999-0) and the R-forge "stable" version (lme4.0 0.999999-1), this covers only linear mixed models with uncorrelated random effects.
+
+As has been discussed in a variety of places (e.g. [on r-sig-mixed models](http://article.gmane.org/gmane.comp.lang.r.lme4.devel/1788/), and [on the r-forge bug tracker](https://r-forge.r-project.org/tracker/?func=detail&aid=68&group_id=60&atid=298), it is challenging to come up with a sampler that accounts properly for the possibility that the posterior distributions for some of the variance components may be mixtures of point masses at zero and continuous distributions.  Naive samplers are likely to get stuck at or near zero.  Doug Bates has always been a bit unsure that `mcmcsamp` is really performing as intended, even in the limited cases it now handles.
+
+Given this uncertainty about how even the basic version works, the `lme4` developers have been reluctant to make the effort to extend it to GLMMs or more complex LMMs, or to implement it for the development version of lme4 ... so unless something miraculous happens, it will not be implemented for the new version of `lme4`. As always, users are encouraged to write and share their own code that implements these capabilities ...
+
+#### Parametric bootstrap
+
+The idea here is that in order to do inference on the effect of (a) predictor(s), you (1) fit the reduced model (without the predictors) to the data; (2) many times, (2a) simulate data from the reduced model; (2b) fit both the reduced and the full model to the simulated (null) data; (2c) compute some statistic(s) [e.g. t-statistic of the focal parameter, or the log-likelihood or deviance difference between the models]; (3) compare the observed values of the statistic from fitting your full model to the data to the null distribution generated in step 2.
+- `PBmodcomp` in the `pbkrtest` package
+- see the example in `help("simulate-mer")` in the `lme4` package to roll your own, using a combination of `simulate()` and `refit()`.
+- `bootMer` in `lme4` version >1.0.0
+- a presentation at UseR! 2009 ([abstract](http://www.agrocampus-ouest.fr/math/useR-2009/abstracts/pdf/SanchezEspigares+Ocana.pdf), [slides](http://www.agrocampus-ouest.fr/math/useR-2009/slides/SanchezEspigares+Ocana.pdf)) went into detail about a proposed `bootMer` package and suggested it could work for GLMMs too -- but it does not seem to be active.
+
+### How do I compute a coefficient of determination ($R^2$), or an analogue, for (G)LMMs?
+
+(*This topic applies to both LMMs and GLMMs, perhaps more so to LMMs, because the issues are even harder for GLMMs.*)
+
+Researchers often want to know if there is a simple (or at least implemented-in-R) way to get an analogue of $R^2$ or another simple goodness-of-fit metric for LMMs or GLMMs. This is a challenging question in both the GLM and LMM worlds (and therefore doubly so for GLMMs), because it turns out that the wonderful simplicity of $R^2$ breaks down in the extension to GLMs or LMMs. If you're trying to quantify "fraction of variance explained" in the GLM context, should you include or exclude sampling variation (e.g., Poisson variation around the expected mean)? [According to an `sos::findFn` search for "Nagelkerke", one of the common solutions to this problem, the `LogRegR2` function in the `descr` package computes several different "pseudo-$R^2$" measures for logistic regression.]  If you're trying to quantify it in the LMM context, should you include or exclude variation of different random-effects terms?
+
+The same questions apply more generally to decomposition of variance (i.e. trying to assess the contribution of various model components to the overall fit, not just trying to assess the overall goodness-of-fit of the model); there is unlikely to be a single recipe that does everything you want.
+
+This has been discussed at various times on the mailing lists. [This thread](http://thread.gmane.org/gmane.comp.lang.r.lme4.devel/3281) and [this thread](http://thread.gmane.org/gmane.comp.lang.r.lme4.devel/684) on the r-sig-mixed-models  mailing list are good starting points, and [this post](http://thread.gmane.org/gmane.comp.lang.r.lme4.devel/2143) is useful too.
+
+In one of those threads, Doug Bates said:
+
+> Assuming that one wants to define an R^2 measure, I think an
+> argument could be made for treating the penalized residual sum of
+> squares from a linear mixed model in the same way that we consider the
+> residual sum of squares from a linear model.  Or one could use just
+> the residual sum of squares without the penalty or the minimum
+> residual sum of squares obtainable from a given set of terms, which
+> corresponds to an infinite precision matrix.  I don't know, really.
+> It depends on what you are trying to characterize.
+
+Also in one of those threads, Jarrett Byrnes contributed the following code:
+```{r r2corr}
+r2.corr.mer <- function(m) {
+   lmfit <-  lm(model.response(model.frame(m)) ~ fitted(m))
+   summary(lmfit)$r.squared
+}
+```
+
+$\Omega^2_0$ [@xu_measuring_2003], which is almost the same, based on comparing the residual variance of the full model against the residual variance of a (fixed) intercept-only null model: 
+
+```{r resvar,eval=FALSE}
+1-var(residuals(m))/(var(model.response(model.frame(m)))
+```
+
+The bottom line is that there are some simple recipes (and some more complex recipes that may or may not have been coded up by someone), but that '''you have to think carefully about what information you want to get out of the coefficient of determination''', because no recipe will have all of the properties of $R^2$ in the simple linear model case.
+
+## GLMMs
+
+
+### What methods are available to fit (estimate) GLMMs?
+
+(adapted from Bolker et al TREE 2009)
+
+|| Penalized quasi-likelihood || Flexible, widely implemented ||  Likelihood inference may be inappropriate; biased for large variance or small means || PROC GLIMMIX (SAS), GLMM (GenStat), glmmPQL (R:MASS), ASREML-R ||
+|| Laplace approximation || More accurate than PQL || Slower and less flexible than PQL || glmer (R:lme4,lme4a), glmm.admb (R:glmmADMB), AD Model Builder, HLM ||
+|| Gauss-Hermite quadrature || More accurate than Laplace || Slower than Laplace; limited to 2‑3 random effects || PROC NLMIXED (SAS), glmer (R:lme4, lme4a), glmmML (R:glmmML), xtlogit (Stata) ||
+|| Markov chain Monte Carlo || Highly flexible, arbitrary number of random effects; accurate || Very slow, technically challenging, Bayesian framework || MCMCglmm (R:MCMCglmm), MCMCpack (R), WinBUGS/OpenBUGS (R interface: BRugs/R2WinBUGS), JAGS (R interface: rjags/R2jags), AD Model Builder (R interface: R2admb), glmm.admb[[footnote]] post hoc MCMC after Laplace fit [[/footnote]] (R:glmmADMB) ||
+
+
+### Which R packages (functions) fit GLMMs?
+- MASS::glmmPQL (penalized quasi-likelihood)
+- lme4::glmer (Laplace approximation and adaptive Gauss-Hermite quadrature [AGHQ])
+- MCMCglmm (Markov chain Monte Carlo)
+- glmmML (AGHQ)
+- glmmAK (AGHQ?)
+- glmmADMB (Laplace)
+- glmm (from Jim Lindsey's `repeated` package: AGHQ)
+- gamlss.mx
+- ASREML-R
+- sabreR
+
+
+### How can I deal with overdispersion in GLMMs?
+
+#### How can I test for overdispersion/compute an overdispersion factor?
+
+- with the usual caveats, plus a few extras -- counting degrees of freedom, etc. -- the usual procedure of calculating the sum of squared Pearson residuals and comparing it to the residual degrees of freedom should give at least a crude idea of overdispersion.  The following attempt counts each variance or covariance parameter as one model degree of freedom and presents the sum of squared Pearson residuals, the ratio of (SSQ residuals/rdf), the residual df, and the $p$-value based on the (approximately!!) appropriate $\chi^2$ distribution. **Do PLEASE note the usual, and extra, caveats noted here: this is an APPROXIMATE estimate of an overdispersion parameter**. Even in the GLM case, the expected deviance per point equaling 1 is only true as the distribution of individual deviates approaches normality, i.e. the usual $\lambda>5$ rules of thumb for Poisson values and $\textrm{min}(Np, N(1-p)) > 5$ for binomial values (e.g. see [Venables and Ripley MASS p. 209](http://books.google.com/books?id=974c4vKurNkC&pg=PA209 Venables and Ripley MASS)). (And that's without the extra complexities due to GLMM, i.e. the "effective" residual df should be large enough to make the sums of squares converge on a $\chi^2$ distribution ...)
+
+The following function works for (at least) `lme4` and `glmmADMB` ...
+```{r overdisp_fun}
+overdisp_fun <- function(model) {
+  ## number of variance parameters in 
+  ##   an n-by-n variance-covariance matrix
+  vpars <- function(m) {
+    nrow(m)*(nrow(m)+1)/2
+  }
+  model.df <- sum(sapply(VarCorr(model),vpars))+length(fixef(model))
+  rdf <- nrow(model.frame(model))-model.df
+  rp <- residuals(model,type="pearson")
+  Pearson.chisq <- sum(rp^2)
+  prat <- Pearson.chisq/rdf
+  pval <- pchisq(Pearson.chisq, df=rdf, lower.tail=FALSE)
+  c(chisq=Pearson.chisq,ratio=prat,rdf=rdf,p=pval)
+}
+```
+
+Example:
+```{r overdisp_ex,cache=TRUE}
+library(lme4)
+set.seed(101)  
+d <- data.frame(y=rpois(1000,lambda=3),x=runif(1000),
+                f=factor(sample(1:10,size=1000,replace=TRUE)))
+m1 <- glmer(y~x+(1|f),data=d,family=poisson)
+overdisp_fun(m1)
+library(glmmADMB)  ## 0.7.7
+m2 <- glmmadmb(y~x+(1|f),data=d,family="poisson")
+overdisp_fun(m2)
+```
+
+The `gof` function in the `aods3` package works for recent (development) versions of the `lme4` package -- it provides essentially the same set of information.
+
+#### How can I fit a model that allows for overdispersion?
+
+- quasilikelihood estimation: [MASS::glmmPQL](http://finzi.psych.upenn.edu/R/library/MASS/html/glmmPQL.html). Quasi- was deemed unreliable in lme4, and is no longer available. (Part of the problem was questionable numerical results in some cases;; the other problem was that DB felt that he did not have a sufficiently good understanding of the theoretical framework that would explain what the algorithm was actually estimating in this case.) [geepack::geelgm](http://finzi.psych.upenn.edu/R/library/geepack/html/geeglm.html) may be workable (haven't tried it)
+- individual-level random effects (MCMCglmm **or** recent version of lme4, 0.999375-34 or later) [or WinBUGS or ADMB or ...]. If you want to a citation for this approach, try @elston_analysis_2001, who cite @lawson_disease_1999; apparently there is also an example in section 10.5 of @maindonald_data_2010, and (according to an R-sig-mixed-models post) this is also discussed by @rabehesketh_multilevel_2008. Also see @browne_variance_2005 for an example in the binomial context (i.e. logit-normal-binomial rather than lognormal-Poisson). Agresti's excellent (2002) book @agresti_categorical_2002 also discusses this (section 13.5), referring back to @breslow_NOTITLE_1984 and @hinde_NOTITLE_1982. [**Notes**: (a) I haven't checked all these references myself, (b) I can't find the reference any more, but I have seen it stated that individual-level random effect estimation is probably dodgy for PQL approaches as used in Elston et al 2001] 
+- alternative distributions
+   - Poisson-lognormal model (see above, "individual-level random effects")
+   - negative binomial
+   - [glmmADMB](http://r-forge.r-project.org/projects/glmmADMB/) (R-forge) will fit two parameterizations of the negative binomial: family="nbinom" gives the classic parameterization with var/mean=(1+mean/k) ("NB2" in Hardin and Hilbe's terminology) while family="nbinom1" gives a parameterization with var/mean=phi*mean ("NB1" to Hardin and Hilbe). The latter might also be called a "quasi-Poisson" parameterization because it matches mean-variance relationship assumed by quasi-Poisson models.
+  * gamlss.mx:gamlssNP
+  * WinBUGS/JAGS (via R2WinBUGS/Rjags)
+  * AD Model Builder (possibly via R2ADMB)
+  * gnlmm in the `repeated` package (off-CRAN: [http://www.commanster.eu/rcode.html])
+  * ASREML ([http://www.asreml.com/software/genstat/htmlhelp/server/GLMM.htm])
+
+Negative binomial models in glmmADMB and lognormal-Poisson models in glmer (or MCMCglmm) are probably the best quick alternatives. If you need to explore alternatives (different variance-mean relationships, different distributions), then ADMB and WinBUGS are the most flexible alternatives.
+
+### Gamma GLMMs?
+
+While one (well, ok I) would naively think that GLMMs with Gamma distributions would be just as easy (or hard) as any other sort of GLMMs, it seems that they are in fact harder to implement (or at least not yet thoroughly/stably working in lme4). Basic simulated examples of Gamma GLMMs can fail in lme4 despite analogous problems with Poisson, binomial, etc. distributions.  Solutions:
+- the default inverse link seems particularly problematic; try other links if that is possible/makes sense
+- consider whether a lognormal model (i.e. a regular LMM on logged data) would work/makes sense
+- glmmPQL
+- glmmADMB, especially the 'alpha' (>0.6.4) version which handles multiple random effects
+- other packages (WinBUGS) etc. ?
+- gamlssNP?
+
+### Zero-inflated GLMMs?
+
+- MCMCglmm handles zero-truncated, zero-inflated, and zero-altered models, although specifying the models is a little bit tricky: see Sections 5.3 to 5.5 of the "CourseNotes" vignette
+- glmmADMB handles 
+ * zero-inflated models (with a single zero-inflation parameter -- i.e., the level of zero-inflation is assumed constant across the whole data set)
+ * truncated Poisson and negative binomial distributions (which allows two-stage fitting of hurdle models)
+- gamlssNP in the gamlss.mx package should handle zero-inflation, and the gamlss.tr package should handle truncated (i.e. hurdle) models -- but I haven't tried them
+- roll-your-own: ADMB/R2admb, WinBUGS/R2WinBUGS ... 
+
+#### ZIGLMMs for continuous data
+Continuous data are a special case where the mixture model may make less sense.
+
+- The simplest solution is to fit a Bernoulli model to the zero/non-zero data, then a continuous model (lognormal?  Gamma?) for the non-zero values. If you want to fit a truncated continuous distribution to the non-zero values, that gets harder ...
+- The cplm package handles 'Tweedie compound Poisson linear models', which in a particular range of parameters allows for skewed continuous responses with a spike at zero
+
+#### Tests for zero-inflation?
+
+- you can use a likelihood ratio test between the regular and zero-inflated version of the model, but be aware of boundary issues (search "boundary" elsewhere on this page ...) -- the null value (no zero inflation) is on the boundary of the feasible space
+- you can use AIC or variations, with the same caveats
+- you can use Vuong's test, which is often recommended for testing zero-inflation in GLMs, because under some circumstances the various model flavors under consideration (hurdle vs zero-inflated vs "vanilla") are not nested. Vuong's test is implemented (and referenced) in the pscl package, and should be feasible to implement for GLMMs, but I don't know of an implementation.  Someone should let me (BMB) know if they find one.
+- two untested but reasonable approaches:
+ * use a 'simulate' method if it exists to construct a simulated distribution of the proportion of zeros in your dataset, and compare it to the observed proportion
+ * compute the probability of a zero for each observation.  On the basis of Bernoulli trials, compute the expected number of zeros and the confidence intervals -- compare it with the observed number.
+
+
+### REML for GLMMs?
+
+While restricted maximum likelihood (REML) procedures ([http://en.wikipedia.org/wiki/Restricted_maximum_likelihood Wikipedia definition]) are well established for linear mixed models, it is less clear how one should define and compute the equivalent criteria (integrating out the effects of fixed parameters) for GLMMs. @millar_maximum_2011 and @berger_integrated_1999 are possible starting points in the peer-reviewed literature, and there are mailing-list discussions of these issues [here](https://stat.ethz.ch/pipermail/r-sig-mixed-models/2009q1/002104.html) and [here](http://lists.admb-project.org/pipermail/users/2011-June/001224.html).
+
+Note that in the current version of lme4, glmer **silently ignores** the REML specification (!)
+
+## Model specification etc.
+
+Modified from Robin Jeffries, UCLA:
+
+|| `(1|group)` ||  random group intercept ||
+|| `(x|group)` = `(1+x|group)` || random slope of x within group with correlated intercept ||
+|| `(0+x|group)` = `(-1+x|group)` || random slope of x within group: no variation in intercept ||
+|| `(1|group) + (0+x|group)`  || uncorrelated random intercept and random slope within group ||
+|| `(1|site/block)` = `(1|site)+(1|site:block)` || intercept varying among sites and among blocks within sites (nested random effects) ||
+|| `site+(1|site:block)` || *fixed* effect of sites plus random variation in intercept among blocks within sites ||
+|| `(x|site/block)` = `(x|site)+(x|site:block)` = `(1 + x|site)+(1+x|site:block)` || slope and intercept varying among sites and among blocks within sites ||
+|| `(x1|site)+(x2|block)` || two different effects, varying at different levels ||
+|| `x*site+(x|site:block)` || fixed effect variation of slope and intercept varying among sites and random variation of slope and intercept among blocks within sites ||
+|| `(1|group1)+(1|group2)` || intercept varying among crossed random effects (e.g. site, year) ||
+
+[Another possibly useful treatment](http://www.rensenieuwenhuis.nl/r-sessions-16-multilevel-model-specification-lme4/)
+
+### Spatial and temporal correlation models, heteroscedasticity ("R-side" models)
+
+In `nlme` these so-called **R-side** (R for "residual") structures are accessible via the `weights`/`VarStruct` (heteroscedasticity) and `correlation`/`corStruct` (spatial or temporal correlation) arguments and data structures. This extension is a bit harder than it might seem. In LMMs it is a natural extension to allow the residual error terms to be components of a single multivariate normal draw; if that MVN distribution is uncorrelated and homoscedastic (i.e. proportional to an identity matrix) we get the classic model, but we can in principle allow it to be correlated and/or heteroscedastic.
+
+It is not too hard to define marginal correlation structures that don't make sense.  One class of reasonably sensible models is to always assume an observation-level random effect (as MCMCglmm does for computational reasons) and to allow that random effect to be MVN on the link scale (so that the full model is lognormal-Poisson, logit-normal binomial, etc., depending on the link function and family).
+
+For example, a relatively simple Poisson model with spatially correlated errors might look like this:
+
+$$
+\begin{split}
+\eta & \sim MVN(a + b x, \Sigma)
+\Sigma_{ij} & = \sigma^2 \exp(-d_{ij}/s)
+y_i & \sim \mbox{Poisson}(\lambda=\exp(\eta_i))
+$$
+
+That is, the marginal distributions of the response values are Poisson-lognormal, but on the link (log) scale the latent Normal variables underlying the response are *multivariate* normal, with a variance-covariance matrix described by an exponential spatial correlation function with scale parameter $s$.
+
+How can one achieve this?
+
+- These types of models are not implemented in `lme4`, for either LMMs or GLMMs; they are fairly low priority, and it is hard to see how they could be implemented for GLMMs (the equivalent for LMMs is tedious but should be straightforward to implement).
+- For LMMs, you can use the spatial/temporal correlation structures that are built into (n)lme
+- You can use the spatial/temporal correlation structures available for (n)lme, which include basic geostatistical (space) and ARMA-type (time) models. 
+```{r findcors,eval=FALSE}
+library("sos")
+findFn("corStruct")
+```
+finds additional possibilities in the `ramps` (extended geostatistical) and `ape` (phylogenetic) packages.
+- You can use these structures in GLMMs via `MASS::glmmPQL` (see Dormann et al.)
+- geepack::geeglm
+- geoR, geoRglm (power tools); these are mostly designed for fitting spatial random field GLMMs via MCMC -- not sure that they do random effects other than the spatial random effect
+- [http://r-inla.org R-INLA] (super-power tool)
+- it is possible to use AD Model Builder to fit spatial GLMMs, as shown in these [http://admb-project.org/examples/spatial-models AD Model Builder examples]; this capability is not in the glmmADMB package (and may not be for a while!), but it would be possible to run AD Model Builder via the R2admb package (requires installing -- and learning! ADMB)
+- [geoBUGS http://mathstat.helsinki.fi/openbugs/Manuals/GeoBUGS/Manual.html], the geostatistical/spatial correlation module for WinBUGS, is another alternative (but again requires going outside of R)
+
+### Nested or crossed?
+
+- Relatively few mixed effect modeling packages can handle crossed random effects, i.e. those where one level of a random effect can appear in conjunction with more than one level of another effect.  (This definition is confusing, and I would happily accept a better one.)  A classic example is crossed temporal and spatial effects. If there is random variation among temporal blocks (e.g. years) ''and'' random variation among spatial blocks (e.g. sites), ''and'' if there is a consistent year effect across sites and ''vice versa'', then the random effects should be treated as crossed.
+- `lme4` does handled crossed effects, efficiently; if you need to deal with crossed REs in conjunction with some of the features that `nlme` offers (e.g. heteroscedasticity of residuals via `weights`/`varStruct`, correlation of residuals via `correlation`/`corStruct`, see p. 163ff of @pinheiro_mixed-effects_2000 (section 4.2.2,  [Google books link](http://tinyurl.com/crossedRE)
+- I rarely find it useful to think of fixed effects as "nested" (although others disagree); if for example treatments A and B are only measured in block 1, and treatments C and D are only measured in block 2, one still assumes (because they are fixed effects) that each treatment would have the same effect if applied in the other block. (One might like to estimate treatment-by-block interactions, but in this case the experimental design doesn't allow it; one would have to have multiple treatments measured within each block, although not necessarily all treatments in every block.)  One would code this analysis as `response~treatment+(1|block)` in `lme4`.
+- Whether you explicitly specify a random effect as nested or not depends (in part) on the way the levels of the random effects are coded. If the 'lower-level' random effect is coded with unique levels, then the two syntaxes `(1|a/b)` (or `(1|a+a:b)`) and `(1|a)+(1|b)` are equivalent. If the lower-level random effect has the same labels within each larger group (e.g. blocks 1, 2, 3, 4 within sites A, B, and C) then the explicit nesting `(1|a/b)` is required. It seems to be considered best practice to code the nested level uniquely (e.g. A1, A2, ..., B1, B2, ...) so that confusion between nested and crossed effects is less likely.
+
+### Do I have the right syntax corresponding to my design?
+
+(examples of common designs?)
+
+### Do I have to specify the levels of fixed effects in lmer?
+
+No. See Doug Bates reply to this question [here](http://r.789695.n4.nabble.com/lme4-and-Variable-level-detection-td881680.html)
+
+
+### Should I treat factor xxx as fixed or random?
+
+Or, **why is RLRsim not working when I try to test a random effect?**
+
+This is in general a far more difficult question than it seems on the surface. There are many competing philosophies and definitions. For example, from @gelman_analysis_2005:
+
+> Before discussing the technical issues, we briefly review what is meant by fixed and random effects. It turns out that different—in fact, incompatible—definitions are used in different contexts. [See also Kreft and de Leeuw (1998), Section 1.3.3, for a discussion of the multiplicity of definitions of fixed and random effects and coefficients, and Robinson (1998) for a historical overview.] Here we outline five definitions that we have seen: 1. Fixed effects are constant across individuals, and random effects vary. For example, in a growth study, a model with random intercepts αi and fixed slope β corresponds to parallel lines for different individuals i, or the model yit = αi + βt. Kreft and de Leeuw [(1998), page 12] thus distinguish between fixed and random coefficients. 2. Effects are fixed if they are interesting in themselves or random if there is interest in the underlying population. Searle, Casella and McCulloch [(1992), Section 1.4] explore this distinction in depth. 3. “When a sample exhausts the population, the corresponding variable is fixed; when the sample is a small (i.e., negligible) part of the population the corresponding variable is random” [Green and Tukey (1960)]. 4. “If an effect is assumed to be a realized value of a random variable, it is called a random effect” [LaMotte (1983)]. 5. Fixed effects are estimated using least squares (or, more generally, maximum likelihood) and random effects are estimated with shrinkage [“linear unbiased prediction” in the terminology of Robinson (1991)]. This definition is standard in the multilevel modeling literature [see, e.g., Snijders and Bosker (1999), Section 4.2] and in econometrics.
+
+Another useful comment (via Kevin Wright) reinforcing the idea that "random vs. fixed" is not a simple, cut-and-dried decision: from @schabenberger_contemporary_2001, p. 627
+> Before proceeding further with random field linear models we need to remind the reader of the adage that one modeler's random effect is another modeler's fixed effect.
+
+Clark and Linzer (2013) have an [unpublished paper](http://www.tomclarkphd.com/workingpapers/randomeffects.pdf) addressing this question from a mostly econometric perspective, focusing mostly on practical variance/bias/RMSE criteria.
+
+One point of particular relevance to 'modern' mixed model estimation (rather than 'classical' method-of-moments estimation) is that, for practical purposes, there must be a reasonable number of random-effects levels (e.g. blocks) -- more than 5 or 6 at a minimum. This is not surprising if you consider that random effects estimation is trying to estimate an among-block variance. For example, from @Crawley2002 p. 670: 
+> Are there enough levels of the factor in the data on which to base an estimate of the variance of the population of effects? No, means [you should probably treat the variable as] fixed effects.
+
+Some researchers (who treat fixed vs random as a philosophical rather than a pragmatic decision) object to this approach.
+
+Treating factors with small numbers of levels as random will in the best case  lead to very small and/or imprecise estimates of random effects; in the worst case it will lead to various numerical difficulties such as lack of convergence, zero variance estimates, etc.. (A small [simulation exercise](http:/rpubs.com/bbolker/4187 simulation exercise) shows that at least the estimates of the standard deviation are downwardly biased in this case; it's not clear whether/how this bias would affect the point estimates of  fixed effects or their estimated confidence intervals.) In the classical method-of-moments approach these problems may not arise (because the sums of squares are always well defined as long as there are at least two units), but the underlying problems of lack of power are there nevertheless.
+
+Also see [this thread](https://stat.ethz.ch/pipermail/r-sig-mixed-models/2010q2/003709.html) on the r-sig-mixed-models mailing list.
+
+### Why is my random effect variance estimated as zero, or correlations estimated as +/- 1? What should I do about it?
+
+It is very common for somewhat overfitted models (i.e., models that are more complex than the data can support, e.g. because there are too few levels of the random effect -- see previous section) to result in singular fits.  Technically this means that some of the "theta" (variance-covariance Cholesky decomposition) parameters are exactly zero, which is the edge of the feasible space, or equivalently that the variance-covariance matrix has some zero eigenvalues (i.e. is positive semidefinite rather than positive definite), or (*almost* equivalently) that some of the variances are estimated as zero or some of the correlations are estimated as +/-1. This is most commonly (but not always) a problem with small numbers of random-effect levels, as illustrated in [http://rpubs.com/bbolker/4187 these simulations] and discussed (in a somewhat different, Bayesian context) by @gelman_prior_2006.
+
+- One alternative (suggested by Robert LaBudde) is to "fit the model with the random factor as a fixed effect, get the level coefficients in the sum to zero form, and then compute the standard deviation of the coefficients." This is appropriate for users who are (a) primarily interested in measuring variation (i.e. the random effects are not just nuisance parameters, and the variability [rather than the estimated values for each level] is of scientific interest), (b) unable or unwilling to use other approaches (e.g. MCMC with half-Cauchy priors in WinBUGS), (c) unable or unwilling to collect more data. For the simplest case (balanced, orthogonal, nested designs with normal errors) these estimates of standard deviations should equal the classical method-of-moments estimates.
+- You could use the `blme` package, based on @chung_nondegenerate_2013, which penalizes the likelihood expression to get an approximation of a Bayesian maximum *a posteriori* estimate with a weakly informative prior that pushes the estimates away from singularity.
+- Another option is to use the MCMCglmm package with weakly (or strongly) informative priors on the variance-covariance matrix, or more generally to use a Bayesian approach with somewhat more informative priors.
+
+## Miscellaneous/procedural
+
+### How do you pronounce `lmer`/`glmer`/etc.?
+
+- `lmer`: I have heard "ell emm ee arr" (i.e. pronouncing each letter); "elmer" (probably most common); and "lemur"
+- `glmer`: "gee ell emm ee arr", "gee elmer", "glimmer", or "gleamer"
+- for `lme` and `nlme` people just seem to spell out the names (rather than saying e.g. "lemmy" and "nelmy")
+
+
+### Common errors (convergence failures etc.)
+
+- As pointed out by several users ([here](https://stat.ethz.ch/pipermail/r-help/2009-April/195135.html), [here](https://stat.ethz.ch/pipermail/r-sig-mixed-models/2010q1/003473.html), and [here](https://stat.ethz.ch/pipermail/r-help/2012-December/332624.html), for example), the AICs computed for lmer models in `summary` and `anova` are different; `summary` uses the REML specification as specified when fitting the model, while `anova` always uses REML=FALSE (to safeguard users against incorrectly using restricted MLs to compare models with different fixed effect components).  (This behavior is slightly overzealous since users might conceivably be using `anova` to compare models with different **random** effects [although this also subject to boundary effects as described elsewhere in this document ...])
+- `Error: Length(f1) == length(f2) is not TRUE`, typically accompanied by a warning that `numerical expression has xxx elements: only the first used`: make sure that your grouping variables are all factors.  
+- `mer_finalize(ans) : gr cannot be computed at initial par (65)` warning, followed by `Error in asMethod(object) : matrix is not symmetric [1,2]`, **or** `Error in mer_finalize(ans) : Downdated X'X is not positive definite, 1.` **or** `Error ... rank of X = <m> < ncol(X) = <n>`:
+ * especially if this happens on the first step (the number at the end of the error message is "1"), you may have incorporated some perfectly collinear terms in your design matrix (see [this Stack Exchange question](http://stats.stackexchange.com/questions/35071/what-is-rank-deficiency-and-how-to-deal-with-it) for further information). To confirm that this problem, try a `glm` or `lm` fit (i.e. dropping the random effects) and see if some of the parameters are set to `NA`.  (Whether linear modeling software can handle rank-deficient cases depends on the details of the computational linear algebra routines used: so far, those used in `lme4` have traded the robustness of being able to handle rank-deficiency for speed).  One example of a workaround (constructing the design matrix by hand, or in `glm`, and then dropping the collinear terms) is shown [here](http://article.gmane.org/gmane.comp.lang.r.general/276472).
+ * Alternatively, you may just have *mostly* collinear (rather than perfectly collinear) terms. Try centering and scaling your data (usually a good idea anyway, and centering removes the correlation between the intercept and the other predictors). Also check the correlation of the predictors, and if they are strongly correlated try some of the standard tactics -- discard predictors, use principal components analysis, ...
+- `Error in UseMethod("ranef") : no applicable method for 'ranef' applied to an object of class "mer"`: this is usually caused by package conflicts, especially with the `nlme` package.  Try `detach("package:nlme")` (the `glmmADMB` package may also cause such errors).
+- Other warnings about "false convergence" often indicates model mis-specification, or insufficient data for estimation; they do not necessarily indicate an error, but results that should be scrutinized particularly carefully.  Replicate the analysis in another package, if possible; make sure that the results are consistent with those of a simplified version of the model. Another approach is to use a Bayesian model with stabilizing priors (see `MCMCglmm`, or `brglm`)
+- `function 'cholmod_start' not provided by package 'Matrix'`: this error, and errors like it, are due to the `lme4` and `Matrix` package being out of sync. Here is a table giving versions that do seem to work:
+|| Type   || OS  || R version || Source || lme4 version || Matrix version || works? ||
+|| Source || (Ubuntu 10.04) || 2.13.0 || CRAN || 0.999375-39 || 0.999375-50 || yes ||
+|| Source || (Ubuntu 10.04) || 2.13.0 || R-forge || 0.999375-40 || 0.9996875-0 || yes ||
+|| Source || (Ubuntu 10.04) || 2.13.0 || SVN  || 0.999375-40 (r1322)|| 0.9996875-0 (r2678)|| yes ||
+
+### How do I store information?
+
+Copied from https://stat.ethz.ch/pipermail/r-help/2012-February/302767.html :
+
+There's a somewhat hack-ish solution, which is to use options(warn=2)
+to 'upgrade' warnings to errors, and then use try() or tryCatch() to
+catch them.
+
+More fancily, I used code that looked something like this to save
+warnings as I went along (sorry about the <<- ) in a recent simulation
+study.  You could also check w$message to do different things in the
+case of different warnings.
+
+```{r catch_errors,eval=FALSE}
+## have to set up a 3D warn array first ...
+withCallingHandlers(tryCatch(fun(n=nvec[j],tau=tauvec[i],...),
+                error = function(e) {
+                  warn[k,i,j] <<- paste("ERROR:",e$message)
+              NA_ans}),
+               warning = function(w) {
+                  warn[k,i,j] <<- w$message
+                  invokeRestart("muffleWarning")
+             })
+```
+
+More recent versions of `lme4` output contain an `@optinfo` slot that stores warnings.
+
+### Zero or very small random effects variance estimates; large (=1.0) estimates of correlation
+- (maximum likelihood estimate may be zero, even for cases where the 'true' variance is non-zero (e.g. in simulations)
+- Very small variance estimates, or very large correlation estimates, often indicates unidentifiability/lack of data (either due to exact identifiability [e.g. designs that are not replicated at an important level] or weak identifiable (designs that would be workable with more data of the same type)
+
+### Standard errors of variance estimates
+
+- Paraphrasing Doug Bates: the sampling distribution of variance estimates is in general strongly asymmetric: the standard error may be a poor characterization of the uncertainty. 
+- `Alternatives?` 
+   - The development version of `lme4`, `lme4a`, allows for computing likelihood profiles of variances and computing confidence intervals on their basis; see ch. 1 of FIXME Batesdraft. These confidence intervals will be based on the likelihood ratio test (i.e. asymptotic chi-squared distribution of the deviance), hence are subject to the usual caveats about the LRT with finite sample sizes. It's also not entirely clear whether the caveats about hypothesis testing against null values on the boundary of the feasible space apply ...
+   - Using an MCMC-based approach (the simplest/most canned is probably to use the `MCMCglmm` package, although its mode specifications are not identical to those of lme4) will provide posterior distributions of the variance parameters: quantiles or credible intervals (`HPDinterval()` in the `coda` package) will characterize the uncertainty.
+   - (don't say we didn't warn you ...) `[n]lme` fits contain an element called `apVar` which contains the approximate variance-covariance matrix (derived from the Hessian, the matrix of (numerically approximated) second derivatives of the likelihood (REML?) at the maximum (restricted?) likelihood values): you can derive the standard errors from this list element via `sqrt(diag(lme.obj$apVar))`. For whatever it's worth, though, [these estimates might not match](http://www.biostat.wustl.edu/archives/html/s-news/2003-07/msg00127.html) the [estimates that SAS gives](http://www.tau.ac.il/cc/pages/docs/sas8/stat/chap41/sect25.htm#mixedcpe) which are supposedly derived in the same way.
+
+
+### Confidence intervals on conditional means/BLUPs/random effects
+
+#### lme4 
+
+(From Harold Doran, updated by Assaf Oron Nov. 2013:)
+
+If you want the standard errors of the conditional means, then you can extract them as follows:
+```{r stder_condmeans}
+fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
+cV <- ranef(fm1, condVar = TRUE)   
+```
+`cV` is a list; each element is a data frame containing the conditional modes for a particular grouping factor. If you use scalar random effects (typically random intercepts), then specifying `ranef(...,drop=TRUE)` will return the conditional modes as a single named vector instead.
+
+The conditional variances are returned as an attribute of the conditional modes.
+For example, if we set
+```{r ranvar}
+ranvar <- attr(cV[[1]], "postVar")
+```
+then `ranvar` is a 3-D array (the attribute is still called `postVar``, rather than `condVar`, for historical reasons/backward compatibility). Individual-level covariance matrices of the conditional modes will sit on the ``[,,i]`` faces. For example:
+```{r sqrtdiagranvars}
+sqrt(diag(ranvar[,,1]))
+```
+will provide the intercept and slope standard errors for the first group's conditional modes. If you have a scalar random effect and used `drop=TRUE` in `ranef()`, then you will (mercifully) receive only a vector of individual variances here (one for each level of the grouping factor).
+ 
+See also section 1.6 of FIXME Batesdraft
+
+Also, note that at a minimum, the uncertainty of the fixed-effect intercept estimate needs to be incorporated as well; probably manually (remember, the model assumes the fixed and random effects to be orthogonal, so this is straightforward). If you predict on an individual with specific fixed-effect covariate values, those need incorporation too.
+
+### Predictions and/or confidence (or prediction) intervals on predictions
+
+Note that none of the following approaches takes the uncertainty
+of the random effects parameters into account ...
+
+The general recipe for computing predictions from a linear or generalized linear model is to 
+- figure out the model matrix $X$ corresponding to the new data;
+-  matrix-multiply $X$ by the parameter vector $\beta$ to get the predictions (or linear predictor in the case of GLM(M)s); 
+- extract the variance-covariance matrix of the parameters $V$ 
+- compute $X V X^{\prime}$ to get the variance-covariance matrix of the predictions; 
+- extract the diagonal of this matrix to get variances of predictions;
+- if computing prediction rather than confidence intervals, add the residual variance; 
+- take the square-root of the variances to get the standard deviations (errors) of the predictions; 
+- compute confidence intervals based on a Normal approximation;
+- for GL(M)Ms, run the confidence interval boundaries (not the standard errors) through the inverse-link function.
+
+#### lme
+
+```{r lmepred}
+library("nlme") 
+fm1 <- lme(distance ~ age*Sex, random = ~ 1 + age | Subject,
+           data = Orthodont) 
+plot(Orthodont,asp="fill") ## plot responses by individual
+## note that expand.grid() orders factor levels by *order of
+## appearance* -- must match levels(Orthodont$Sex)
+newdat <- expand.grid(age=c(8,10,12,14), Sex=c("Female","Male")) 
+newdat$pred <- predict(fm1, newdat, level = 0)
+
+## [-2] drops response from formula
+Designmat <- model.matrix(formula(fm1)[-2], newdat)
+predvar <- diag(Designmat %*% vcov(fm1) %*% t(Designmat)) 
+newdat$SE <- sqrt(predvar) 
+newdat$SE2 <- sqrt(predvar+fm1$sigma^2)
+
+library(ggplot2) 
+pd <- position_dodge(width=0.4) 
+g0 <- ggplot(newdat,aes(x=age,y=pred,colour=Sex))+ 
+   geom_point(position=pd)
+cmult <- 2  ## could use 1.96 instead
+g0 + geom_linerange(aes(ymin=pred-cmult*SE,ymax=pred+cmult*SE), position=pd)
+
+## prediction intervals 
+g0 + geom_linerange(aes(ymin=pred-cmult*SE2,ymax=pred+cmult*SE2), position=pd) 
+```
+
+A similar answer is laid out in the responses to this [StackOverflow question](http://stackoverflow.com/questions/14358811/extract-prediction-band-from-lme-fit).
+
+#### lme4
+
+Current versions of lme4 have a `predict` method.
+
+```{r lme4pred}
+library("lme4")
+library("ggplot2") # Plotting
+data("Orthodont",package="MEMSS")
+fm1 <- lmer(
+	formula = distance ~ age*Sex + (age|Subject)
+	, data = Orthodont
+)
+newdat <- expand.grid(
+	age=c(8,10,12,14)
+	, Sex=c("Female","Male")
+	, distance = 0
+)
+mm <- model.matrix(terms(fm1),newdat)
+newdat$distance <- predict(fm1,newdat,re.form=NA)
+## or newdat$distance <- mm %*% fixef(fm1)
+pvar1 <- diag(mm %*% tcrossprod(vcov(fm1),mm))
+tvar1 <- pvar1+VarCorr(fm1)$Subject[1]  ## must be adapted for more complex models
+cmult <- 2 ## could use 1.96
+newdat <- data.frame(
+	newdat
+	, plo = newdat$distance-cmult*sqrt(pvar1)
+	, phi = newdat$distance+cmult*sqrt(pvar1)
+	, tlo = newdat$distance-cmult*sqrt(tvar1)
+	, thi = newdat$distance+cmult*sqrt(tvar1)
+)
+#plot confidence
+g0 <- ggplot(newdat, aes(x=age, y=distance, colour=Sex))+geom_point()
+g0 + geom_pointrange(aes(ymin = plo, ymax = phi))+
+    labs(title="CI based on fixed-effects uncertainty ONLY")
+#plot prediction
+g0 + geom_pointrange(aes(ymin = tlo, ymax = thi))+
+    labs(title="CI based on FE uncertainty + RE variance")
+rm("Orthodont") ## clean up
+```
+
+
+#### glmmadmb
+
+```{r glmmadmbpred,cache=TRUE}
+library(glmmADMB)
+data(Orthodont,package="nlme")
+fm2 <- glmmadmb(distance ~ age*Sex, random = ~ 1 + age | Subject,
+                data = Orthodont,
+                family="gaussian") 
+
+## make prediction data frame
+newdat <- expand.grid(age=c(8,10,12,14), Sex=c("Female","Male"))
+## design matrix (fixed effects)
+mm <- model.matrix(delete.response(terms(fm2)),newdat)
+## linear predictor (for GLMMs, back-transform this with the
+##  inverse link function (e.g. plogis() for binomial, beta;
+##  exp() for Poisson, negative binomial
+newdat$distance <- mm %*% fixef(fm2)
+
+predvar <- diag(mm %*% vcov(fm2) %*% t(mm))
+newdat$SE <- sqrt(predvar) 
+newdat$SE2 <- sqrt(predvar+fm2$alpha^2)
+```
+
+(Probably overly complicated) ggplot code:
+```{r ggplot}
+library(ggplot2);  theme_set(theme_bw())
+pd <- position_dodge(width=0.4)
+g0 <- ggplot(Orthodont,aes(x=age,y=distance,colour=Sex))+
+    stat_sum(alpha=0.2,aes(size=..n..))+
+    scale_size_continuous(breaks=1:4,range=c(2,5))
+g1 <- g0+geom_line(data=newdat,position=pd)+
+      geom_point(data=newdat,shape=17,size=3,position=pd)
+g1 + geom_linerange(data=newdat,
+                    aes(ymin=distance-2*SE,ymax=distance+2*SE), position=pd)
+## prediction intervals 
+g1 + geom_linerange(data=newdat,
+                    aes(ymin=distance-2*SE2,ymax=distance+2*SE2), position=pd)
+```
+
+### Should I use aov(), nlme, or lme4, or some other package?
+
+- aov (in the `stats` package in base R: balanced, orthogonal designs only (R analogue of SAS PROC GLM)
+- `nlme` (analogue of SAS PROC MIXED/NLMIXED)
+   - allows more complex designs than `aov` (unbalanced, heteroscedasticity and/or correlation among residual errors)
+   - more mature than `lme4`
+   - well-documented [@pinheiro_mixed-effects_2000]
+   - implements R-side effects (heteroscedasticity and correlation)
+   - estimates "denominator degrees of freedom" for $F$ statistics, and hence $p$ values, for LMMs (but see above)
+- stable `lme4` (also SAS PROC MIXED/NLMIXED): 
+   - fastest
+   - best for crossed designs (although they are possible in `lme`)
+   - GLMMs
+   - cutting-edge (for better or worse!)
+   - likelihood profiles (development version only)
+   - use `lme4` for GLMMs, or if you have big data (thousands to tens of thousands of records)
+- development `lme4`, from github:
+   - likelihood profiles
+   - predict method (missing from stable `lme4`)
+- also see the [[[pkg-comparison|package comparison]]] page
+
+# Mixed modeling packages 
+
+modified from a contribution by Kingsford Jones, found 2010-03-16 on [http://cran.r-project.org/web/packages/*
+
+See a [[[pkg-comparison|package comparison]]]: estimation and inference methods available, accessors defined, etc.
+
+### linear and nonlinear mixed models
+- [lme](http://cran.r-project.org/web/packages/lme4/index.html) -- Linear mixed-effects models using S4 classes
+- `lmm` -- Linear mixed models
+- `nlme` -- Linear and Nonlinear Mixed Effects Models
+- `sabreR`
+- [regress](http://cran.r-project.org/web/packages/regress/index.html) Linear mixed models
+
+### GLMMs
+- glmmAK -- Generalized Linear Mixed Models
+- MASS -- Main Package of Venables and Ripley's MASS (see function glmmPQL)
+- MCMCglmm -- MCMC Generalised Linear Mixed Models
+- lme4 (glmer)
+- glmmML
+- gamlss.mx
+- sabreR
+ 
+### Additive and generalized-additive mixed models
+- amer -- Additive mixed models with lme4
+- gamm4 -- Generalized additive mixed models using mgcv and lme4
+- mgcv (gamm function, via glmmPQL in MASS package)
+- gamlss.mx
+
+### Hierarchical GLMs
+- hglm -- hglm is used to fit hierarchical generalized linear models
+- HGLMMM -- Hierarchical Generalized Linear Models
+
+### diagnostic and modeling frameworks
+- influence.ME -- Tools for detecting influential data in mixed effects models
+- arm -- Data Analysis Using Regression and Multilevel/Hierarchical Models
+- pamm -- Power analysis for random effects in mixed models
+- RLRsim -- Exact (Restricted) Likelihood Ratio tests for mixed and additive models
+- npde -- Normalised prediction distribution errors for nonlinear mixed-effect models
+- multilevel -- Multilevel Functions (psychology-oriented; within-group agreement, random group resampling, etc.)
+- languageR
+- pbkrtest -- parametric bootstrap and Kenward-Roger tests
+
+### data and examples
+- MEMSS -- Data sets from Mixed-effects Models in S
+- mlmRev -- Examples from Multilevel Modelling Software Review
+- SASmixed -- Data sets from "SAS System for Mixed Models"
+
+### extensions
+- lmeSplines -- lmeSplines
+- lmec -- Linear Mixed-Effects Models with Censored Responses
+- kinship -- mixed-effects Cox models, sparse matrices, and modeling data from large pedigrees
+- coxme -- Mixed Effects Cox Models
+- ordinal -- Regression Models for Ordinal Data
+- phmm -- Proportional Hazards Mixed-effects Model (PHMM)
+- pedigreemm -- Pedigree-based mixed-effects models
+- (see also MCMCglmm for pedigree-based approaches)
+- heavy -- Estimation in the linear mixed model using heavy-tailed distributions
+- GLMMarp -- Generalized Linear Multilevel Model with AR(p) Errors Package
+- glmmlasso -- penalized GLMM fitting
+- spatialCovariance -- spatial covariance matrix calculations
+
+### Interfaces to other systems
+- glmmBUGS -- Generalised Linear Mixed Models and Spatial Models with BUGS
+- Interfaces to WinBUGS/OpenBUGS/JAGS (roll your own model file):
+ * R2WinBUGS
+ * r2jags
+ * rjags
+ * RBugs
+
+### modeling based on LMMs
+
+- `nlmeODE` -- Non-linear mixed-effects modelling in nlme using differential equations
+- `longRPart` -- Recursive partitioning of longitudinal data using mixed-effects models
+- `PSM` -- Non-Linear Mixed-Effects modelling using Stochastic Differential Equations
+
+## Off-CRAN mixed modeling packages:
+
+### R-forge:
+- glmmADMB (R-forge, interface to AD Model Builder)
+- R2admb (R-forge; roll your own model file)
+- spida, p3d (Georges Monette)
+
+### Other open source:
+- [bernor](http://www.stat.umn.edu/geyer/bernor/ bernor) package (logit-normal fitting), by Yun Ju Sung and Charles J. Geyer
+- glmm (in Jim Lindsey's `repeated` package: at [Lindsey's web site](http://www.commanster.eu/rcode.html)
+
+
+### Commercial:
+- OpenMx -- Advanced Structural Equation Modeling
+- ASReml-R (commercial, but 30 days' free use/free license for academic or developing-country use available).  Very good at complex LMMs (fast, flexible covariance structures, etc.), but only offers PQL for GLMMs, and the manual says: 
+> we cannot recommend the use of this technique for general use. It is included in the current version of asreml() for advanced users. It is highly recommended that its use be accompanied by some form of cross-validatory assessment for the specific dataset concerned."
+Resources:
+- [short R wiki tutorial](http://rwiki.sciviews.org/doku.php?id=guides:tutorials:asreml)
+- [reference manual](http://www.vsni.co.uk/downloads/asreml/release3/asreml-R.pdf reference manual) (PDF)
+- Luis Apiolaza's [asreml-r cookbook](http://apiolaza.net/asreml-r/)
+
+## Network pictures and code
+
+Here is some code that uses the relatively new `packdep` package to find and plot the dependencies of lme4 and nlme on CRAN and r-forge: 
+
+### 1-step dependencies of the lme4 package:
+
+[[image lme4dep1.png]]
+
+### 2-step dependencies of the lme4 package:
+
+[[image lme4dep2.png]]
+
+# Bibliography
+
