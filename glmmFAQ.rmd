@@ -457,6 +457,7 @@ More recent versions of `lme4` output contain an `@optinfo` slot that stores war
 
 If you want the standard errors of the conditional means, then you can extract them as follows:
 ```{r stder_condmeans}
+library("lme4")
 fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 cV <- ranef(fm1, condVar = TRUE)   
 ```
