@@ -87,17 +87,17 @@ Also see [this thread](https://stat.ethz.ch/pipermail/r-sig-mixed-models/2010q2/
 ## Nested or crossed?
 
 - Relatively few mixed effect modeling packages can handle crossed random effects, i.e. those where one level of a random effect can appear in conjunction with more than one level of another effect.  (This definition is confusing, and I would happily accept a better one.)  A classic example is crossed temporal and spatial effects. If there is random variation among temporal blocks (e.g. years) ''and'' random variation among spatial blocks (e.g. sites), ''and'' if there is a consistent year effect across sites and ''vice versa'', then the random effects should be treated as crossed.
-- `lme4` does handled crossed effects, efficiently; if you need to deal with crossed REs in conjunction with some of the features that `nlme` offers (e.g. heteroscedasticity of residuals via `weights`/`varStruct`, correlation of residuals via `correlation`/`corStruct`, see p. 163ff of @pinheiro_mixed-effects_2000 (section 4.2.2,  [Google books link](http://tinyurl.com/crossedRE)
-- I rarely find it useful to think of fixed effects as "nested" (although others disagree); if for example treatments A and B are only measured in block 1, and treatments C and D are only measured in block 2, one still assumes (because they are fixed effects) that each treatment would have the same effect if applied in the other block. (One might like to estimate treatment-by-block interactions, but in this case the experimental design doesn't allow it; one would have to have multiple treatments measured within each block, although not necessarily all treatments in every block.)  One would code this analysis as `response~treatment+(1|block)` in `lme4`.
+- `lme4` does handled crossed effects, efficiently; if you need to deal with crossed REs in conjunction with some of the features that `nlme` offers (e.g. heteroscedasticity of residuals via `weights`/`varStruct`, correlation of residuals via `correlation`/`corStruct`, see p. 163ff of @pinheiro_mixed-effects_2000 (section 4.2.2:  [Google books link](http://tinyurl.com/crossedRE))
+- I rarely find it useful to think of fixed effects as "nested" (although others disagree); if for example treatments A and B are only measured in block 1, and treatments C and D are only measured in block 2, one still assumes (because they are fixed effects) that each treatment would have the same effect if applied in the other block. (One might like to estimate treatment-by-block interactions, but in this case the experimental design doesn't allow it; one would have to have multiple treatments measured within each block, although not necessarily all treatments in every block.)  One would code this analysis as `response~treatment+(1|block)` in `lme4`. Also, in the case of fixed effects, crossed and nested specifications change the parameterization of the model, but not anything else (e.g. the number of parameters estimated, log-likelihood, model predictions are all identical).  That is, in R's `model.matrix` function (which implements a version of Wilkinson-Rogers notation) `a*b` and `a/b` (which expand to `1+a+b+a:b` and `1+a+a:b` respectively) give model matrices with the same number of columns.
 - Whether you explicitly specify a random effect as nested or not depends (in part) on the way the levels of the random effects are coded. If the 'lower-level' random effect is coded with unique levels, then the two syntaxes `(1|a/b)` (or `(1|a+a:b)`) and `(1|a)+(1|b)` are equivalent. If the lower-level random effect has the same labels within each larger group (e.g. blocks 1, 2, 3, 4 within sites A, B, and C) then the explicit nesting `(1|a/b)` is required. It seems to be considered best practice to code the nested level uniquely (e.g. A1, A2, ..., B1, B2, ...) so that confusion between nested and crossed effects is less likely.
 
 # Model extensions (overdispersion, zero-inflation, ...)
 
 ## Overdispersion
 
-### Testing for overdispersion/computing overdispersion factor?
+### Testing for overdispersion/computing overdispersion factor
 
-- with the usual caveats, plus a few extras -- counting degrees of freedom, etc. -- the usual procedure of calculating the sum of squared Pearson residuals and comparing it to the residual degrees of freedom should give at least a crude idea of overdispersion.  The following attempt counts each variance or covariance parameter as one model degree of freedom and presents the sum of squared Pearson residuals, the ratio of (SSQ residuals/rdf), the residual df, and the $p$-value based on the (approximately!!) appropriate $\chi^2$ distribution. **Do PLEASE note the usual, and extra, caveats noted here: this is an APPROXIMATE estimate of an overdispersion parameter**. Even in the GLM case, the expected deviance per point equaling 1 is only true as the distribution of individual deviates approaches normality, i.e. the usual $\lambda>5$ rules of thumb for Poisson values and $\textrm{min}(Np, N(1-p)) > 5$ for binomial values (e.g. see [Venables and Ripley MASS p. 209](http://books.google.com/books?id=974c4vKurNkC&pg=PA209 Venables and Ripley MASS)). (And that's without the extra complexities due to GLMM, i.e. the "effective" residual df should be large enough to make the sums of squares converge on a $\chi^2$ distribution ...)
+- with the usual caveats, plus a few extras -- counting degrees of freedom, etc. -- the usual procedure of calculating the sum of squared Pearson residuals and comparing it to the residual degrees of freedom should give at least a crude idea of overdispersion.  The following attempt counts each variance or covariance parameter as one model degree of freedom and presents the sum of squared Pearson residuals, the ratio of (SSQ residuals/rdf), the residual df, and the $p$-value based on the (approximately!!) appropriate $\chi^2$ distribution. **Do PLEASE note the usual, and extra, caveats noted here: this is an APPROXIMATE estimate of an overdispersion parameter**. Even in the GLM case, the expected deviance per point equaling 1 is only true as the distribution of individual deviates approaches normality, i.e. the usual $\lambda>5$ rules of thumb for Poisson values and $\textrm{min}(Np, N(1-p)) > 5$ for binomial values (e.g. see @venables_modern_2002, [p. 209](http://books.google.com/books?id=974c4vKurNkC&pg=PA209)). (And that's without the extra complexities due to GLMM, i.e. the "effective" residual df should be large enough to make the sums of squares converge on a $\chi^2$ distribution ...)
 
 The following function works for (at least) `lme4` and `glmmADMB` ...
 ```{r overdisp_fun}
@@ -143,8 +143,8 @@ The `gof` function in the `aods3` package works for recent (development) version
   * gamlss.mx:gamlssNP
   * WinBUGS/JAGS (via R2WinBUGS/Rjags)
   * AD Model Builder (possibly via R2ADMB)
-  * gnlmm in the `repeated` package (off-CRAN: [http://www.commanster.eu/rcode.html])
-  * ASREML ([http://www.asreml.com/software/genstat/htmlhelp/server/GLMM.htm])
+  * gnlmm in the `repeated` package ([off-CRAN](http://www.commanster.eu/rcode.html))
+  * [ASREML](http://www.asreml.com/software/genstat/htmlhelp/server/GLMM.htm)
 
 Negative binomial models in glmmADMB and lognormal-Poisson models in glmer (or MCMCglmm) are probably the best quick alternatives. If you need to explore alternatives (different variance-mean relationships, different distributions), then ADMB and WinBUGS are the most flexible alternatives.
 
@@ -153,8 +153,9 @@ Negative binomial models in glmmADMB and lognormal-Poisson models in glmer (or M
 While one (well, ok I) would naively think that GLMMs with Gamma distributions would be just as easy (or hard) as any other sort of GLMMs, it seems that they are in fact harder to implement (or at least not yet thoroughly/stably working in lme4). Basic simulated examples of Gamma GLMMs can fail in lme4 despite analogous problems with Poisson, binomial, etc. distributions.  Solutions:
 - the default inverse link seems particularly problematic; try other links if that is possible/makes sense
 - consider whether a lognormal model (i.e. a regular LMM on logged data) would work/makes sense
+
 - glmmPQL
-- glmmADMB, especially the 'alpha' (>0.6.4) version which handles multiple random effects
+- glmmADMB
 - other packages (WinBUGS) etc. ?
 - gamlssNP?
 
@@ -164,8 +165,8 @@ While one (well, ok I) would naively think that GLMMs with Gamma distributions w
 
 - MCMCglmm handles zero-truncated, zero-inflated, and zero-altered models, although specifying the models is a little bit tricky: see Sections 5.3 to 5.5 of the "CourseNotes" vignette
 - glmmADMB handles 
- * zero-inflated models (with a single zero-inflation parameter -- i.e., the level of zero-inflation is assumed constant across the whole data set)
- * truncated Poisson and negative binomial distributions (which allows two-stage fitting of hurdle models)
+  - zero-inflated models (with a single zero-inflation parameter -- i.e., the level of zero-inflation is assumed constant across the whole data set)
+  - truncated Poisson and negative binomial distributions (which allows two-stage fitting of hurdle models)
 - gamlssNP in the gamlss.mx package should handle zero-inflation, and the gamlss.tr package should handle truncated (i.e. hurdle) models -- but I haven't tried them
 - roll-your-own: ADMB/R2admb, WinBUGS/R2WinBUGS ... 
 
@@ -173,16 +174,16 @@ While one (well, ok I) would naively think that GLMMs with Gamma distributions w
 Continuous data are a special case where the mixture model may make less sense.
 
 - The simplest solution is to fit a Bernoulli model to the zero/non-zero data, then a continuous model (lognormal?  Gamma?) for the non-zero values. If you want to fit a truncated continuous distribution to the non-zero values, that gets harder ...
-- The cplm package handles 'Tweedie compound Poisson linear models', which in a particular range of parameters allows for skewed continuous responses with a spike at zero
+- The `cplm` package handles 'Tweedie compound Poisson linear models', which in a particular range of parameters allows for skewed continuous responses with a spike at zero
 
 ### Tests for zero-inflation
 
 - you can use a likelihood ratio test between the regular and zero-inflated version of the model, but be aware of boundary issues (search "boundary" elsewhere on this page ...) -- the null value (no zero inflation) is on the boundary of the feasible space
 - you can use AIC or variations, with the same caveats
-- you can use Vuong's test, which is often recommended for testing zero-inflation in GLMs, because under some circumstances the various model flavors under consideration (hurdle vs zero-inflated vs "vanilla") are not nested. Vuong's test is implemented (and referenced) in the pscl package, and should be feasible to implement for GLMMs, but I don't know of an implementation.  Someone should let me (BMB) know if they find one.
+- you can use Vuong's test, which is often recommended for testing zero-inflation in GLMs, because under some circumstances the various model flavors under consideration (hurdle vs zero-inflated vs "vanilla") are not nested. Vuong's test is implemented (and referenced) in the `pscl` package, and should be feasible to implement for GLMMs, but I don't know of an implementation.  Someone should let me (BMB) know if they find one.
 - two untested but reasonable approaches:
- * use a 'simulate' method if it exists to construct a simulated distribution of the proportion of zeros in your dataset, and compare it to the observed proportion
- * compute the probability of a zero for each observation.  On the basis of Bernoulli trials, compute the expected number of zeros and the confidence intervals -- compare it with the observed number.
+   -  use a 'simulate' method if it exists to construct a simulated distribution of the proportion of zeros in your dataset, and compare it to the observed proportion
+   - compute the probability of a zero for each observation.  On the basis of Bernoulli trials, compute the expected number of zeros and the confidence intervals -- compare it with the observed number.
 
 ## Spatial and temporal correlation models, heteroscedasticity ("R-side" models)
 
@@ -212,6 +213,7 @@ library("sos")
 findFn("corStruct")
 ```
 finds additional possibilities in the `ramps` (extended geostatistical) and `ape` (phylogenetic) packages.
+
 - You can use these structures in GLMMs via `MASS::glmmPQL` (see Dormann et al.)
 - geepack::geeglm
 - geoR, geoRglm (power tools); these are mostly designed for fitting spatial random field GLMMs via MCMC -- not sure that they do random effects other than the spatial random effect
@@ -226,13 +228,14 @@ finds additional possibilities in the `ramps` (extended geostatistical) and `ape
 (adapted from Bolker et al TREE 2009)
 
 ```{r echo=FALSE,results="asis"}
-methtab <- read.table(sep="|",header=FALSE,text="
+methtab <- read.table(sep="|",header=TRUE,text="
+Method | Advantages | Disadvantages | Packages
 Penalized quasi-likelihood | Flexible, widely implemented | Likelihood inference may be inappropriate; biased for large variance or small means | PROC GLIMMIX (SAS), GLMM (GenStat), glmmPQL (R:MASS), ASREML-R
 Laplace approximation | More accurate than PQL | Slower and less flexible than PQL | glmer (R:lme4,lme4a), glmm.admb (R:glmmADMB), AD Model Builder, HLM 
 Gauss-Hermite quadrature | More accurate than Laplace | Slower than Laplace; limited to 2‑3 random effects | PROC NLMIXED (SAS), glmer (R:lme4, lme4a), glmmML (R:glmmML), xtlogit (Stata)
 Markov chain Monte Carlo | Highly flexible, arbitrary number of random effects; accurate | Very slow, technically challenging, Bayesian framework | MCMCglmm (R:MCMCglmm), MCMCpack (R), WinBUGS/OpenBUGS (R interface: BRugs/R2WinBUGS), JAGS (R interface: rjags/R2jags), AD Model Builder (R interface: R2admb), glmm.admb (post hoc MCMC after Laplace fit) (R:glmmADMB)"
 )
-library(pander)
+set.alignment(default="left")
 pander(methtab,split.table=Inf)
 ```
 
@@ -253,15 +256,13 @@ pander(methtab,split.table=Inf)
 
 ## Singular models: random effect variances estimated as zero, or correlations estimated as +/- 1
 
-It is very common for somewhat overfitted models (i.e., models that are more complex than the data can support, e.g. because there are too few levels of the random effect -- see previous section) to result in singular fits.  Technically this means that some of the "theta" (variance-covariance Cholesky decomposition) parameters are exactly zero, which is the edge of the feasible space, or equivalently that the variance-covariance matrix has some zero eigenvalues (i.e. is positive semidefinite rather than positive definite), or (*almost* equivalently) that some of the variances are estimated as zero or some of the correlations are estimated as +/-1. This is most commonly (but not always) a problem with small numbers of random-effect levels, as illustrated in [these simulations](http://rpubs.com/bbolker/4187) and discussed (in a somewhat different, Bayesian context) by @gelman_prior_2006.
+It is very common for somewhat overfitted models (i.e., models that are more complex than the data can support, e.g. because there are too few levels of the random effect -- see previous section) to result in singular fits.  Technically this means that some of the $\boldsymbol \theta$ (variance-covariance Cholesky decomposition) parameters are exactly zero, which is the edge of the feasible space, or equivalently that the variance-covariance matrix has some zero eigenvalues (i.e. is positive semidefinite rather than positive definite), or (*almost* equivalently) that some of the variances are estimated as zero or some of the correlations are estimated as +/-1. This is most commonly (but not always) a problem with small numbers of random-effect levels, as illustrated in [these simulations](http://rpubs.com/bbolker/4187) and discussed (in a somewhat different, Bayesian context) by @gelman_prior_2006.
+
+There is a good deal of controversy ... (**fixme**: discuss @barr_random_2013 and rejoinders by @bates_parsimonious_2015, @matuschek_balancing_2015)
 
 - One alternative (suggested by Robert LaBudde) is to "fit the model with the random factor as a fixed effect, get the level coefficients in the sum to zero form, and then compute the standard deviation of the coefficients." This is appropriate for users who are (a) primarily interested in measuring variation (i.e. the random effects are not just nuisance parameters, and the variability [rather than the estimated values for each level] is of scientific interest), (b) unable or unwilling to use other approaches (e.g. MCMC with half-Cauchy priors in WinBUGS), (c) unable or unwilling to collect more data. For the simplest case (balanced, orthogonal, nested designs with normal errors) these estimates of standard deviations should equal the classical method-of-moments estimates.
 - You could use the `blme` package, based on @chung_nondegenerate_2013, which penalizes the likelihood expression to get an approximation of a Bayesian maximum *a posteriori* estimate with a weakly informative prior that pushes the estimates away from singularity.
-- Another option is to use the MCMCglmm package with weakly (or strongly) informative priors on the variance-covariance matrix, or more generally to use a Bayesian approach with somewhat more informative priors.
-
-### Zero or very small random effects variance estimates; large (=1.0) estimates of correlation
-- (maximum likelihood estimate may be zero, even for cases where the 'true' variance is non-zero (e.g. in simulations)
-- Very small variance estimates, or very large correlation estimates, often indicates unidentifiability/lack of data (either due to exact identifiability [e.g. designs that are not replicated at an important level] or weak identifiable (designs that would be workable with more data of the same type)
+- Another option is to use the `MCMCglmm` package with weakly (or strongly) informative priors on the variance-covariance matrix, or more generally to use a Bayesian approach with somewhat more informative priors.
 
 ## REML for GLMMs
 
@@ -382,6 +383,7 @@ Note that none of the following approaches takes the uncertainty
 of the random effects parameters into account ...
 
 The general recipe for computing predictions from a linear or generalized linear model is to 
+
 - figure out the model matrix $X$ corresponding to the new data;
 -  matrix-multiply $X$ by the parameter vector $\beta$ to get the predictions (or linear predictor in the case of GLM(M)s); 
 - extract the variance-covariance matrix of the parameters $V$ 
@@ -440,8 +442,8 @@ newdat <- expand.grid(
 	, Sex=c("Female","Male")
 	, distance = 0
 )
-mm <- model.matrix(terms(fm1),newdat)
 newdat$distance <- predict(fm1,newdat,re.form=NA)
+mm <- model.matrix(terms(fm1),newdat)
 ## or newdat$distance <- mm %*% fixef(fm1)
 pvar1 <- diag(mm %*% tcrossprod(vcov(fm1),mm))
 tvar1 <- pvar1+VarCorr(fm1)$Subject[1]  ## must be adapted for more complex models
@@ -466,7 +468,7 @@ rm("Orthodont") ## clean up
 ### glmmadmb
 
 ```{r glmmadmbpred,cache=TRUE}
-library(glmmADMB)
+library("glmmADMB")
 data(Orthodont,package="nlme")
 fm2 <- glmmadmb(distance ~ age*Sex, random = ~ 1 + age | Subject,
                 data = Orthodont,
@@ -480,7 +482,6 @@ mm <- model.matrix(delete.response(terms(fm2)),newdat)
 ##  inverse link function (e.g. plogis() for binomial, beta;
 ##  exp() for Poisson, negative binomial
 newdat$distance <- mm %*% fixef(fm2)
-
 predvar <- diag(mm %*% vcov(fm2) %*% t(mm))
 newdat$SE <- sqrt(predvar) 
 newdat$SE2 <- sqrt(predvar+fm2$alpha^2)
@@ -521,7 +522,7 @@ For example, if we set
 ```{r ranvar}
 ranvar <- attr(cV[[1]], "postVar")
 ```
-then `ranvar` is a 3-D array (the attribute is still called `postVar``, rather than `condVar`, for historical reasons/backward compatibility). Individual-level covariance matrices of the conditional modes will sit on the ``[,,i]`` faces. For example:
+then `ranvar` is a 3-D array (the attribute is still called `postVar`, rather than `condVar`, for historical reasons/backward compatibility). Individual-level covariance matrices of the conditional modes will sit on the ``[,,i]`` faces. For example:
 ```{r sqrtdiagranvars}
 sqrt(diag(ranvar[,,1]))
 ```
@@ -583,20 +584,6 @@ $\Omega^2_0$ [@xu_measuring_2003], which is almost the same, based on comparing 
 
 The bottom line is that there are some simple recipes (and some more complex recipes that may or may not have been coded up by someone), but that '''you have to think carefully about what information you want to get out of the coefficient of determination''', because no recipe will have all of the properties of $R^2$ in the simple linear model case.
 
-
-
-## Which R packages (functions) fit GLMMs?
-- MASS::glmmPQL (penalized quasi-likelihood)
-- lme4::glmer (Laplace approximation and adaptive Gauss-Hermite quadrature [AGHQ])
-- MCMCglmm (Markov chain Monte Carlo)
-- glmmML (AGHQ)
-- glmmAK (AGHQ?)
-- glmmADMB (Laplace)
-- glmm (from Jim Lindsey's `repeated` package: AGHQ)
-- gamlss.mx
-- ASREML-R
-- sabreR
-
 ### Do I have to specify the levels of fixed effects in lmer?
 
 No. See Doug Bates reply to this question [here](http://r.789695.n4.nabble.com/lme4-and-Variable-level-detection-td881680.html)
@@ -643,7 +630,20 @@ More recent versions of `lme4` output contain an `@optinfo` slot that stores war
 
 - also see the [package comparison](http://glmm.wikidot.com/pkg-comparison) on `glmm.wikidot.com`
 
-### Should I use aov(), nlme, or lme4, or some other package?
+## Which R packages (functions) fit GLMMs?
+
+- MASS::glmmPQL (penalized quasi-likelihood)
+- lme4::glmer (Laplace approximation and adaptive Gauss-Hermite quadrature [AGHQ])
+- MCMCglmm (Markov chain Monte Carlo)
+- glmmML (AGHQ)
+- glmmAK (AGHQ?)
+- glmmADMB (Laplace)
+- glmm (from Jim Lindsey's `repeated` package: AGHQ)
+- gamlss.mx
+- ASREML-R
+- sabreR
+
+## Should I use aov(), nlme, or lme4, or some other package?
 
 - aov (in the `stats` package in base R: balanced, orthogonal designs only (R analogue of SAS PROC GLM)
 - `nlme` (analogue of SAS PROC MIXED/NLMIXED)
@@ -760,17 +760,23 @@ Resources:
 sessionInfo()
 ```
 
-## Network pictures and code
+## One-step dependencies of the lme4 package
 
-Here is some code that uses the relatively new `packdep` package to find and plot the dependencies of lme4 and nlme on CRAN and r-forge: 
+```{r getdep,echo=FALSE,message=FALSE,cache=TRUE}
+library("packdep")
+d <- map.depends(contriburl=contrib.url("https://mirrors.nics.utk.edu/cran"))
+```
 
-### 1-step dependencies of the lme4 package:
-
-[[image lme4dep1.png]]
-
-### 2-step dependencies of the lme4 package:
-
-[[image lme4dep2.png]]
+```{r graph,echo=FALSE,message=FALSE,warning=FALSE,dev="png",fig.width=12,fig.height=12}
+library("igraph")
+s <- make_ego_graph(d, order=1, nodes=which(V(d)$name=="lme4"),
+                    mode="out")[[1]]
+V(s)$color = "SkyBlue2"
+V(s)[V(s)$name == "lme4"]$color = "red"
+plot(s, vertex.label=V(s)$name,
+     layout = layout.kamada.kawai(s), vertex.size=1.5,
+     vertex.label.family = "sans")
+```
 
 # Bibliography
 

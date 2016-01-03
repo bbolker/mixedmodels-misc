@@ -8,14 +8,13 @@ newdep <- function (x, order = 1, node, mode="all", plot.it=TRUE)
         stop("'x' must be an object of class 'igraph'.")
     if (is.character(node) && length(node) == 1) {
         if (node %in% V(x)$name) 
-            target <- which(V(x)$name %in% node) - 1
-        else stop(paste("unknown package ", target, ".", sep = ""))
+            target <- which(V(x)$name==node)
+        else stop("unknown package ", node)
     }
     else {
         stop("'node' must be a character string , the name of a package.")
     }
-    n = neighborhood(x, order, target, mode=mode)[[1]]
-xap    s = subgraph(x, n)
+    s = make_ego_graph(x, order, target,mode=mode)[[1]]
     V(s)$color = "SkyBlue2"
     V(s)[V(s)$name == node]$color = "red"
     if (plot.it) plot(s, vertex.label = V(s)$name, layout = layout.kamada.kawai(s))
@@ -38,31 +37,28 @@ xapply <- function(FUN,...,FLATTEN=TRUE,MoreArgs=NULL) {
 }
 
 d <- map.depends()
-dr <- map.depends(contriburl=contrib.url("http://r-forge.r-project.org"))
-
+## dr <- map.depends(contriburl=contrib.url("http://r-forge.r-project.org"))
 
 gsize <- function(x) x[[1]]  ## nodes in a graph
 tmpf <- function(x,node,order) {
     gsize(newdep(x,order=order,node=node,mode="out",plot.it=FALSE))
 }
-dd <- expand.grid(repos=c("CRAN","r-forge"),pkg=c("nlme","lme4"),order=1:3)
+dd <- expand.grid(repos=c("CRAN"),pkg=c("nlme","lme4"),order=1:3)
 dd$number <- unlist(xapply(tmpf,
-       list(d,dr),list("nlme","lme4"),as.list(1:3)))
+                           list(d),list("nlme","lme4"),as.list(1:3)))
 
-library(ggplot2)
-qplot(order,number,colour=pkg,lty=repos,shape=repos,
-      data=dd)+geom_point()+geom_line()+
-  theme_bw()+scale_x_continuous(breaks=1:3)+
-  scale_y_log10()
+library(ggplot2); theme_set(theme_bw())
+ggplot(dd,aes(order,number,colour=pkg,lty=repos,shape=repos))+
+    geom_point()+geom_line()+
+        theme_bw()+scale_x_continuous(breaks=1:3)+
+            scale_y_log10()
 
 png("lme4dep1.png",1200,1200)
-invisible(newdep(d,1,"lme4",mode="out"))
+invisible(ss <- newdep(d,1,"lme4",mode="out"))
 dev.off()
-
-png("lme4dep2.png",1200,1200)
-invisible(newdep(d,2,"lme4",mode="out"))
-dev.off()
-
-
+##plot(ss,layout=layout_with_sugiyama,hgap=2,vgap=2)
+##L <- 
+##coords <- with_sugiyama(hgap=2,vgap=2)
+##plot(ss,layout=coords)
 #######################
 
