@@ -1,0 +1,2094 @@
+---
+title: "GLMM worked examples"
+author: Ben Bolker
+date: "`r format(Sys.time(), '%H:%M %d %B %Y')`"
+bibliography: glmm.bib
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+---
+
+<!--
+ * Jan 2016: lots of minor updates.  Dispense with coefplot2 
+ * re-run 10 Aug 2015 with new lme4; tweaks (newlines after plots etc.)
+ * update 27 Jan 2015: glmmADMB hacks
+ * update 23 Dec 2014: tweaks for final upload (package installation etc.)
+ * update 15 July 2014:
+change scapeMCMC to plotMCMC
+ * re-run with new Mathjax targets etc.
+-->
+```{r opts,echo=FALSE}
+library("knitr")
+opts_chunk$set(tidy=FALSE,fig.width=6,fig.height=4)
+## work around transparency problem
+opts_chunk$set(dev.args=list(type="cairo"))
+grDevices::X11.options(type='cairo')
+```
+
+# Introduction
+
+These are worked examples for a book chapter on mixed models in *Ecological Statistics: Contemporary Theory and Application*  editors Negrete, Sosa, and Fox
+(available from the [Oxford University Press catalog](http://ukcatalogue.oup.com/product/9780199672554.do) or from [Amazon.com](http://www.amazon.com/Ecological-Statistics-Contemporary-theory-application/dp/0199672555) or [Powell's Books](http://www.powells.com/biblio/62-9780199672554-1) or ...).
+
+It may move or be renamed eventually, but for right now the source (`.rmd`) file and data files are available from `http://www.math.mcmaster.ca/bolker/R/misc/foxchapter`:
+
+* [source](http://www.math.mcmaster.ca/bolker/R/misc/foxchapter/bolker_chap.rmd)
+* [tundra data](http://www.math.mcmaster.ca/bolker/R/misc/foxchapter/tundra.csv)
+* [Culcita data](http://www.math.mcmaster.ca/bolker/R/misc/foxchapter/culcita.RData)
+* [gopher tortoise data](http://www.math.mcmaster.ca/bolker/R/misc/foxchapter/gopherdat2.RData)
+* [tick data](http://www.math.mcmaster.ca/bolker/R/misc/foxchapter/Elston2001_tickdata.txt)
+
+There's a *lot* of material here. I have erred on the side of including things, and on the side of compact rather than elementary code. Try not to be overwhelmed, just skim it the first time and thereafter focus on the parts that are most relevant to your analyses.
+
+I use a very large set of packages in this example, because I am trying out a wide range of approaches. You should whittle these down to just the ones you need for any given analysis ... if you want to install all of them at once, the following code should be sufficient (remember that you only have to install packages one time on each computer you are using, but you have to use `library()` to load them in every new R session). The packages noted below as "not on CRAN" (`glmmADMB`) are hosted on R-forge (`http://r-forge.r-project.org`), but in order to install them you may have to install from `http://www.math.mcmaster.ca/bolker/R`, as below.
+
+```{r install_pkgs,eval=FALSE}
+pkgs_CRAN <- c("lme4","MCMCglmm","blme",
+               "pbkrtest","coda","aods3","bbmle","ggplot2",
+               "reshape2","plyr","numDeriv","Hmisc",
+               "plotMCMC","gridExtra","R2admb",
+               "broom","dotwhisker")
+install.packages(pkgs_CRAN)
+rr <- "http://www.math.mcmaster.ca/bolker/R"
+install.packages("glmmADMB",type="source",repos=rr)
+library("devtools")
+install_github("bbolker/broom")
+install
+```
+```{r pkgs,message=FALSE,warning=FALSE}
+## primary GLMM-fitting packages:
+library("lme4")
+library("glmmADMB")      ## (not on CRAN)
+library("glmmTMB")       ## (not on CRAN)
+library("MCMCglmm")
+library("blme")
+library("MASS")          ## for glmmPQL (base R)
+library("nlme")          ## for intervals(), tundra example (base R)
+## auxiliary
+library("ggplot2")       ## for pretty plots generally
+## ggplot customization:
+theme_set(theme_bw())
+## to squash facets together ...
+zmargin <- theme(panel.margin=grid::unit(0,"lines"))
+library("gridExtra")     ## for grid.arrange()
+library("broom")         ## recent version on Github
+library("dotwhisker")
+library("coda")      ## MCMC diagnostics
+library("aods3")     ## overdispersion diagnostics
+library("plotMCMC") ## pretty plots from MCMC fits
+library("bbmle")     ## AICtab
+library("pbkrtest")  ## parametric bootstrap
+library("Hmisc")
+## for general-purpose reshaping and data manipulation:
+library("reshape2")
+library("plyr")
+## for illustrating effects of observation-level variance in binary data:
+library("numDeriv")
+```
+
+Package versions used (core packages only):
+```{r pkgversion,echo=FALSE}
+pkgs_used <- c("lme4","glmmADMB","MCMCglmm","blme",
+               "pbkrtest","coda","aods3","bbmle","glmmTMB")
+pkgs_CRAN <- c("lme4","MCMCglmm","blme",
+               "pbkrtest","coda","aods3","bbmle",
+               "ggplot2","reshape2","plyr","numDeriv",
+               "Hmisc","plotMCMC","gridExtra")
+##print(paste(paste0('"',pkgs_CRAN,'"'),collapse=","),quote=FALSE)
+vers <- sapply(pkgs_used,function(x) as.character(packageVersion(x)))
+print(vers,quote=FALSE)
+```
+
+If you are using Windows and have problems using `glmmADMB` on some problems, there is a (slightly tedious) workaround:
+
+* check the [directory that contains the latest version of the glmmADMB binary component](http://www.admb-project.org/buildbot/glmmadmb/); find the most recent version of the binaries for your operating system (Windows, MacOS, Linux [Fedora or Ubuntu], and 32 vs 64 bits: check `sessionInfo()$platform` for more information).  For example, the most recent Windows binary as of this writing is `glmmadmb-mingw64-r2885-windows8-mingw64.exe`.  If you find more than one file that seems to apply, just pick one at random.
+* Once you've figured out what file to download, execute the following code (substituting the name of the appropriate binary file in the last line):
+```{r glmmadmb_hack,eval=FALSE}
+library("glmmADMB")
+bb <- glmmADMB:::get_bin_loc()[["bin_loc"]]
+bpath <- gsub("glmmadmb$","",bb)
+file.copy(bb,paste0(bpath,"glmmadmb.bak"))
+bburl <- "http://admb-project.org/buildbot/glmmadmb/"
+download.file(paste0(bburl,
+   "glmmadmb-mingw64-r2885-windows8-mingw64.exe"), dest=bb)
+```
+
+# Tundra carbon 
+
+These data were originally analyzed in @belshe_tundra_2013.
+
+## Data exploration
+
+Read the data:
+
+```{r tundradat}
+mc1 <- read.csv("data/tundra.csv",na.strings=c("-","NA"))
+```
+
+A first look at the data, plotting net ecosystem exchange during the growing season (`GS.NEE`) against year, using colour to distinguish sites, and superimposing a separate linear regresssion (with confidence bands) per site:
+
+```{r tundra_plot1,warning=FALSE}
+ggplot(mc1,aes(x=Year,y=GS.NEE,colour=Site))+geom_point()+
+    geom_smooth(method="lm",alpha=0.3)+
+    ## oob=squish retains the (truncated) confidence bands;
+    ## otherwise bands that went outside the limits would disappear
+    scale_y_continuous(limits=c(-150,400),oob=scales::squish)+
+    scale_colour_discrete(guide="none") ## suppress legend
+```
+
+We have suppressed the legend for the colours,
+because there are a lot of sites and their names will not be
+particularly meaningful except to tundra biologists.
+There is lots of variability among sites,
+both in the trend and in the uncertainty of the trend. The uncertainty
+is caused in part by noisiness of the data, and part by sparsity/shortness
+of the time series for individual sites.
+
+In some cases there were multiple observations per site in a single year.
+We could have handled this by adding a year-within-site random variable,
+but it proved to be easier to aggregate these cases by calculating the
+mean, and account for the different amount of sampling by weighting
+site-year combinations according to the number of samples.
+
+The following (rather complicated) function aggregates the data; in the course of our analysis we ended up needing to aggregate several different response variables according to several different sets of grouping variables.  We re-centred the year to have year=0 at the beginning of the observation period.
+```{r tundra_agg}
+aggfun <- function(dat,agg=c("Year","Site"),response="Winter.adj",
+                   baseYear=min(mc1$Year)) {
+    ## select only site, year, and response
+    sub1 <- na.omit(dat[,c("Site","Year",response)])
+    ## compute means of non-aggregation variables
+    agg1 <- aggregate(sub1[!names(sub1) %in% agg],by=sub1[agg],FUN=mean)
+    ## compute sample size of non-aggregation variables
+    aggn <- aggregate(sub1[response],by=sub1[agg],FUN=length)
+    names(aggn)[ncol(aggn)] <- "n"   ## assumes response is last column
+    ## put mean and sample size together
+    agg2 <- merge(agg1,aggn)
+    ## recompute centred year
+    agg2$cYear <- agg2$Year - baseYear
+    agg2
+}
+mc2 <- aggfun(mc1,response="GS.NEE")
+## center year at the mean rather than the date of
+## the first observation:
+mc2B <- aggfun(mc1,response="GS.NEE",baseYear=mean(mc1$Year))
+```
+
+The aggregated data show a similar picture:
+```{r tundra_plot2,warning=FALSE}
+ggplot(mc2,aes(x=cYear,y=GS.NEE,colour=Site))+
+    geom_point(aes(size=n),alpha=0.7)+
+    geom_smooth(method="lm",alpha=0.3,aes(weight=n))+
+    scale_y_continuous(limits=c(-150,400),oob=scales::squish)+
+    scale_colour_discrete(guide="none")+
+    scale_size_continuous(range=c(2,5),breaks=c(1,3,6))
+```
+
+## Fitting
+
+We use `nlme::lme` because at present 
+it is the only *easy* way to allow
+for temporal autocorrelation in a LMM in R.
+
+* we use `corCAR1`, which implements a continuous-time
+first-order autocorrelation model (i.e. autocorrelation
+declines exponentially with time), because we have missing
+values in the data. The more standard discrete-time autocorrelation
+models (`lme` offers `corAR1` for a first-order model and `corARMA`
+for a more general model) don't work with missing data.
+* The `weights=varFixed(~I(1/n))` specifies that
+the residual variance for each (aggregated) data point
+is inversely proportional to the number of samples.  
+* The `control` argument lets the model try more iterations
+(otherwise we get an error).
+```{r tundra_fit1,cache=TRUE}
+cmod_lme <- lme(GS.NEE ~ cYear,
+                data=mc2, method="REML",
+                random = ~ 1 + cYear | Site, 
+                correlation=corCAR1(form=~cYear|Site),
+                weights=varFixed(~I(1/n)),
+                control=list(maxIter=10000, niterEM=10000))
+```
+
+Model summary:
+```{r tundra_sum1}
+summary(cmod_lme)
+```
+The results generally look sensible: the only warning sign is that
+the among-site variation in baseline NEE (`(Intercept)`) and
+the among-site variation in slope are perfectly correlated (i.e., the
+`-1` term in the `Corr` column under `Random effects`).  We weren't
+happy with this, but we kept the full random effects model anyway.
+The alternative, dropping the random effect of year, seemed
+unacceptable in our case. Recentring the data at the mean year ($\approx$ 1997)
+improves things slightly:
+```{r recenter}
+cmod2_lme <- update(cmod_lme,data=mc2B)
+```
+
+`VarCorr()` or `summary()` show that the intercept
+and slope random effects are still very strongly, but not perfectly, correlated
+($\rho=`r as.numeric(VarCorr(cmod2_lme)["cYear","Corr"])`$); the fixed-effect intercept is very
+different (of course), and the year effect is almost identical, but its
+standard error is larger (so its $p$-value doubles).
+
+```{r prtlmetab,echo=FALSE}
+prtlmetab <- function(x)
+    printCoefmat(summary(x)$tTab,
+             tst.ind=c(1,2,4),
+             digits=3,
+             has.Pvalue=TRUE)
+```
+```{r ctr_sum,echo=FALSE}
+prtlmetab(cmod2_lme)
+```
+
+We can also fit the model with `lmer` from the `lme4` package: it's faster and allows for crossed random effects (neither of which really matters here), but unfortunately it can't incorporate temporal autocorrelation in the model:
+
+```{r tundra_lmer}
+cmod_lmer <- lmer(GS.NEE ~ cYear + (1+cYear|Site),
+                data=mc2B, REML=TRUE,
+                weights=n)
+summary(cmod_lmer)
+```
+
+Note that `weights` here are specified as `n` rather than `1/n` (`varFixed()` in the `lme` call specifies the variance, rather than the actual weights of different observations)
+
+The results are not *too* different -- the `cYear` fixed-effect slope is slightly smaller than for the `lme` fit (`r round(fixef(cmod_lmer)["cYear"],2)` vs. `r round(fixef(cmod2_lme)["cYear"],2)` (g C m^2 /year/season)/year), but the standard error is smaller, so the $t$-statistic is similar (`r round(coef(summary(cmod_lmer))["cYear","t value"],2)` vs. `r round(summary(cmod2_lme)$tTab["cYear","t-value"],2)`).
+
+```{r tundra_glmmTMB}
+cmod_glmmTMB <- glmmTMB(GS.NEE ~ cYear + (1+cYear|Site),
+                data=mc2B,
+                weights=n)
+summary(cmod_glmmTMB)
+```
+
+```{r dwplot}
+dwplot(list(cmod_glmmTMB,cmod_lmer))
+```
+
+We have to admit that the model we are using
+is just a little bit more complex than the data can easily handle, and especially that Toolik is quite different from the other sites ... making the estimates somewhat unstable.
+
+## Diagnostics
+
+Here are the default residuals-vs.-fitted plot; the scale-location plot
+($\sqrt{|\textrm{residual}|}$ vs. fitted); a plot of the residuals
+as a function of year; and the Q-Q plot.
+```{r tundra_diag,fig.width=6,fig.height=6}
+colvec <- c("#ff1111","#007eff") ## second colour matches lattice default
+grid.arrange(plot(cmod2_lme,type=c("p","smooth")),
+             plot(cmod2_lme,sqrt(abs(resid(.)))~fitted(.),
+                  col=ifelse(mc2$Site=="Toolik, AK",colvec[1],colvec[2]),
+                  type=c("p","smooth"),ylab=expression(sqrt(abs(resid)))),
+                                       ## "sqrt(abs(resid(x)))"),
+             plot(cmod2_lme,resid(.,type="pearson")~cYear,
+                  type=c("p","smooth")),
+             qqnorm(cmod2_lme,abline=c(0,1),
+                    col=ifelse(mc2$Site=="Toolik, AK",colvec[1],colvec[2])))
+```
+
+The diagnostics look OK -- mostly.
+
+* The biggest concern is that the scale-location plot (upper right)
+shows that
+the variance increases with the fitted values, which is
+entirely driven by data from the Toolik site (see below).
+(I initially diagnosed the problem by using `id=0.05`, which labels relatively large residuals by site -- since they were mostly from Toolik I changed the diagnostic plot above to colour all of the Toolik points differently.)  The standard approach would be to transform the data, but transforming data in way that (1) preserves the linear trends in the data (2) allows for negative as well as positive values is a bit challenging (we could try the `yjPower()` function in the `car` package).  We could also use
+the `weights` argument to specify that the variance increases with the fitted values,
+but we are already using `weights` to account for the number of samples aggregated
+per data point ...
+* The Q-Q plot is a little bit funky, too, also partially driven by Toolik, although non-normality is generally less of a concern than heteroscedasticity.
+
+```{r tundra_toolik,warning=FALSE}
+ggplot(mc2,aes(x=cYear,y=GS.NEE,colour=(Site=="Toolik, AK")))+
+    geom_point(aes(size=n),alpha=0.7)+
+    geom_smooth(method="lm",alpha=0.3,aes(weight=n,group=Site))+
+    scale_colour_discrete(name="Site",breaks=0:1,labels=c("other","Toolik"))+
+    scale_y_continuous(limits=c(-150,400),oob=scales::squish)+
+    scale_size_continuous(range=c(2,5),breaks=c(1,3,6))
+```
+
+We should also check whether our model has dealt with temporal
+autocorrelation properly.  One potential trap when diagnosing
+autocorrelation in `lme` models is that the `ACF()` function
+by default uses a form of the residuals that do not correct
+for autocorrelation, *even when there is a correlation term
+specified in the fitted model*: you have to use `resType="normalized"`
+to get autocorrelation-corrected residuals, as shown in the right-hand
+plot below:
+
+```{r tundra_acfplot,fig.width=8}
+grid.arrange(plot(ACF(cmod2_lme),alpha=0.05),
+             plot(ACF(cmod2_lme,resType="normalized"),alpha=0.05),
+             nrow=1)
+```
+
+The autocorrelation term in the model has successfully corrected
+for the autocorrelation at lag 1, but there are some large
+anomalies for longer time lags.  These are somewhat worrisome, but autocorrelation estimates this large (absolute value >1) probably represent other anomalies in the data, rather than an actual signal of autocorrelation. 
+
+We can try refitting the model without the Toolik data.
+As it turns out we run into convergence problems and have to
+drop the autocorrelation structure from the model.
+```{r refit_notoolik,fig.keep="none"}
+cmod3_lme <- update(cmod2_lme,
+                    data=subset(mc2,Site!="Toolik, AK"),
+                    correlation=NULL)
+plot(ACF(cmod3_lme),alpha=0.05) ## not shown, but looks fine
+```
+
+We are again stuck between what the data might tell us to do
+(throw out the Toolik data), and what we want to do as biologists
+(incorporate all the data).  At least the results (the slope of
+NEE with respect to time) are not too much different when we fit
+the model without the Toolik data (the slope is actually steeper, although noisier): the coefficient
+table from `summary(cmod3_lme)` looks like this:
+```{r tooliktab,echo=FALSE}
+prtlmetab(cmod3_lme)
+```
+
+What about the estimated random effects (conditional modes)?  They are easy to extract, using the `ranef()` method, which is the same way you would do it with `lme4` or `glmmADMB`.  Plotting them takes a little bit more effort -- the default plot produced by the `nlme` package is OK, but (1) it doesn't plot the random effects in sorted order (which is a good default); (2) it doesn't produce standard errors; (3) it makes it a bit hard if we want to plot only one set of random effects (in this case, since `lme` has estimated the among-site variance in intercept to be very close to zero, it's not really worth plotting the intercept random effects).
+
+```{r tundra_ranef}
+rr <- ranef(cmod2_lme)
+rr.order <- rr[order(rr$cYear),] ## order by RE slope value
+```
+
+```{r tundra_ranef_plot,echo=FALSE,fig.width=10}
+rr.slope <- rr.order[,2,drop=FALSE]
+attr(rr.slope,"effectNames") <- "cYear"
+attr(rr.slope,"label") <- "Random effects"
+attr(rr.slope,"level") <- 1
+attr(rr.slope,"standardized") <- FALSE
+attr(rr.slope,"grpNames") <- "Site"
+qqr <- qqmath
+grid.arrange(plot(rr.slope),qqmath(rr.slope[,1],abline=c(0,1), 
+                                   ylab="Random-effects slope"),nrow=1)
+```
+
+We can more easily plot the random effects for the `lmer` fit (we also get confidence intervals without too much fuss):
+```{r rr_lme4_ranefplot}
+dotplot(ranef(cmod_lmer,condVar=TRUE),
+          lattice.options=list(layout=c(1,2)))
+```
+
+* In contrast to the `lme` fit, the `lmer` fit gives a non-negligible estimate for the among-site standard deviation.
+* You can use `qqmath()` instead of `dotplot()` to get Q-Q plots of the conditional modes.
+* Toolik still stands out as an outlier.
+
+## Inference
+
+Looking more carefully at the model fit, we can see that the intercept variation has disappeared -- this means that, at the temporal center of the data, the variation among sites is essentially indistinguishable from measurement error. There is still substantial variation in the slope, along with 
+the almost-perfect correlation described above:
+```{r cmod_varcorr}
+VarCorr(cmod2_lme)
+```
+
+Fixed effects:
+
+```{r cmod_tab,echo=FALSE}
+prtlmetab(cmod2_lme)
+```
+
+Because the model only has a single continuous predictor, the conclusions of `summary()`, `drop1()`, and `anova()` are all equivalent (the `anova` method for `lme` has a useful `type="marginal"` option, but you should be **very** careful when using it with models containing interactions -- `car::Anova` is safer). **Note** that `lme` gets the degrees-of-freedom calculation wrong for random-slopes models: because the year effect varies among sites, it should be tested with 23 denominator df rather than 53 as reported by `lme`. However, it doesn't make a huge difference here:
+```{r cmod_fstat}
+fstat <- anova(cmod2_lme)["cYear","F-value"]
+pf(fstat,1,53,lower.tail=FALSE)  ## as reported by lme
+pf(fstat,1,23,lower.tail=FALSE)  ## correct
+```
+
+In Belshe *et al.* we reported that when we simulated data according to the null hypothesis (incorporating information about the variation in intercepts and slopes across sites, and autocorrelation, but with the population-level slope set to zero), we saw an inflated type I error.  Therefore, we used this parametric bootstrap distribution of the $t$ statistic to test the fixed effect of slope, which approximately doubled our $p$-value.
+
+The `nlme` package uses `intervals()`, rather than `confint()`, to extract confidence intervals: if we try `intervals(cmod2_lme)` we get an error about "non-positive definite approximate variance-covariance" (which should be yet another indication that our model is somewhat unstable or overfitted).  However, we can work around this by restricting our question to the fixed effects only:
+
+```{r t_int}
+intervals(cmod2_lme,which="fixed")
+```
+
+The `lmer` profile is basically messed up (lots of warnings, lots of `NA`s).
+This should give us
+pause, but if we just want to get Wald intervals to see how well they
+match those given by `nlme::intervals()`, we can do it as follows:
+```{r cmod_wald_confint}
+confint(cmod_lmer,parm="beta_",method="Wald")
+```
+They're not identical, but they're reasonably similar (in general, you should
+always expect that confidence interval estimates will be more 
+unstable/variable/sensitive to differences in implementation than
+point estimates).
+
+We could plot the profiles with the following code, but the results
+are too ugly even to show:
+```{r cprofplot,warning=FALSE,eval=FALSE}
+ggplot(as.data.frame(pp),aes(.focal,.zeta))+
+  geom_point()+geom_line()+
+  facet_wrap(~.par,scale="free_x")+
+  geom_hline(yintercept=0,colour="gray")+
+    geom_hline(yintercept=c(-1.96,1.96),linetype=2,
+                            colour="gray")
+```
+
+# *Culcita*
+
+The data are from @mckeon_multiple_2012.
+
+## Data exploration
+
+The basic data can be reduced, for the purposes
+of this exercise, to a single treatment (`ttt`)
+[which consists of combinations of different
+symbionts: crab, shrimp, both or neither]; a binary response (`predation`);
+and a blocking factor (`block`).
+
+```{r getdat}
+load("data/culcita.RData")
+summary(culcita_dat)
+```
+Confirm that this is a randomized block design with
+2 replications per treatment per block:
+```{r exptab}
+with(culcita_dat,table(ttt,block))
+```
+(the `ftable()` function can be handy for displaying experimental designs with more than two levels).
+
+Plot summary statistics (mean and bootstrap 95% CI) for treatments, ignoring block structure:
+
+```{r plot1,message=FALSE}
+ggplot(culcita_dat,aes(x=ttt,y=predation))+
+  stat_summary(fun.data=mean_cl_boot,size=2)+
+  ylim(c(0,1))
+```
+
+The basic conclusion is that symbionts have a definite protective
+effect; the combination of two symbionts seems *slightly* more
+protective than a single symbiont.  However, we have to see if
+this holds up when we account for among-plot variation.  
+
+I have yet to find a good way to visualize these data that displays
+the among-block variation.
+This is my best attempt, but it's more artistic than compelling:
+
+```{r plot2,message=FALSE}
+ggplot(culcita_dat,aes(x=ttt,y=predation,colour=block,group=block))+
+    stat_summary(fun.y=sum,geom="line",alpha=0.4)+
+    stat_summary(fun.y=sum,geom="point",alpha=0.7,
+                 position=position_dodge(width=0.25))
+```
+
+## Fitting
+
+First, fit the model in each framework.
+
+### lme4::glmer
+
+(The syntax `pkg::fun` refers in general to a function `fun` in the R package `pkg`.)
+
+```{r lme4_0,message=FALSE,cache=TRUE}
+cmod_lme4_L <- glmer(predation~ttt+(1|block),data=culcita_dat,
+               family=binomial)
+```
+
+Take a quick look at the results:
+```{r lme4_results}
+print(summary(cmod_lme4_L),correlation=FALSE)
+```
+
+It would be nice to fit the model with a random effect of treatments across blocks as well, but it takes a long time and warns that it has failed to converge ...
+```{r c_block,cache=TRUE}
+cmod_lme4_block <- update(cmod_lme4_L,.~ttt+(ttt|block))
+```
+(we could extend the maximum number of iterations by using (e.g.)
+`control=glmerControl(optCtrl=list(maxfun=1e5))`, but it probably
+wouldn't help). (When you use `update()` you normally specify
+which variables to add (e.g. `.~.+new_var`) or subtract
+(`.~.-dropped_var`). Here I replaced the entire
+right-hand side of the formula: I might have been able to
+replace the intercept-only random effect with a random effect of
+treatment by subtracting and adding, i.e. `.~.-(1|block)+(ttt|block)`, but I wasn't
+sure it would work ...)
+
+If we examine the parameter estimates from this fit, we see various additional indications of trouble. The `crab` parameter and several of the variance-covariance parameters are very large and some of the variance-covariance parameters are very strongly correlated with each other, both indications that the model is overfitted:
+```{r c_block_est}
+fixef(cmod_lme4_block)
+VarCorr(cmod_lme4_block)
+```
+We can also use model comparison to see that it's not worth
+adding the extra terms:
+```{r AICcomp1}
+AICtab(cmod_lme4_L,cmod_lme4_block,nobs=nrow(culcita_dat))
+```
+(If we use AICc instead of AIC `cmod_lme4_block` does even worse,
+by 6 AICc units ...)
+
+Fitting with Gauss-Hermite quadrature:
+```{r c_AGQ}
+cmod_lme4_AGQ10 <- update(cmod_lme4_L,nAGQ=10)
+```
+
+```{r c_AGQ_all,echo=FALSE,cache=TRUE}
+agqfun <- function(i) {
+    f <- update(cmod_lme4_L,nAGQ=i)
+    c(fixef(f),sqrt(unlist(VarCorr(f))))
+}
+agqvec <- 1:25
+agqres <- sapply(agqvec,agqfun)
+```
+
+```{r fix_agqres,echo=FALSE}
+dimnames(agqres) <- list(c("intercept","crabs","shrimp",
+                           "both","sd.block"),agqvec)
+## melt and restore order of parameter labels
+m <- transform(melt(agqres),
+               Var1=factor(Var1,levels=rownames(agqres)))
+```
+
+The next plot (showing the values of each parameter
+as a function of the number of quadrature points)
+shows that using more quadrature points
+does have some effect, but on an absolute
+scale the parameters don't vary much: probably the biggest effect
+is in the estimated among-block standard deviation, increasing
+irregularly from `r round(agqres["sd.block",1],2)` for the
+Laplace approximation ($n=1$) to an asymptote of 
+`r round(agqres["sd.block",25],2)`.
+
+```{r c_AGQ_plot,fig.width=10,echo=FALSE}
+ggplot(m,aes(x=Var2,y=value))+
+    geom_line()+facet_wrap(~Var1,scale="free",nrow=1)+
+    labs(x="Number of adaptive Gauss-Hermite\nquadrature points")
+```
+
+### glmmADMB
+
+The only difference in moving from `lme4` to `glmmADMB` is that you have to express the `family` argument as a quoted string (i.e., `family="binomial"` rather than `family=binomial`):
+
+```{r glmmADMB_culc}
+cmod_gA_L <- glmmadmb(predation~ttt+(1|block),data=culcita_dat,
+               family="binomial")
+```
+
+The `summary()` for `glmmADMB` is nearly identical.
+
+```{r checkSE,echo=FALSE,eval=FALSE}
+library(numDeriv)
+## compute SEs from Hessian
+hfun <- function(model,incTheta=TRUE,...) {
+    dd <- update(model,devFunOnly=TRUE)
+    if (!incTheta) {
+        dd2 <- dd
+        th <- getME(model,"theta")
+        dd <- function(x) {
+            dd2(c(th,x))
+        }
+        v <- getME(model,"beta")
+    } else     v <- unlist(getME(model,c("theta","beta")))
+    h <-  hessian(dd,v,...)/2
+    sqrt(diag(solve(h)))
+}
+h <- hfun(cmod_lme4_L)
+h2 <- hfun(cmod_lme4_L,incTheta=FALSE)
+cmat <- cbind(h[-1],
+              h2,
+              coef(summary(cmod_lme4_L))[,"Std. Error"],
+              coef(summary(cmod_gA_L))[,"Std. Error"])
+colnames(cmat) <- c("hess","hess2","lme4","glmmADMB")
+cmat
+```
+
+```{r glmmADMB_culc_sum}
+summary(cmod_gA_L)
+```
+
+### MCMCglmm
+
+The `MCMCglmm` random effect specification is a little different
+from `glmer` and `glmmadmb`: other
+differences include
+
+* the Bernoulli (binomial with $N=1$) response is specified as `family="categorical"` (you would code a binomial response with $N>1$ as a two-column matrix of successes and failures, as in `glm()`, and specify `family="multinomial2"`)
+* After looking at the diagnostics on the default fit (see below), and with advice from Jarrod Hadfield (the author of `MCMCglmm`), I decided to 
+    * Set priors. 
+	    * The standard way to set priors for the variance-covariance matrices is to specify them as *inverse-Wishart* distributions; the corresponding [Wikipedia page](http://en.wikipedia.org/wiki/Inverse-Wishart_distribution) explains that for a single variance, the inverse-Wishart reduces to an inverse-gamma distribution with shape parameter $\alpha$ equal to half the Wishart shape ($\nu$) parameter. (The [inverse-gamma distribution](http://en.wikipedia.org/wiki/Inverse_gamma) is in turn a distribution of a random variable $X$ where $1/X$ is [Gamma-distributed](http://en.wikipedia.org/wiki/Gamma_distribution) ...) I initially used an informative prior with `G=list(list(V=11,nu=1))))` (i.e. specify that the mean of the variance is approximately equal to the among-block variance we got from `glmer`/`glmmADMB` and, the shape parameter is 1 (weak)).
+		* Hadfield suggested that I could instead "use parameter expanded priors which can be made approximately flat (but still proper) for the standard deviation [see `prior.c` below]. Transforming the variance parameters to the intra-class correlation (ICC) can cause problems however, as it puts high prior mass on extreme ICC's. Parameter expanded priors can also improve mixing considerably for the variances that are close to zero."
+		* For the observation-level variance (`R`) I initially used a strong Gamma-distributed prior with mean 1 and a shape parameter of 10, i.e. $1/\sigma^2$ was Gamma-distributed with a mean of 1 and coefficient of variance $1/\sqrt{5}$, but Hadfield suggested instead that instead I should simply fix `R` (which is unidentifiable anyway for binomial trials with a single observation) to 1.
+	* Specify the number of iterations (`nitt`), number
+of iterations to discard (`burnin`), and thinning (`thin`) manually,
+to get a much longer chain than the defaults (`nitt=13000`, `thin=10`, `burnin=3000`).
+
+
+First attempts, first with everything set to the default and then with a longer run:
+⌛ (60 seconds: *in general I will use this hourglass icon to indicate code that might take a long time to run -- you might want to skip running these chunks.*)
+```{r MCMCglmm1,cache=TRUE}
+cmod_MG0 <- MCMCglmm(predation~ttt,
+                     random=~block,data=culcita_dat,
+                     family="categorical",
+                     verbose=FALSE)
+cmod_MG1 <- MCMCglmm(predation~ttt,
+                    random=~block,data=culcita_dat,
+                    family="categorical",verbose=FALSE,
+                    nitt=5e5,burnin=5e4,thin=100)
+```
+
+As we will see below, simply running for longer won't fix everything.  Instead, we set stronger/better priors as described above:
+```{r MCMCglmm_longrun,cache=TRUE}
+prior.c <- list(R=list(V=1,fix=1),
+                G=list(G1=list(V=1, nu=1, alpha.mu=0, alpha.V=1000)))
+cmod_MG <- MCMCglmm(predation~ttt,
+                    random=~block,data=culcita_dat,
+                     slice=TRUE, ## slice sampling: for binary trials
+                                 ## with independent residuals
+                     pl=TRUE,    ## save posterior distributions of latent
+                                 ## variables (= conditional modes)
+                    prior=prior.c,
+                    family="categorical",verbose=FALSE,
+                    nitt=13000*10,burnin=3000*10,thin=5*10)
+
+```
+
+```{r mcmcglmm_sum}
+(cmod_MGsum <- summary(cmod_MG))
+```
+
+Take note of the `eff.samp` columns in the summary output, which describe the size of the sample we have taken from the posterior distribution corrected for autocorrelation; values much smaller than the nominal sample size (listed in the third line of the summary) indicate poor mixing.
+
+## Diagnostics and model summaries
+
+### lme4
+
+Diagnostic plots:
+```{r cmod_lme4_L_diagplot,fig.width=8}
+p1 <- plot(cmod_lme4_L,id=0.05,idLabels=~.obs)
+p2 <- plot(cmod_lme4_L,ylim=c(-1.5,1),type=c("p","smooth"))
+grid.arrange(p1,p2,nrow=1)
+```
+
+The only thing that the default (left-hand)
+diagnostic plot tells us is that observation \#20
+has a (very) extreme residual (we use
+`idLabels=~.obs` to get outliers labelled by their
+observation number; otherwise, by default, they are
+labelled by their groups); if we use `ylim=c(-1.5,1)`
+to limit the $y$-range,
+we get (on the right) the usual not-very-informative residuals plot expected
+from binary data.
+
+## Digression: complete separation
+
+If we exclude observation 20, we see the symptoms of [complete separation](http://www.ats.ucla.edu/stat/mult_pkg/faq/general/complete_separation_logit_models.htm) (e.g., parameter values with $|\beta|>10$, huge Wald confidence intervals and large Wald $p$-values).
+
+
+We refit the model with the new data ...
+```{r refit_outlier,cache=TRUE}
+newdat <- subset(culcita_dat,
+                 abs(resid(cmod_lme4_L,"pearson"))<10)
+cmod_lme4_L2 <- update(cmod_lme4_L,data=newdat)
+```
+
+We can use `bglmer` from the `blme` package to impose zero-mean Normal priors on the fixed effects (a 4 $\times$ 4 diagonal matrix with diagonal elements equal to 9, for variances of 9 or standard deviations of 3), or add a `B` element to the priors list for `MCMCglmm` to specify the same priors:
+```{r constr,cache=TRUE}
+cmod_blme_L2 <- bglmer(predation~ttt+(1|block),data=newdat,
+                       family=binomial,
+                       fixef.prior = normal(cov = diag(9,4)))
+cmod_MG2 <- MCMCglmm(predation~ttt,
+                    random=~block,data=newdat,
+                    family="categorical",verbose=FALSE,
+                    nitt=13e4,burnin=3e4,thin=50,
+                    prior=c(prior.c,
+                        list(B=list(mu=rep(0,4),
+                           V=diag(9,4)))))
+```
+
+Both methods of constraining the parameters give similar results:
+
+```{r constr_CI,echo=FALSE}
+tfun <- function(x) {
+    t1 <- tidy(x,conf.int=TRUE,effects="fixed")
+    t1[,c("term","estimate","conf.low","conf.high")]
+}
+c0_constr <- tfun(cmod_lme4_L2)
+c0_constr <- data.frame(fun="glmer",c0_constr)
+c1_constr <- tfun(cmod_blme_L2)
+c1_constr <- data.frame(fun="bglmer",c1_constr)
+ss2 <- summary(cmod_MG2)
+ff <- fixef(cmod_lme4_L)
+cc <- c("post.mean","l-95% CI","u-95% CI")
+c4_constr <- setNames(data.frame(rownames(ss2$solutions),
+                                 ss2$solutions[,cc]),
+                      c("term","estimate","conf.low","conf.high"))
+c4_constr <- data.frame(c4_constr,fun="MCMCglmm")                       
+cmod_constr_Results <- rbind(c0_constr,c1_constr,c4_constr)
+ggplot(cmod_constr_Results,aes(x=term,y=estimate,ymin=conf.low,ymax=conf.high,
+                               colour=fun))+
+  geom_pointrange(position=position_dodge(width=0.1))+coord_flip()+
+    scale_colour_brewer(palette="Set1")
+```
+
+There are other packages in R (`brglm`, `logistf`) that can handle completely separated data, but they only apply to logistic regression, and they cannot simultaneously incorporate random effects (@pasch_interspecific_2013 dropped random effects and used `brglm` to handle completely separated data, arguing that random effects were small and/or hard to estimate in their system.)
+
+(*End of digression*)
+
+We can do a little bit better with boxplots grouped by
+treatment (again limiting the range to exclude the outlier).
+
+```{r cmod_lme4_L_boxplot}
+plot(cmod_lme4_L,ttt~resid(.,type="pearson"),xlim=c(-1.5,1))
+```
+
+Check the random effects:
+```{r cmod_ranef}
+dotplot(ranef(cmod_lme4_L,condVar=TRUE))
+```
+
+There are only a few unique values 
+of the random effects because there are only a few
+possible configurations per block of predation/no-predation in
+each treatment.
+
+It's worth checking `methods(class="merMod")` to see all the things
+you can do with the fit (some of them may be a bit obscure ...)
+The most important are:
+
+* `fixef()` to extract the vector of fixed-effect parameters (confusingly, 
+`coef()` -- which is the accessor method for finding coefficients for
+most other models in R -- gives a matrix showing the estimated coefficients
+for each block (incorporating the random effects), which I don't find
+useful very often)
+* `coef(summary(.))` to extract just the table of estimates with standard errors,
+$z$ values, and $p$-values
+* `VarCorr()` to extract the estimates of the random effect variances
+and covariances. (Use `unlist(VarCorr(.))` if you want the variances
+as a vector.)
+* `ranef()` to extract estimates of the random effects, and `dotplot(ranef(.,condVar=TRUE))` or `qqmath(ranef(.,condVar=TRUE))` to explore them graphically
+* `plot()` for diagnostic plots
+* `AIC()`, `anova()`, `drop1()`, `confint()`, `profile()` for various statistical tests
+* `predict()` for predictions; `simulate()` for simulations based on the model
+
+### glmmADMB
+
+The methods and diagnostics for `glmmADMB` are similar, although
+not quite as well developed.
+You can still create the same kinds of diagnostic plots
+(I have done this one with `ggplot2` rather than `lattice`):
+
+```{r glmmADMB_diag}
+augDat <- data.frame(culcita_dat,resid=residuals(cmod_gA_L,type="pearson"),
+                     fitted=fitted(cmod_gA_L))
+ggplot(augDat,aes(x=ttt,y=resid))+geom_boxplot()+coord_flip()
+```
+
+### MCMCglmm
+
+Within an `MCMCglmm` fit the chains are stored in two separate
+matrices (`mcmc` objects, actually, but these can be treated
+a lot like matrices) called `Sol` (fixed effects) and
+`VCV` (variances and covariances).  (Random effects are not
+saved unless you set `pr=TRUE`.)
+```{r MCMCglmm_chains1}
+allChains <- as.mcmc(cbind(cmod_MG0$Sol,cmod_MG0$VCV))
+```
+The trace plots for the default parameters:
+```{r MCMCglmm_diag}
+plotTrace(allChains)
+```
+
+(`plotTrace` is from the `plotMCMC` package, and is slightly
+prettier than the default trace plot you get from `xyplot(allChains)`,
+or the trace+density plot you get from `plot(allChains)`, but they
+all show the same information.)
+This trace plot is terrible: it indicates at the very least that we
+need a longer burn-in period (to discard the transient)
+and a longer chain with more thinning (to make the chains
+look more like white noise). It's also worrying that the `units`
+variance appears to be get stuck near zero (although here the
+problem may be with the large transient spikes 
+distorting the scale and making the
+rest of the chain look non-variable).
+
+Running longer:
+```{r MCMCglmm_diag2}
+allChains2 <- as.mcmc(cbind(cmod_MG1$Sol,cmod_MG1$VCV))
+plotTrace(allChains2,axes=TRUE,las=1)
+```
+
+This looks OK at first glance, but the magnitudes of the parameters (suppressed
+by default from the `tracePlot` results since we're initially
+interested only in the pattern, not the magnitude, of the
+parameters) suggest a problem: the values of the fixed-effect parameters are in the hundreds, when any values with $|\beta|>10$ suggest a problem.
+
+The fundamental problem here is that, for both technical
+and philosophical reasons, `MCMCglmm` always adds an
+observation-level variance (referred to in `MCMCglmm`
+as the "R-structure", for "residual structure"),
+corresponding to an overdispersion term. For binary
+data,
+$$
+\text{logit}(p_i) = m_i + \epsilon_i
+$$
+where $\epsilon_i \sim N(0,\sigma^2)$
+then the *expected value* of $p_i$ is
+the average of $\text{logistic}(m_i+\epsilon_i)$.
+This is a nonlinear average, and so the mean of $p_i$
+is *not* equal to $\text{logistic}(m_i)$ (this
+phenomenon is  called [Jensen's inequality](http://en.wikipedia.org/wiki/Jensen%27s_inequality); [Ruel and Ayres 1999](www.dartmouth.edu/~mpayres/pubs/Jensen.PDF) give an ecologist-friendly explanation).
+If $\ell(x)=1/(1+\exp(-x))$ is the logistic function then
+the mean of $p_i$ is approximately
+$$
+\overline{p_i} \approx \ell(m_i) + 
+\left.\frac{d^2\ell}{dx^2}\right|_{x=m_i} \cdot \sigma^2/2
+$$
+
+We won't bother to show the math of $d^2\ell(x)/dx^2$ here:
+suffice it to say that this term varies from about +0.1 to -0.1
+depending on the baseline value $m_i$, so that the estimates
+of $m_i$ and the observation-level variance $\sigma^2$ are
+confounded:
+
+```{r d2logis,echo=FALSE}
+## deviation of mean(m+eps) from m
+## int (m + dL/dm eps + dL^2/d^2m eps^2/s) =
+## m + dL^2/d^2m * v/2
+## 1/(1+exp(-x))
+## dlogis = exp(-x)/(1+exp(-x))^2  = exp(-x) plogis(x)^2
+## d2logis = -exp(-x) plogis(x)^2 + exp(-x) *2*plogis(x)*dlogis(x)
+##         = exp(-x)*plogis(x)^2*(-1 + 2*dlogis(x)/plogis(x))
+##         = dlogis(x)*(2*dlogis(x)/plogis(x)-1)
+d2logis <- function(x) dlogis(x)*(2*dlogis(x)/plogis(x)-1)
+if (FALSE) {
+    ## check
+    library(numDeriv)
+    grad(dlogis,x=2)
+    d2logis(2)
+}
+par(las=1,bty="l")
+curve(d2logis(x),from=-3,to=3,
+      xlab=~d^2*L/d*x^2)
+abline(h=0,lty=3)
+abline(v=0,lty=3)
+```
+
+```{r MCMCglmm_diag_sum,echo=FALSE}
+bb <- cmod_MGsum$Gcovariances["block",]
+bb2 <- summary(cmod_MG1)$Rcovariances["units",]
+apvar <- round(bb2["post.mean"]/100)*100
+## mean posterior
+## 37.3     3.02      106      147
+```
+
+In the MCMC example here, the observation-level
+variance has drifted to a very large value
+($\sigma^2_R \approx `r apvar`$), and the initial
+(variance-free) value of the baseline predation probability was low,
+so the variance inflates the mean by a great deal and the 
+intercept parameter becomes strongly negative to compensate.
+
+To deal with the confounding between these variables, we
+fix the value of $\sigma^2_R$ as described above.
+The results:
+```{r MCMCglmm_diag3}
+allChains3 <- as.mcmc(cbind(cmod_MG$Sol,cmod_MG$VCV))
+## units variance is fixed to 1 anyway, we don't need
+## to examine it
+allChains3 <- allChains3[,colnames(allChains3)!="units"]
+plotTrace(allChains3,axes=TRUE,las=1)
+```
+
+Now the magnitudes of the parameters look a little bit more sensible.
+The chains for the variances are a little
+bit "spiky" because the posterior densities have 
+long right tails, so it can be helpful to look at them on a log scale
+(it's easier to see the details when the distribution is symmetric):
+```{r MCMCglmm_diag_log}
+vcChain <- log10(cmod_MG$VCV)[,1]
+plotTrace(vcChain)
+```
+
+The `block` variance is still slightly worrying: the trace plot still shows
+some pattern (we want it to be more or less indistinguishable
+from white noise), and the
+effective sample size (`r round(bb["eff.samp"])`) is much smaller
+than our nominal sample size of `r nrow(vcChain)` (see the `eff.samp` column in the summary above).
+
+We have one more thing to worry about.
+If we extract `cmod_MG$Liab` (the conditional modes/latent variables) and plot their histogram:
+
+```{r cmod_MG2_hist,echo=FALSE}
+hfun <- function(x,breaks=50,...) {
+   par(las=1,bty="l")
+   hist(x,col="gray",main="",breaks=breaks,
+     freq=FALSE,...)
+}
+hfun(cmod_MG$Liab,
+     xlab="Value of conditional mode/latent variable")
+```
+
+Some of the latent variables are larger than 20. The likelihood of the linear predictor is essentially flat from $[20,\infty]$. If this happens for all observations belonging to a single term (fixed or random) then there is nothing constraining that term except the prior ($B$) or for random effects the posterior variance. Consequently issues can arise, without suitable prior or hyper prior specifications -- this suggests that we might want to consider using the slightly stronger priors on $B$ specified above when we were trying to deal with complete separation.
+
+In order to compare the estimates we get from `MCMCglmm` with the other models -- which do not incorporate an observation-level random effect -- we 
+rescale block variance to what it would be had we set the units variance to zero, and overlay the `lmer` estimate:
+
+```{r scale_mcmcglmm}
+## see eqs. 2.13, 2.14 of the MCMCglmm 'CourseNotes' vignette
+## for further information & references:
+c2 <- ((16 * sqrt(3))/(15 * pi))^2
+cmod_MGsc <- cmod_MG
+cmod_MGsc$VCV[,"block"] <-
+  cmod_MGsc$VCV[,"block"]/(1+c2*cmod_MGsc$VCV[,"units"])
+cmod_MGsc$Sol[] <- cmod_MGsc$Sol/sqrt(1+c2*cmod_MGsc$VCV[,"units"])
+cmod_MGsc$VCV[,1] <- sqrt(cmod_MGsc$VCV[,1])
+```
+
+```{r mcmcviolins,message=FALSE,echo=FALSE}
+mcmcCompFun <- function(mcmcfit,lme4fit,whichvar=1,include.units=FALSE) {
+    mcmc_ests <- rbind(
+        melt(data.frame(type="fixed",
+                        as.data.frame(mcmcfit$Sol),
+                  check.names=FALSE)),
+        melt(data.frame(type="random",
+                      as.data.frame(mcmcfit$VCV),
+                      check.names=FALSE)))
+    ff <- fixef(lme4fit)
+    aa <- as.data.frame(VarCorr(lme4fit))
+    lme4res <- rbind(data.frame(type="fixed",variable=names(ff),
+                                value=ff),
+                     data.frame(type="random",
+                                variable=aa$grp[whichvar],
+                                value=aa$sdcor[whichvar]))
+    ss2 <- summary(mcmcfit)
+    fixres <- data.frame(type="fixed",variable=rownames(ss2$solutions),
+                              value=ss2$solutions[,"post.mean"])
+    vcvres <- data.frame(type="random",
+                          variable=colnames(mcmcfit$VCV),
+                          value=c(ss2$Gcovariances[,"post.mean"],
+                          ss2$Rcovariances[,"post.mean"]))
+    MGres <- rbind(fixres,vcvres[whichvar,])
+    allres <- rbind(data.frame(sum="MCMCglmm mean",MGres),
+                    data.frame(sum="lme4 MLE",lme4res))
+    list(mcmc_ests=mcmc_ests,allres=allres)
+}
+cmod_comp <- mcmcCompFun(cmod_MGsc,cmod_lme4_L)
+v0 <- ggplot(subset(cmod_comp$mcmc_ests,variable!="units"),
+             aes(variable,value))
+v0 + geom_violin(fill="gray") +
+  geom_point(data=cmod_comp$allres,aes(colour=sum),alpha=0.7)+
+    scale_colour_brewer(palette="Set1")
+```
+
+The modes of the `MCMCglmm` results (the fattest part of the
+"violins") agree well with
+the `lme4` MLEs, for the most part: the `lme4` estimate of the among-block standard deviation is a bit lower than the
+`MCMCglmm` estimate. (When we display the overall parameter
+comparison below, we will show the MCMCglmm means instead.)
+
+## Inference
+
+We get the values of the parameters and
+the (Wald) standard errors, $Z$- and $p$-values
+(for `glmer()` and `glmmADMB()`), or 
+the (quantile-based) credible intervals and
+"pMCMC" values from the `summary()` output, as shown above.
+
+If we want more accurate profile confidence interval,
+parametric bootstrap, or MCMC-based confidence intervals
+for `glmer()`- or `glmmADMB()`-based analyses, we use
+`confint()`:
+
+⌛ 
+Compute profile confidence intervals:
+```{r CIhide,message=FALSE,cache=TRUE,echo=FALSE,warning=FALSE}
+t_lme4_prof <- system.time(cmod_lme4_L_CI_prof <- confint(cmod_lme4_L))
+t_lme4_CI_quad <- system.time(
+  cmod_lme4_L_CI_q <- confint(cmod_lme4_L,method="Wald"))
+t_lme4_CI_boot <- system.time(
+  cmod_lme4_L_CI_boot <- confint(cmod_lme4_L,method="boot"))
+```
+
+```{r CI,eval=FALSE}
+cmod_lme4_L_CI_prof <- confint(cmod_lme4_L)
+cmod_lme4_L_CI_quad <- confint(cmod_lme4_L,method="Wald")
+cmod_lme4_L_CI_boot <- confint(cmod_lme4_L,method="boot")
+```
+
+```{r assemble_cmod,echo=FALSE}
+simplify_term <- function(x,first=TRUE) {
+    if (first) {
+        gsub(".*\\.([[:alpha:]]+):?.*","\\1",x)
+    } else {
+        gsub(".*[.:]([[:alpha:]]+)$","\\1",x)
+    }
+}
+tfun2 <- function(x) {
+    t1 <- tidy(x,conf.int=TRUE)
+    ## take 'group' (block) but call it 'term'
+    t2 <- t1[,c("term","estimate","conf.low","conf.high")]
+    t2$term <- simplify_term(t2$term,first=FALSE)
+    t2
+}
+c1 <- tfun2(cmod_lme4_L)
+c1_prof <- c1
+c1_prof[,c("conf.low","conf.high")] <- cmod_lme4_L_CI_prof[c(2:5,1),]
+c1_boot <- c1
+c1_boot[,c("conf.low","conf.high")] <- cmod_lme4_L_CI_boot[c(2:5,1),]
+ff <- function(x,CI) {
+    data.frame(x,CI=CI)
+}
+c2 <- do.call(rbind,mapply(ff,list(c1,c1_prof,c1_boot),
+                           list("Wald","profile","boot"),SIMPLIFY=FALSE))
+c2 <- data.frame(c2,fun="glmer")
+c3 <- rbind(setNames(data.frame(coef(cmod_gA_L),confint(cmod_gA_L)),
+                     c("estimate","conf.low","conf.high")),
+            block=with(cmod_gA_L,
+                       data.frame(estimate=unname(sqrt(S$block)),
+                       conf.low=0,
+                       conf.high=unname(sqrt(S$block+1.96*sd_S$block)))))
+c3 <- data.frame(term=rownames(c3),c3,CI="Wald",fun="glmmADMB")
+ss <- summary(cmod_MGsc)
+cc <- c("post.mean","l-95% CI","u-95% CI")
+c4 <- rbind(setNames(data.frame(rownames(ss$solutions),
+                       ss$solutions[,cc]),
+                                c("term","estimate","conf.low","conf.high")),
+           setNames(data.frame(term=rownames(ss$Gcovariances),
+                               ## we already took the sqrt above
+                               ## when we were adjusting scales ...
+                               ss$Gcovariances[,cc,drop=FALSE]),
+                               c("term","estimate","conf.low","conf.high")))
+c4 <- data.frame(c4,CI="MCMC",fun="MCMCglmm")                       
+cmod_Results <- rbind(c2,c3,c4)
+```
+
+The parameter estimates and confidence intervals are reasonably
+consistent across packages and algorithms (the Wald estimate of the
+block variance from `glmmADMB` actually gives a *negative* estimate
+of the variance ...)
+
+* `glmer` and `glmmADMB` give the same point estimates -- reassuringly,
+since they are both using (different implementations of) the Laplace
+approximation method. `MCMCglmm` gives slightly lower (= more negative)
+estimates of the point estimates, and higher estimates of the
+among-block standard deviation; this is in part because `MCMCglmm`
+is reporting the posterior mean, which for a distribution with a long
+right tail is larger than the posterior mode (analogous to the
+maximum likelihood estimate).
+* the likelihood profile and Wald CIs are similar (`glmmADMB`'s Wald intervals are slightly wider than `glmer`'s, because `glmer`'s calculation does not account for uncertainty due to the random-effects parameters; this is not
+really obvious from the plot).
+* The `MCMCglmm` confidence intervals are a bit wider, and the parametric bootstrap confidence intervals are extremely wide (they're truncated at $\pm 15$ for display purposes).  For some parametric bootstrap realizations, the simulated predation outcomes are such that complete separation occurs (some blocks, or some treatments, are either always or never attacked by predators), leading to infinite estimates of the parameters (log-odds differences). This is not a big practical difficulty because the direction of the uncertainty is toward more extreme results ...
+
+```{r cmod_plotResults,echo=FALSE,warning=FALSE}
+(gg_cmodres <- ggplot(cmod_Results,aes(x=term,y=estimate,
+                        ymin=conf.low,ymax=conf.high,
+                        colour=fun,
+                        shape=fun,
+                        linetype=CI))+
+    geom_pointrange(position=position_dodge(width=0.5))+
+    scale_y_continuous(lim=c(-15,15),oob=scales::squish,expand=c(0,0))+
+    coord_flip()+xlab("")+ylab("Effect (log-odds of predation)")+
+  scale_colour_brewer(palette="Set1"))
+ggsave("../cmod_plotResults.pdf",height=4,width=6)
+```
+
+## Model comparison/hypothesis testing
+
+The summary of the model gives us crude (Wald) estimates of the $p$-values for each individual parameter:
+```{r cmod_coefs}
+coef(summary(cmod_lme4_L))
+```
+
+We can get the overall $p$-value for the effect of treatment and use `anova()` to do a likelihood ratio test:
+```{r cmod_lrt}
+cmod_lme4_0 <- update(cmod_lme4_L,.~.-ttt,
+                      control=glmerControl(optimizer="bobyqa"))
+```
+If I don't use `optimizer="bobyqa"` I get a convergence warning
+(this will probably become the `lme4` default in a new version ...)
+
+```{r cmod_lrt_anova}
+anova(cmod_lme4_L,cmod_lme4_0)
+```
+
+
+We could also use `drop1(cmod_lme4_L,test="Chisq")` to refit the reduced model automatically (helpful if we have a more complex model with more separate fixed effects to test).
+
+We can also get parametric bootstrap confidence intervals.  I initially tried to do this via `PBmodcomp(cmod_lme4_L,cmod_lme4_0,nsim=400)`, but failed when one of the model-refitting steps produced an error.  Instead, I defined my own parametric bootstrap function which tests to make sure that neither of the refitting steps failed:
+
+```{r pbmcdefs}
+PBsimfun <- function(m0,m1,x=NULL) {
+  if (is.null(x)) x <- simulate(m0)
+  m0r <- try(refit(m0,x[[1]]),silent=TRUE)
+  if (inherits(m0r,"try-error")) return(NA)
+  m1r <- try(refit(m1,x[[1]]),silent=TRUE)
+  if (inherits(m1r,"try-error")) return(NA)
+    c(-2*(logLik(m0r)-logLik(m1r)))
+}
+```
+
+⌛ 
+```{r pbcmodcomp,cache=TRUE,warning=FALSE}
+set.seed(101)
+PBrefdist <- replicate(400,PBsimfun(cmod_lme4_0,cmod_lme4_L))
+```
+
+Out of 400 replicates, `r sum(is.na(PBrefdist))` are `NA` (the refitting failed somehow), and 1 is <0 by a tiny amount (numerical inaccuracy in the fitting).  It is also appropriate to add the observed value of the difference in $-2 \log(L)$ to the reference distribution:
+
+```{r pmodcomp2}
+obsval <- -2*(logLik(cmod_lme4_0)-logLik(cmod_lme4_L))
+PBrefdist <- c(na.omit(pmax(PBrefdist,0)),obsval)
+```
+
+The histogram looks pretty close to the expected
+$\chi^2_3$ distribution for the likelihood ratio test
+(3 degrees of freedom because we are comparing a model
+with 4 vs. 1 fixed-effect parameters):
+
+```{r pbhist,echo=FALSE}
+par(las=1,bty="l")
+hist(PBrefdist,col="gray",breaks=40,freq=FALSE,
+     main="",xlab="Deviance difference")
+curve(dchisq(x,3),col=2,add=TRUE,lwd=2)
+```
+
+However, we would probably prefer a real $p$-value, which we get by computing the fraction of values in the reference distribution >= the observed value (we can use `mean(ref>obs)` as a shortcut to compute this proportion). Since the observed value is included in the reference distribution, the $p$-value can never be less than $1/(\mbox{nsim}+1)$, which is its value in this case:
+
+```{r pb_pval1}
+mean(PBrefdist>=obsval)
+```
+
+If we want to use parametric bootstrapping to test a different hypothesis, either based on the assumption that a single parameter is zero or based on some particular *contrast* among the treatments (e.g. that the effect of two symbionts is equal to the effect of either symbiont alone), we have to set up our own dummy variables rather than relying on R's automatic handling of categorical (factor) variables.
+
+Suppose we want to compare the effect of a single symbiont of either kind to the effect of two symbionts (i.e., the average
+of crabs and shrimp). This is a bit more challenging than testing the overall effect of treatment. First we have to set up an appropriate *contrast* to partition the effects of treatment. In this case we change the default treatment contrasts (control, control vs. crab, control vs. shrimp, control vs. both) to test (i) control, (ii) any symbionts vs no symbionts, (iii) crabs alone vs shrimp alone, (iv) one symbiont vs two symbionts. 
+
+```{r contrasts}
+invcontr <- matrix(c(1,0,0,0, 
+                  -1,1/3,1/3,1/3,
+                   0,-1,1,0,
+                   0,-1/2,-1/2,1), 
+                   byrow=TRUE,ncol=4, 
+                   dimnames=list(c("none","symbiont",
+                   "C_vs_S","1_vs_2"),
+              levels(culcita_dat$ttt))) 
+cmat0 <- solve(invcontr)[,-1]
+```
+
+Because we will want to do a parametric bootstrap test of one particular contrast, we will need to be able to exclude that variable from the model.  We do this by setting up the model matrix explicitly and using its columns explicitly as *numeric* dummy variables:
+
+```{r contrast_setup2}
+X <- model.matrix(~ttt,
+                  data=culcita_dat,
+                  contrasts=list(ttt=cmat0))
+culcita_dat2 <- with(culcita_dat,data.frame(block,predation,
+                                            X[,-1]))
+cmod_lme4C_L <- glmer(predation~tttsymbiont+
+                        tttC_vs_S+ttt1_vs_2+
+                        (1|block),data=culcita_dat2,
+                      family=binomial)
+## fit reduced model as well
+cmod_lme4C_L0 <- update(cmod_lme4C_L,.~.-ttt1_vs_2)
+```
+
+Now we do the parametric bootstrap comparison
+(⌛!): 
+```{r pbcmodcomp2,cache=TRUE,warning=FALSE}
+set.seed(101)
+PBrefdist2 <- replicate(400,PBsimfun(cmod_lme4C_L0,cmod_lme4C_L))
+```
+
+And compute the $p$-value by comparing against the observed value as above:
+```{r pmodcomp3}
+obsval2 <- -2*(logLik(cmod_lme4C_L0)-logLik(cmod_lme4C_L))
+PBrefdist2 <- c(na.omit(pmax(PBrefdist2,0)),obsval2)
+mean(PBrefdist2>=obsval2)
+```
+
+Ironically, after all that computational effort this $p$-value is nearly identical to the value from the Wald test:
+```{r pb_vs_wald_fake,eval=FALSE}
+coef(summary(cmod_lme4C_L))
+```
+```{r pb_vs_wald,echo=FALSE}
+print(coef(summary(cmod_lme4C_L)),digits=3)
+```
+
+## Prediction
+
+Getting predicted values from an `lme4` model (or an `MCMCglmm` model) is
+fairly straightforward: in this case by specifying `re.form=NA` we're saying
+that we want the *population-level* prediction, i.e. setting the random effects
+to zero and getting a prediction for an average (or unknown) block:
+```{r predframe}
+pframe <- data.frame(ttt=factor(levels(culcita_dat$ttt),
+                                levels=levels(culcita_dat$ttt)))
+cpred1 <- predict(cmod_lme4_L,re.form=NA,newdata=pframe,type="response")
+```
+
+Computing confidence intervals on the predicted values is relatively
+easy *if* we're willing to completely ignore the random effects, and
+the uncertainty of the random effects. Here is a generic function that extracts the relevant bits from a fitted model and returns the confidence intervals for predictions:
+
+```{r pred2}
+easyPredCI <- function(model,newdata=NULL,alpha=0.05) {
+    ## baseline prediction, on the linear predictor (logit) scale:
+    pred0 <- predict(model,re.form=NA,newdata=newdata)
+    ## fixed-effects model matrix for new data
+    X <- model.matrix(formula(model,fixed.only=TRUE)[-2],newdata)
+    beta <- fixef(model) ## fixed-effects coefficients
+    V <- vcov(model)     ## variance-covariance matrix of beta
+    pred.se <- sqrt(diag(X %*% V %*% t(X))) ## std errors of predictions
+    ## inverse-link function
+    linkinv <- family(model)$linkinv
+    ## construct 95% Normal CIs on the link scale and
+    ##  transform back to the response (probability) scale:
+    crit <- -qnorm(alpha/2)
+    linkinv(cbind(conf.low=pred0-crit*pred.se,
+                  conf.high=pred0+crit*pred.se))
+}
+cpred1.CI <- easyPredCI(cmod_lme4_L,pframe)
+```
+
+We can also get parametric bootstrap predictions
+by resampling, refitting, and re-predicting many times
+and computing the 95% quantiles of the predictions:
+⌛ 
+```{r cmod_bootpreds,cache=TRUE}
+set.seed(101)
+bb <- bootMer(cmod_lme4_L,
+              FUN=function(x)
+              predict(x,re.form=NA,newdata=pframe,type="response"),
+              nsim=500)
+```
+
+```{r culcbootci}
+cpredboot1.CI <- t(sapply(1:4,
+       function(i)
+         boot.ci(bb,type="perc",index=i)$percent[4:5]))
+## or: t(apply(bb$t,2,quantile,c(0.025,0.975),na.rm=TRUE))
+```
+
+```{r cmod_CIcomp,echo=FALSE}
+cnames <- list(ttt=levels(culcita_dat$ttt),v=c("conf.low","conf.high"))
+dimnames(cpred1.CI) <- dimnames(cpredboot1.CI) <- cnames
+CIcompdat <- rbind(data.frame(ttt=cnames[[1]],method="easy",cpred1.CI),
+                   data.frame(ttt=cnames[[1]],method="boot",cpredboot1.CI))
+CIcompdat <- merge(data.frame(ttt=cnames[[1]],estimate=cpred1),CIcompdat)
+CIcompdat$ttt <- factor(CIcompdat$ttt,levels=cnames[[1]])
+ggplot(CIcompdat,aes(x=ttt,y=estimate,ymin=conf.low,ymax=conf.high,colour=method))+
+  geom_pointrange(position=position_dodge(width=0.2))+
+    scale_colour_brewer(palette="Set1")
+```
+
+The confidence intervals from the "easy" approach and the
+bootstrap approach are similar in this case.  The bootstrap
+CIs are sometimes narrower (the lower CI for the predation
+probability of undefended corals is higher for the bootstrap
+than the "easy" CI) and sometimes larger (the upper bootstrap
+CIs for all of the other treatments extends all the way up
+to 1.0).
+
+# Gopher tortoise
+
+The data are from @ozgul_upper_2009.
+
+## Data 
+
+```{r gopherdat}
+load("data/gopherdat2.RData")
+(gplot1 <- ggplot(Gdat,aes(x=prev,y=1+shells/Area))+
+    stat_sum(aes(colour=factor(year),
+                 size=factor(..n..)))+
+    scale_size_discrete(range=c(3,6),name="overlap")+
+    scale_y_log10()+
+    scale_colour_discrete(name="year")+
+    geom_line(aes(group=Site),alpha=0.2)+
+    labs(x="Seroprevalence",y="1+shells/Area (log scale)"))
+```
+There does indeed seem to be a general upward trend 
+in shell density as a function of seroprevalence,
+but the rest of the plot is pretty messy.  Lines
+connect observations from the same site (in an earlier
+version I used `geom_text(aes(label=Site))` to label the points by site:
+this is useful for diagnostic purposes, but ugly).
+
+## Fitting
+
+### glmer
+
+Fit basic model with a log-linear effect of prevalence, an
+offset of `log(Area)` (to make the expected number of shells
+proportional to `Area`), `year` as a fixed categorical effect,
+and `Site` as a random effect.
+
+```{r gopherfit1}
+gmod_lme4_L <- glmer(shells~prev+offset(log(Area))+factor(year)+(1|Site),
+      family=poisson,data=Gdat,
+      control=glmerControl(optimizer="bobyqa",
+                           check.conv.grad=.makeCC("warning",0.05)))
+```
+
+```{r gophersum1}
+summary(gmod_lme4_L)
+```
+
+This initial summary shows that the site-level variance is exactly
+zero (corresponding to pooling our data/ignoring the effect of `Site`:
+if you want to inspect this component of the summary by itself,
+you can specify `VarCorr(gmod_lme4_L)`).
+For comparison, we can also explicitly fit (non-mixed) generalized
+linear models with complete pooling and fixed effects of `Site`,
+respectively:
+
+```{r gopherglm}
+gmod_glm <- glm(shells~prev+offset(log(Area))+factor(year),
+      family=poisson,data=Gdat)
+gmod_glm2 <- glm(shells~prev+offset(log(Area))+factor(year)+factor(Site),
+      family=poisson,data=Gdat)
+```
+
+Try the fit with Gauss-Hermite quadrature for comparison
+(perhaps GHQ will estimate a non-zero variance?)
+```{r gopherfit2}
+gmod_lme4_agq <- update(gmod_lme4_L,nAGQ=10)
+```
+
+No:
+```{r gfit2_vc}
+VarCorr(gmod_lme4_agq)
+```
+
+```{r gfit_AICtab}
+AICtab(gmod_glm,gmod_glm2,gmod_lme4_L,logLik=TRUE)
+```
+(At present `lme4` computes log-likelihood/AIC
+values for models fitted with GHQ that are not
+comparable with `glm()` fits or `glmer` Laplace fits,
+so we skip `gmod_lme4_agq` in this summary.)
+
+The pooled `glm()` and `glmer()` fits have identical
+log-likelihoods, as expected (when the random-effects
+variance collapses to 0, `glmer()` is essentially
+fitting a pooled model): the `glmer()` fit is
+AIC-penalized for an additional parameter (the among-site
+variance).  The fixed-effect `glm()` fit has a slightly
+better log-likelihood, but not enough to make up for 
+9 additional `Site` effect parameters.
+
+Another option in this case is to use `bglmer` from the `blme` package,
+which sets a weak prior on the variance to push it away from zero:
+```{r blmer1,cache=TRUE}
+gmod_blmer_L <- bglmer(shells~prev+offset(log(Area))+factor(year)+(1|Site),
+      family=poisson,data=Gdat)
+```
+
+```{r blmer_CI,eval=FALSE}
+gmod_blmer_prof <- confint(gmod_blmer_L)
+```
+```{r blmer_CI2,cache=TRUE,message=FALSE}
+gmod_blmer_bootCI <- confint(gmod_blmer_L,method="boot")
+```
+
+Now we do estimate a positive (but small) among-site variance:
+```{r blmer_vc}
+VarCorr(gmod_blmer_L)
+```
+
+Check for overdispersion: you can do this by hand by computing
+`sum(residuals(gmod_lme4_L,"pearson")^2))`, but the `gof()` function
+from the `aods3` package is a handy shortcut (it computes overdispersion
+based on the deviance (`D` below) and Pearson residuals (`X2`): when
+they disagree, use the latter:
+```{r checkdisp}
+gof(gmod_lme4_L)
+```
+The sum of squared Pearson residuals is less than
+the residual degrees of freedom, so the response
+is actually underdispersed.
+
+Just for comparison's sake, we'll fit a model
+with an observation-level random effect (logistic-normal
+model) anyway:
+```{r od}
+Gdat$obs <- factor(seq(nrow(Gdat)))
+gmod_lme4_L_od <- glmer(shells~prev+offset(log(Area))+factor(year)+(1|Site)+(1|obs),
+      family=poisson,data=Gdat)
+```
+
+### glmmADMB
+
+As before, the only thing we have to change for `glmmADMB` is to
+specify the family in quotation marks (`family="poisson"`):
+
+```{r gopher_glmmADMB,cache=TRUE}
+gmod_gA_L <- glmmadmb(shells~prev+offset(log(Area))+factor(year)+(1|Site),
+      family="poisson",data=Gdat)
+```
+
+If we want, we have the alternative of fitting a negative-binomial
+model, either "type 1" ($\text{Var} = \phi \mu$) or
+"type 2" ($\text{Var} = \mu (1 + \mu/k)$):
+```{r gopher_glmmADMB2,cache=TRUE}
+gmod_gA_L_NB2 <- glmmadmb(shells~prev+offset(log(Area))+factor(year)+(1|Site),
+      family="nbinom",data=Gdat)
+gmod_gA_L_NB1 <- glmmadmb(shells~prev+offset(log(Area))+factor(year)+(1|Site),
+      family="nbinom1",data=Gdat)
+```
+
+Unsurprisingly (since we know the data are underdispersed),
+the negative binomial model fits don't decrease the AIC:
+```{r g_AICtab}
+AICtab(gmod_gA_L,gmod_gA_L_NB1,gmod_gA_L_NB2)
+```
+
+### MCMCglmm
+
+As in the previous example, it turns out we have to run
+`MCMCglmm` chains for longer, and specify reasonably
+strong priors, in order to get reasonable results.
+
+Offsets have to be set "by hand" by placing a strong prior on a coefficient of 1 for the offset term; the rest of the fixed-effect parameters get the usual mean of 0 and very large variance.
+```{r g_offprior}
+B.prior <- list(V=diag(5)*1e7, mu=c(0,0,1,0,0))
+B.prior$V[3,3] <- 1e-7  ## replace log(area) (offset) variance
+```
+
+For the variances, after finding that the default priors were too weak (see below), I initially used priors of the form `list(V=5, nu=5)` to specify fairly strongly that the variance could not be near zero, e.g.:
+
+```{r dinvgamma,echo=FALSE}
+dinvgamma <- function(x,shape,scale,log=FALSE) {
+    ## a lobotomized version of dinvgamma() from LaplacesDemon pkg
+  dens <- shape * log(scale) - lgamma(shape) - (shape + 1)* log(x) - (scale/x)
+  if (log == FALSE) exp(dens) else dens
+}
+par(las=1,bty="l")
+curve(dinvgamma(x,shape=5,scale=25),from=0,to=20,
+      ylab="Density",xlab="Variance")
+```
+
+However, Jarrod Hadfield advised me to try parameter-expanded priors
+instead, as follows:
+```{r g_priors2}
+prior.g <- list(B=B.prior,
+                R=list(V=1, nu=0.002),
+                G=list(G1=list(V=1, nu=1, alpha.mu=0, alpha.V=1000)))
+```
+
+Run with default parameters:
+```{r gmod_MG0,cache=TRUE}
+gmod_MG0 <- MCMCglmm(shells~prev+log(Area)+factor(year),
+                     random=~Site,
+                     family="poisson",data=Gdat,
+                     verbose=FALSE)
+```
+
+Run for longer:
+
+```{r gmod_MG,cache=TRUE}
+gmod_MG <- MCMCglmm(shells~prev+log(Area)+factor(year),
+                    random=~Site,
+                    family="poisson",data=Gdat,verbose=FALSE,
+                    nitt=1e5+3e3,thin=1e2)
+```
+
+Stronger/better priors (see above):
+```{r gmod_MG2,cache=TRUE,message=FALSE}
+gmod_MG2 <- MCMCglmm(shells~prev+log(Area)+factor(year),
+         random=~Site,
+       prior=prior.g,
+      family="poisson",data=Gdat,verbose=FALSE,
+      nitt=1e5+3e3,thin=1e2)
+```
+
+```{r gmod_violins,echo=FALSE,fig.width=9,message=FALSE}
+## hack the results a bit for better display
+## still need to adjust prev in cmod results;
+##  adjust names
+gmod_MG2X <- gmod_MG2
+gmod_MG2X$Sol <- gmod_MG2X$Sol[,colnames(gmod_MG2X$Sol) != "log(Area)"]
+gmod_MG2X$Sol[,"prev"] <- gmod_MG2X$Sol[,"prev"]*100
+gmod_MG2X$Fixed$nfl <- 4
+gmod_comp <- mcmcCompFun(gmod_MG2X,gmod_lme4_L)
+gmod_comp$allres <- within(gmod_comp$allres,
+                       {
+                           w <- sum=="lme4 MLE" & variable=="prev"
+                           value[w] <- value[w]*100
+                           variable <- as.character(variable)
+                           variable[variable=="block"] <- "Site"
+                           variable <- gsub("factor\\(year\\)","year=",variable)
+                           ## print(unique(variable))
+                       })
+gmod_comp$mcmc_ests <- within(gmod_comp$mcmc_ests, {
+    variable <- as.character(variable)
+    variable <- gsub("factor\\(year\\)","year=",variable)
+})
+v0 <- ggplot(subset(gmod_comp$mcmc_ests,variable!="units"),
+             aes(variable,value))
+v0 + geom_violin(fill="gray") +
+  geom_point(data=gmod_comp$allres,aes(colour=sum))+
+    scale_colour_brewer(palette="Set1")+facet_wrap(~type,scale="free")  
+```
+
+## Diagnostics
+
+The standard diagnostic plot for the `glmer` fits is a little better than
+in the binary case, but not much:
+```{r g_diag1}
+plot(gmod_lme4_L)
+```
+
+```{r g_diag2}
+plot(gmod_lme4_L,Site~resid(.))
+```
+
+However, it turns out that those boxplots are really only representing
+three values per site (i.e., site $\times$ year combinations): we
+can see this if we use `ggplot` to overlay points on the boxplots.
+While we're at it, we might as well reorder the `Site` factor to
+be in order of mean residuals. 
+```{r g_diag3}
+ff <- fortify(gmod_lme4_L)
+ff <- transform(ff,Site=reorder(Site,X=.resid,FUN=mean,sort=sort))
+ggplot(ff,aes(x=Site,y=.resid))+geom_boxplot()+
+    geom_point(size=4,alpha=0.5)+
+    coord_flip()
+```
+
+There seems to be a fair amount of among-site variation, but apparently
+(at least according to `glmer`) this amount of among-site variation
+is still consistent with Poisson variation among otherwise identical
+sites ...
+
+We have already checked for overdispersion, above, and found
+the residuals to be under- rather than overdispersed.
+
+We can do *posterior predictive simulations* to test
+whether the model is behaving like the data in other ways.
+For example, looking at the distributions of the numbers
+of zero-shell outcomes in simulated data:
+```{r plotsims}
+sims <- simulate(gmod_lme4_L,nsim=1000)
+nzeros <- colSums(sims==0)
+par(las=1,bty="l")
+plot(pt <- prop.table(table(nzeros)),
+     ylab="Probability",xlab="Number of zeros")
+(obszero <- sum(Gdat$shells==0))
+points(obszero,0.13,col="red",pch=16,cex=2)
+```
+
+A two-sided $p$-value, if we felt one were necessary:
+```{r simtest}
+sum(pt[names(pt) %in% c(4:9,13:18)])
+```
+We conclude that the model is doing a good job matching this characteristic
+of the data (i.e., we can't reject the null hypothesis that it's
+doing a good job ...)
+
+
+We can easily do this for other characteristics of the data that
+we were interested in, such as among-site variance.
+In this case we will use the `glm()` fit to simulate and re-fit,
+since it's much faster than `glmer()` and suitable for this
+task:
+
+```{r simvars,cache=TRUE}
+sims2 <- simulate(gmod_glm,nsim=1000)
+vfun <- function(x) {
+    m_new <- update(gmod_glm,data=transform(Gdat,shells=x))
+    Gdat$.resid <- residuals(m_new,"pearson")
+    sitemeans <- ddply(Gdat,"Site",summarise,mresid=mean(.resid))
+    var(sitemeans$mresid)
+}
+vdist <- sapply(sims2,vfun)
+```
+
+```{r comp_vdist}
+Gdat$.glmresid <- residuals(gmod_glm,"pearson")
+obs_sitemeans <- ddply(Gdat,"Site",summarise,mresid=mean(.glmresid))
+obs_sitevar <- var(obs_sitemeans$mresid)
+par(las=1,bty="l")
+hist(vdist,breaks=30,col="gray",freq=FALSE,main="",
+     xlab="Among-site variance in residuals")
+par(xpd=NA) ## prevent point getting cut off at top of plot
+points(obs_sitevar,3.1,col="red",pch=16,cex=2)
+```
+
+The observed among-site variance is almost exactly what we
+would expect from Poisson variation with no true site-to-site
+variation.
+
+### MCMCglmm
+
+We write a small utility function to automate the 
+process of combining the fixed-effect (`Sol`) and
+variance-covariance (`VCV`) parameter chains and
+making the trace plot:
+```{r tfun}
+tfun <- function(mod) {
+    plotTrace(as.mcmc(cbind(mod$Sol,mod$VCV)))
+}
+```
+
+As suggested above, the default results are again bad.
+```{r gtrace0}
+tfun(gmod_MG0)
+```
+
+Running for longer doesn't help that much:
+```{r gtrace1}
+tfun(gmod_MG)
+```
+
+Looks OK with the improved priors, though:
+```{r gtrace2}
+tfun(gmod_MG2)
+```
+
+We can again look at the variance parameters on the log scale to decide
+that they're not *too* bad:
+```{r glogtrace}
+vcChain <- log10(gmod_MG2$VCV)
+plotTrace(vcChain)
+```
+
+## Inference
+
+Computing confidence intervals and comparing estimates and CIs across the range of estimation and inference approaches:
+
+```{r gmod_confint,cache=TRUE,warning=FALSE}
+gmod_CIwald <- confint(gmod_lme4_L,method="Wald")
+gmod_CIprof <- confint(gmod_lme4_L,quiet=TRUE)
+gmod_CIboot <- confint(gmod_lme4_L,method="boot",quiet=TRUE)
+```
+
+```{r assemble_gmod,echo=FALSE}
+g0 <- tidy(gmod_lme4_L,conf.int=TRUE)
+g0$term <- simplify_term(g0$term,first=FALSE)
+g1 <- g0[,c("term","estimate","conf.low","conf.high")]
+g1_prof <- g1
+g1_prof[,c("conf.low","conf.high")] <- gmod_CIprof[c(2:5,1),]
+g1_boot <- g1
+g1_boot[,c("conf.low","conf.high")] <- gmod_CIboot[c(2:5,1),]
+ff <- function(x,CI) {
+    data.frame(x,CI=CI)
+}
+g2 <- do.call(rbind,mapply(ff,list(g1,g1_prof,g1_boot),
+                           list("Wald","profile","boot"),SIMPLIFY=FALSE))
+g2 <- data.frame(g2,fun="glmer")
+g3 <- rbind(setNames(data.frame(coef(gmod_gA_L),confint(gmod_gA_L)),
+                     c("estimate","conf.low","conf.high")),
+            Site=with(gmod_gA_L,
+                      data.frame(estimate=unname(sqrt(S$Site)),
+                            conf.low=0,
+                            conf.high=unname(sqrt(S$Site+
+                                                  1.96*sd_S$Site)))))
+g3 <- data.frame(term=rownames(g3),g3,CI="Wald",fun="glmmADMB")
+ss <- summary(gmod_MG2)
+ss$solutions <- ss$solutions[rownames(ss$solutions)!="log(Area)",]
+cc <- c("post.mean","l-95% CI","u-95% CI")
+g4 <- rbind(setNames(data.frame(rownames(ss$solutions),
+                       ss$solutions[,cc]),
+                     c("term","estimate","conf.low","conf.high")),
+           setNames(data.frame(var=rownames(ss$Gcovariances),
+                               sqrt(ss$Gcovariances[,cc,drop=FALSE])),
+                               c("term","estimate","conf.low","conf.high")))
+g4 <- data.frame(g4,CI="MCMC",fun="MCMCglmm")
+g5 <- tidy(gmod_blmer_L,conf.int=TRUE)
+g5$term <- simplify_term(g5$term,first=FALSE)
+g5B <- g5[,c("term","estimate","conf.low","conf.high")]
+g5C <- data.frame(g5B,CI="Wald",fun="blmer")
+## GLM: fixed effects only
+g6 <- cbind(estimate=coef(gmod_glm2),
+            setNames(data.frame(confint.default(gmod_glm2)),
+                     c("conf.low","conf.high")))[1:4,]
+g6B <- data.frame(term=rownames(g6),g6,CI="Wald",fun="glm")
+gmod_Results <- rbind(g2,g3,g4,g5C,g6B)
+```
+
+```{r gmod_plotResults,echo=FALSE,warning=FALSE}
+n_ylabs <- with(gmod_Results,length(unique(interaction(CI,fun))))
+ggplot(subset(gmod_Results,term != "(Intercept)"),
+       aes(y=interaction(CI,fun),x=estimate,xmin=conf.low,xmax=conf.high,
+           colour=fun,linetype=CI))+
+    geom_errorbarh(height=0)+
+    geom_point()+
+    facet_wrap(~term,scale="free_x")+
+    geom_vline(xintercept=0,lwd=1,alpha=0.3)+
+    expand_limits(x=0)+
+    scale_y_discrete(labels=rep("",n_ylabs))+
+    labs(x="",y="")
+```
+
+I've plotted each of the parameters in a separate facet because
+their scales are somewhat different (it might also be worth
+scaling `prev` by its standard deviation in order to make comparisons,
+as suggested by @schielzeth_simple_2010, but the `Site` variable would still
+differ somewhat).
+
+* the year effects (which are of least interest) are fairly consistent
+among all methods, although `MCMCglmm` interprets the year-2005 parameter
+(i.e., the difference between 2004 and 2005) as being significantly
+different from zero.
+* the effect of prevalence (which is of most interest) is similarly
+consistent, with an estimated effect of around 2% increase in shells
+per percentage seroprevalence. The `blmer` result, which forces
+a slightly positive among-site variance, has a slightly wider confidence
+interval; `MCMCglmm` wider still; and the fixed-effect model (i.e., `glm` with `Site` included as a factor) has a quite wide confidence interval -- the
+latter is not surprising, as this model is quite overfitted (13 parameters
+for only 30 observations).
+* The estimated among-`Site` standard deviations are mostly zero (except
+for `MCMCglmm` and `blmer`), but the confidence intervals vary widely; profile confidence intervals are the most conservative, followed by `MCMCglmm` and parametric bootstrap (it's not so easy to get the Wald confidence intervals on the random effect variances from the other models).
+
+## Prediction
+
+What if we want to re-plot our original data with predictions about the effect of seroprevalence overlaid?
+
+```{r gmod_pred1}
+g_pframe <- cbind(expand.grid(year=2004:2006,prev=0:80),Area=1)
+g_pred <- predict(gmod_lme4_L,newdata=g_pframe,re.form=NA,
+                  type="response")
+```
+
+```{r gmod_easyPred}
+g_predCI <- easyPredCI(gmod_lme4_L,newdata=g_pframe)
+```
+
+```{r gmod_bootpreds,cache=TRUE,warning=FALSE}
+set.seed(101)
+g_bb <- bootMer(gmod_lme4_L,
+              FUN=function(x)
+              predict(x,re.form=NA,newdata=g_pframe,
+              type="response"),
+              nsim=400)
+```
+
+```{r gmod_bootci}
+gpredboot1.CI <- t(sapply(1:nrow(g_pframe),
+       function(i)
+         boot.ci(g_bb,type="perc",index=i)$percent[4:5]))
+## or: t(apply(bb$t,2,quantile,c(0.025,0.975),na.rm=TRUE))
+```
+
+
+```{r gpred1plot}
+g_pframe2 <- cbind(g_pframe,shells=g_pred,g_predCI,
+              setNames(as.data.frame(gpredboot1.CI),
+                       c("conf.low_boot","conf.high_boot")))
+gplot_pred1 <- gplot1 + 
+  geom_line(data=g_pframe2,aes(colour=factor(year)))+
+         geom_ribbon(data=g_pframe2,
+                     aes(group=factor(year),
+                         ymin=1+conf.low,ymax=1+conf.high),
+                     alpha=0.1)+
+    scale_colour_brewer(palette="Set1")
+gplot_pred2 <- gplot1 + 
+  geom_line(data=g_pframe2,aes(colour=factor(year)))+
+         geom_ribbon(data=g_pframe2,
+                     aes(group=factor(year),
+                         ymin=1+conf.low_boot,ymax=1+conf.high_boot),
+                     alpha=0.1)+
+    scale_colour_brewer(palette="Set1")
+```
+
+The confidence intervals from the parametric bootstrap (right-hand plot) are quite similar:
+
+```{r gpred1plotout,fig.width=8}
+grid.arrange(gplot_pred1,gplot_pred2,nrow=1)
+```
+
+# Grouse ticks
+
+These data are those used in @elston_analysis_2001 (kindly donated by Robert Moss *via* David Elston).
+
+```{r tick0}
+tickdata = read.table("data/Elston2001_tickdata.txt",header=TRUE,
+   colClasses=c("factor","numeric","factor","numeric","factor","factor"))
+```
+
+```{r tickplot1}
+ggplot(tickdata,aes(x=HEIGHT,y=1+TICKS,colour=YEAR))+
+    stat_sum(aes(size=..n..),alpha=0.7)+
+    scale_y_log10()+
+    scale_size_continuous(breaks=c(2,6,10),range=c(2,7))+
+    geom_smooth(method="glm",method.args=list(family=quasipoisson))+
+    scale_colour_brewer(palette="Set1")
+```    
+
+The quasi-Poisson GLM fits shown here ignore the grouping structure,
+but are useful for structuring the data (although the `HEIGHT`
+effect is of secondary interest here -- we're mostly interested
+in the relative variances at the individual, brood, and location
+levels).
+
+Center the height data (as recommended by 
+Gelman and Hill 2006, Schielzeth 2010)
+otherwise we will have trouble with both optimization- and
+MCMC-based approaches.
+```{r cheight}
+tickdata <- transform(tickdata,cHEIGHT=HEIGHT-mean(HEIGHT))
+```
+
+Because `INDEX`, `BROOD`, and `LOCATION` are uniquely labeled,
+we can specify the random effect as *either*
+`(1|LOCATION)+(1|BROOD)+(1|INDEX)` or 
+`(1|LOCATION/BROOD/INDEX)`, although the latter might be clearer:
+```{r t_lme4fit,cache=TRUE}
+tmod_lme4_L <- glmer(TICKS~YEAR+cHEIGHT+(1|LOCATION/BROOD/INDEX),
+                    family="poisson",data=tickdata,
+                    control=glmerControl(optimizer="bobyqa",
+                           check.conv.grad=.makeCC("warning",2e-3)))
+```
+(I switched the optimizer used and increased the convergence-checking tolerance
+slightly here: hopefully this will be unnecessary in future versions of `lme4`.)
+```{r tsum1}
+print(summary(tmod_lme4_L),corr=FALSE)
+```
+This all looks reasonable; centering the height has given
+us a sensible intercept (otherwise it would correspond,
+ridiculously, to the expected number of ticks per grouse at
+sea level), the other parameters are sensible, and the
+variance is approximately equally divided between random-effects
+levels (when we work with variance decomposition it makes sense
+to interpret the random effects on the variance rather than
+the standard deviation scale).
+
+```{r t_gAfit,cache=TRUE}
+tmod_gA_L <- glmmadmb(TICKS~YEAR+cHEIGHT+(1|LOCATION/BROOD/INDEX),
+                      family="poisson",data=tickdata)
+```
+
+Since `MCMCglmm` automatically adds an observation-level random
+effect, we specify only `BROOD` and `LOCATION`, leaving out `INDEX`:
+```{r t_MG_fit,cache=TRUE}
+tmod_MG <- MCMCglmm(TICKS~cHEIGHT+YEAR,
+                 random=~BROOD+LOCATION,
+                 family="poisson",data=tickdata,
+                 verbose=FALSE)
+```
+
+Once again we will need to try this with an informative prior.
+I initially specified `(nu=5,V=1)` for both the `BROOD` and `LOCATION` levels, but Hadfield suggests expanded parameters instead:
+```{r t_MG_prior,cache=TRUE}
+prior.t <- list(R=list(nu=0.002,V=1),
+                G=list(G1=list(V=1, nu=1, alpha.mu=0, alpha.V=1000),
+                G2=list(V=1, nu=1, alpha.mu=0, alpha.V=1000)))
+```
+
+The names of `G`-elements are ignored; it is their
+order that matters. Consequently, although the prior elements are named BROOD and LOCATION, because they appear in reverse order to their specification in the random formula the "BROOD" prior is actually associated with the LOCATION effect variance.
+
+```{r t_MG_fit2,cache=TRUE}
+tmod_MG2 <- MCMCglmm(TICKS~cHEIGHT+YEAR,
+                     random=~BROOD+LOCATION,
+                     prior=prior.t,
+                     family="poisson",data=tickdata,
+                     verbose=FALSE)
+```
+
+Comparing results (just the random effects):
+
+```{r tmod_violins,echo=FALSE,message=FALSE}
+## hack the results a bit for better display
+## still need to adjust prev in cmod results;
+##  adjust names
+tmod_comp <- mcmcCompFun(tmod_MG2,tmod_lme4_L,whichvar=1:3)
+tmod_comp$mcmc_ests <- within(tmod_comp$mcmc_ests,
+{
+   variable <- factor(variable,
+                      levels=c("(Intercept)","cHEIGHT","YEAR1","YEAR2",
+                      "BROOD","LOCATION","units"),
+                      labels=c("(Intercept)","height","year=1996","year=1997",
+                      "brood","location","chick"))
+})
+## renaming everything consistently: what a pain
+## YEAR1/YEAR2 and YEAR96/YEAR97 are still inconsistent:
+## were contrasts set to contr.sum at some point 
+## (e.g. by loading 'afex' in from cache/__packages?)
+## only showing random effects now, so I'm going to
+## ignore/not fix the problem.
+v2 <- as.character(tmod_comp$allres$variable)
+conv <- list(list("year=1996",c("YEAR1","YEAR96")),
+             list("year=1997",c("YEAR2","YEAR97")),
+                 list("height","cHEIGHT"),
+                 list("brood",c("BROOD","BROOD:LOCATION")),
+                 list("location","LOCATION"),
+                 list("chick",c("INDEX:(BROOD:LOCATION)","units")))
+    for (i in seq_along(conv)) {
+        v2[v2 %in% conv[[i]][[2]]] <- conv[[i]][[1]]
+    }
+    v2 <- factor(v2,levels=c("(Intercept)",sapply(conv,"[[",1)))
+tmod_comp$allres$variable <- v2
+tmod_comp$allres <- subset(tmod_comp$allres,variable!="(Intercept)")
+v0 <- ggplot(subset(tmod_comp$mcmc_ests,
+                    type=="random"),
+             aes(variable,value))
+v0 + geom_violin(fill="gray") +
+  geom_point(data=subset(tmod_comp$allres,type=="random"),aes(colour=sum))+
+    scale_colour_brewer(palette="Set1")+facet_wrap(~type,scale="free")
+```
+
+For comparison, and because Elston et al. originally used
+penalized quasi-likelihood to fit their models, we use
+`MASS::glmmPQL` to fit the model.
+We don't include `INDEX` in this model either, because
+`glmmPQL` also includes a residual error term by default.
+```{r t_PQL,cache=TRUE}
+tmod_PQL <- glmmPQL(TICKS~cHEIGHT+YEAR,
+                    random=~1|LOCATION/BROOD,
+                    family="poisson",data=tickdata,
+                    verbose=FALSE)
+```
+
+## Diagnostics
+
+The diagnostic plot is clearer if we plot the fitted values
+on the log scale:
+```{r t_residplot0}
+plot(tmod_lme4_L,residuals(.) ~log(fitted(.)))
+```
+
+`ggplot(fortify(.))` puts the fitted values on the log
+scale by default.  Here is a scale-location plot, which
+shows some tendency of the variance of the residuals to
+decrease with the mean:
+```{r t_residplot1,message=FALSE}
+ggplot(fortify(tmod_lme4_L),
+       aes(x=.fitted,y=sqrt(abs(.scresid))))+geom_point()+
+    geom_smooth(colour="red",alpha=0.3)
+```
+
+We can look at the residuals grouped by location:
+```{r t_residplot2}
+plot(tmod_lme4_L,LOCATION~resid(.,type="pearson"))
+```
+
+`ggplot` makes it a little bit easier to re-order the locations
+by mean residual:
+```{r t_residplot3}
+ff <- fortify(tmod_lme4_L)
+ff <- transform(ff,LOCATION=reorder(LOCATION,.resid,fun=MEAN,sort=sort))
+ggplot(ff, aes(x=LOCATION,y=.resid))+geom_boxplot(fill="gray")+coord_flip()
+```
+
+We can also look at the conditional modes:
+```{r t_ranef_dotplot,fig.width=10}
+dd <- dotplot(ranef(tmod_lme4_L,condVar=TRUE))
+do.call(grid.arrange,c(dd,list(nrow=1)))
+```
+
+As we have come to expect, the trace plots for the
+default `MCMCglmm` run are a bit problematic:
+```{r tmod_MG_diag1}
+tfun(tmod_MG)
+```
+
+The adjusted run is a bit better:
+```{r tmod_MG_diag2}
+tfun(tmod_MG2)
+```
+
+We can also look at the pairwise distributions, which look OK
+(we focus on the variance parameters here):
+```{r splom1}
+plotSplom(tmod_MG2$VCV,pch=".")
+```
+
+(using `pch="."` can be effective to prevent scatterplots from
+turning into blobs when you are looking at large samples).
+
+Or we can look at the density plots
+```{r densityplot1,fig.height=4}
+plotDens(tmod_MG2$VCV,from=0,layout=c(3,1),asp="fill",las=1)
+``` 
+
+```{r t_lme4CIprof,cache=TRUE,warning=FALSE}
+pp <- profile(tmod_lme4_L)
+tmod_lme4_ciprof <- confint(pp)
+```
+
+```{r t_lme4ciboot,cache=TRUE,warning=FALSE,echo=FALSE}
+## this chunk takes forever, and despite the caching we can
+##  too easily trigger a re-build; fake this by loading from
+##  a file
+fn <- "data/tmod_lme4_ciboot.RData"
+if (file.exists(fn)) {
+  load(fn)
+} else {
+   tmod_lme4_ciboot <- confint(tmod_lme4_L,method="boot",
+                            nsim=500,quiet=TRUE,seed=101)
+   save("tmod_lme4_ciboot",file=fn)
+}
+```
+
+```{r assemble_tmod,echo=FALSE}
+ttfun <- function(cc,lab) {
+    data.frame(term=rownames(cc),
+               estimate=cc[,"Estimate"],
+               conf.low=cc[,"2.5%"],
+               conf.high=cc[,"97.5%"],
+               fun=lab)
+}
+nms <- c("term","estimate")
+c4 <- tidy(tmod_lme4_L,effects="ran_pars",scales="vcov")[,nms]
+c4$term <- simplify_term(c4$term)
+c4[,c("conf.low","conf.high")] <- tmod_lme4_ciprof[1:3,]^2
+c4$CI <- "profile"
+c4B <- c4
+c4B[,c("conf.low","conf.high")] <- tmod_lme4_ciboot[1:3,]^2
+c4B$CI <- "boot"
+c4$fun <- c4B$fun <- "glmer"
+cgA <- tidy(tmod_gA_L,effects="ran_pars",scales="vcov")[,nms]
+## hack
+cgA$conf.low <- unlist(tmod_gA_L$S)-1.96*unlist(tmod_gA_L$sd_S)
+cgA$conf.high <- unlist(tmod_gA_L$S)+1.96*unlist(tmod_gA_L$sd_S)
+cgA$term <- simplify_term(cgA$term,first=FALSE)
+cgA$CI <- "Wald"
+cgA$fun <- "glmmADMB"
+cMG2 <- tidy(tmod_MG2,effects="ran_pars",conf.int=TRUE)
+cMG2 <- transform(cMG2,term=ifelse(term=="units","INDEX",
+                                   term))
+cMG2 <- cMG2[,c("estimate","conf.low","conf.high","term")]
+cMG2$CI <- "MCMC"
+cMG2$fun <- "MCMCglmm"
+cPQL <- setNames(do.call(rbind,intervals(tmod_PQL)$reStruct),
+                 c("conf.low","estimate","conf.high"))
+cPQL <- rbind(cPQL,INDEX=data.frame(conf.low=NA,estimate=tmod_PQL$sigma,
+                                    conf.high=NA))
+cPQL$term <- rownames(cPQL)
+cPQL$fun <- "glmmPQL"
+cPQL$CI <- "Wald"
+tmod_Results <- rbind(c4,c4B,cgA,cMG2,cPQL)
+```
+
+```{r t_coefs,echo=FALSE,warning=FALSE}
+ggplot(tmod_Results,aes(x=term,y=estimate,ymin=conf.low,ymax=conf.high))+
+    geom_pointrange(position=position_dodge(width=0.5),
+                    aes(colour=fun,lty=CI))+
+    coord_flip()+
+    scale_colour_brewer(palette="Set1")
+```
+
+```{r comb_all}
+all_Results <- rbind(data.frame(example="ticks",tmod_Results),
+                     data.frame(example="gopher",gmod_Results),
+                     data.frame(example="culcita",cmod_Results))
+save("all_Results",file="data/all_Results.RData")
+```
+
+Using the results from `MCMCglmm` we can compute the posterior probability (for example) that the among-brood variance is greater than the among-chick variance:
+
+```{r misc}
+with(as.data.frame(tmod_MG2$VCV),
+     mean(BROOD>units))
+```
+
+We can also compute the distribution of the ratio of among-brood to among-chick variance ...
+```{r misc2}
+with(as.data.frame(tmod_MG2$VCV),
+     summary(BROOD/units))
+```
+...  or the 95% quantiles ...
+```{r misc2_quantiles}
+with(as.data.frame(tmod_MG2$VCV),
+     quantile(BROOD/units,c(0.025,0.975)))
+```
+... or the highest posterior density intervals ...
+```{r misc2_hpd}
+HPDinterval(mcmc(with(as.data.frame(tmod_MG2$VCV),BROOD/units)))
+```
+
+# References
