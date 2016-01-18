@@ -31,13 +31,7 @@ grDevices::X11.options(type='cairo')
 These are worked examples for a book chapter on mixed models in *Ecological Statistics: Contemporary Theory and Application*  editors Negrete, Sosa, and Fox
 (available from the [Oxford University Press catalog](http://ukcatalogue.oup.com/product/9780199672554.do) or from [Amazon.com](http://www.amazon.com/Ecological-Statistics-Contemporary-theory-application/dp/0199672555) or [Powell's Books](http://www.powells.com/biblio/62-9780199672554-1) or ...).
 
-It may move or be renamed eventually, but for right now the source (`.rmd`) file and data files are available from `http://www.math.mcmaster.ca/bolker/R/misc/foxchapter`:
-
-* [source](http://www.math.mcmaster.ca/bolker/R/misc/foxchapter/bolker_chap.rmd)
-* [tundra data](http://www.math.mcmaster.ca/bolker/R/misc/foxchapter/tundra.csv)
-* [Culcita data](http://www.math.mcmaster.ca/bolker/R/misc/foxchapter/culcita.RData)
-* [gopher tortoise data](http://www.math.mcmaster.ca/bolker/R/misc/foxchapter/gopherdat2.RData)
-* [tick data](http://www.math.mcmaster.ca/bolker/R/misc/foxchapter/Elston2001_tickdata.txt)
+Data and source code for this file are currently available at [Github](http://github.com/bbolker/mixedmodels-misc).
 
 There's a *lot* of material here. I have erred on the side of including things, and on the side of compact rather than elementary code. Try not to be overwhelmed, just skim it the first time and thereafter focus on the parts that are most relevant to your analyses.
 
