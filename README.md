@@ -18,12 +18,12 @@ browseURL("./MixedModels.html")
 
 ### FAQ
 
-`glmmFAQ`: An updated version of the generalized linear mixed models FAQ currently hosted at [wikidot.com](http://glmm.wikidot.com/faq) ([HTML](https://htmlpreview.github.io/?https://rawgit.com/bbolker/mixedmodels-misc/master/glmmFAQ.html), [source](glmmFAQ.rmd))
+`glmmFAQ`: An updated version of the generalized linear mixed models FAQ currently hosted at [wikidot.com](http://glmm.wikidot.com/faq) ([HTML](https://rawgit.com/bbolker/mixedmodels-misc/master/glmmFAQ.html), [source](glmmFAQ.rmd))
 
 
 ### GLMM worked examples
 
-`ecostats_chap`: examples from chapter 13  *Ecological Statistics: Contemporary Theory and Application*  editors Negrete, Sosa, and Fox, plus data ([HTML](https://htmlpreview.github.io/?https://rawgit.com/bbolker/mixedmodels-misc/master/ecostats_chap.html), [source](ecostats_chap.rmd), [data](data))
+`ecostats_chap`: examples from chapter 13  *Ecological Statistics: Contemporary Theory and Application*  editors Negrete, Sosa, and Fox, plus data ([HTML](https://rawgit.com/bbolker/mixedmodels-misc/master/ecostats_chap.html), [source](ecostats_chap.rmd), [data](data))
 
 ### Various notes
 
