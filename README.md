@@ -25,6 +25,7 @@ browseURL("./MixedModels.html")
 
 `ecostats_chap`: examples from chapter 13  *Ecological Statistics: Contemporary Theory and Application*  editors Negrete, Sosa, and Fox, plus data ([HTML](https://htmlpreview.github.io/?https://raw.githubusercontent.com/bbolker/mixedmodels-misc/master/ecostats_chap.html), [source](ecostats_chap.rmd), [data](data))
 
-###
+### Various notes
 
-###
+- [thoughts about interfaces for mixed modeling software](mixed_interface.rmd)
+- [thoughts about design of DSLs for statistics](stats_design.md)
