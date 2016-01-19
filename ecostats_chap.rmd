@@ -63,6 +63,12 @@ library("nlme")          ## for intervals(), tundra example (base R)
 library("ggplot2")       ## for pretty plots generally
 ## ggplot customization:
 theme_set(theme_bw())
+scale_colour_discrete <- function(...,palette="Set1") {
+    scale_colour_brewer(...,palette=palette)
+}
+scale_fill_discrete <- function(...,palette="Set1") {
+    scale_fill_brewer(...,palette=palette)
+}
 ## to squash facets together ...
 zmargin <- theme(panel.margin=grid::unit(0,"lines"))
 library("gridExtra")     ## for grid.arrange()
@@ -128,7 +134,7 @@ ggplot(mc1,aes(x=Year,y=GS.NEE,colour=Site))+geom_point()+
     ## oob=squish retains the (truncated) confidence bands;
     ## otherwise bands that went outside the limits would disappear
     scale_y_continuous(limits=c(-150,400),oob=scales::squish)+
-    scale_colour_discrete(guide="none") ## suppress legend
+    scale_colour_discrete(guide="none",palette="Dark2") ## suppress legend
 ```
 
 We have suppressed the legend for the colours,
@@ -174,7 +180,7 @@ ggplot(mc2,aes(x=cYear,y=GS.NEE,colour=Site))+
     geom_point(aes(size=n),alpha=0.7)+
     geom_smooth(method="lm",alpha=0.3,aes(weight=n))+
     scale_y_continuous(limits=c(-150,400),oob=scales::squish)+
-    scale_colour_discrete(guide="none")+
+    scale_colour_discrete(guide="none",palette="Dark2")+
     scale_size_continuous(range=c(2,5),breaks=c(1,3,6))
 ```
 
@@ -258,7 +264,7 @@ summary(cmod_glmmTMB)
 ```
 
 ```{r dwplot}
-dwplot(list(cmod_glmmTMB,cmod_lmer))
+dwplot(list(glmmTMB=cmod_glmmTMB,lmer=cmod_lmer))
 ```
 
 We have to admit that the model we are using
@@ -467,7 +473,8 @@ This is my best attempt, but it's more artistic than compelling:
 ggplot(culcita_dat,aes(x=ttt,y=predation,colour=block,group=block))+
     stat_summary(fun.y=sum,geom="line",alpha=0.4)+
     stat_summary(fun.y=sum,geom="point",alpha=0.7,
-                 position=position_dodge(width=0.25))
+                 position=position_dodge(width=0.25))+
+    scale_colour_brewer(palette="Paired")
 ```
 
 ## Fitting
@@ -714,8 +721,7 @@ c4_constr <- data.frame(c4_constr,fun="MCMCglmm")
 cmod_constr_Results <- rbind(c0_constr,c1_constr,c4_constr)
 ggplot(cmod_constr_Results,aes(x=term,y=estimate,ymin=conf.low,ymax=conf.high,
                                colour=fun))+
-  geom_pointrange(position=position_dodge(width=0.1))+coord_flip()+
-    scale_colour_brewer(palette="Set1")
+  geom_pointrange(position=position_dodge(width=0.1))+coord_flip()
 ```
 
 There are other packages in R (`brglm`, `logistf`) that can handle completely separated data, but they only apply to logistic regression, and they cannot simultaneously incorporate random effects (@pasch_interspecific_2013 dropped random effects and used `brglm` to handle completely separated data, arguing that random effects were small and/or hard to estimate in their system.)
@@ -964,8 +970,7 @@ cmod_comp <- mcmcCompFun(cmod_MGsc,cmod_lme4_L)
 v0 <- ggplot(subset(cmod_comp$mcmc_ests,variable!="units"),
              aes(variable,value))
 v0 + geom_violin(fill="gray") +
-  geom_point(data=cmod_comp$allres,aes(colour=sum),alpha=0.7)+
-    scale_colour_brewer(palette="Set1")
+  geom_point(data=cmod_comp$allres,aes(colour=sum),alpha=0.7)
 ```
 
 The modes of the `MCMCglmm` results (the fattest part of the
@@ -1075,8 +1080,7 @@ really obvious from the plot).
                         linetype=CI))+
     geom_pointrange(position=position_dodge(width=0.5))+
     scale_y_continuous(lim=c(-15,15),oob=scales::squish,expand=c(0,0))+
-    coord_flip()+xlab("")+ylab("Effect (log-odds of predation)")+
-  scale_colour_brewer(palette="Set1"))
+    coord_flip()+xlab("")+ylab("Effect (log-odds of predation)"))
 ggsave("../cmod_plotResults.pdf",height=4,width=6)
 ```
 
@@ -1241,13 +1245,14 @@ We can also get parametric bootstrap predictions
 by resampling, refitting, and re-predicting many times
 and computing the 95% quantiles of the predictions:
 ⌛ 
-```{r cmod_bootpreds,cache=TRUE}
+```{r cmod_bootpreds,cache=TRUE,warning=FALSE}
 set.seed(101)
 bb <- bootMer(cmod_lme4_L,
               FUN=function(x)
               predict(x,re.form=NA,newdata=pframe,type="response"),
               nsim=500)
 ```
+(many warnings suppressed!)
 
 ```{r culcbootci}
 cpredboot1.CI <- t(sapply(1:4,
@@ -1264,8 +1269,7 @@ CIcompdat <- rbind(data.frame(ttt=cnames[[1]],method="easy",cpred1.CI),
 CIcompdat <- merge(data.frame(ttt=cnames[[1]],estimate=cpred1),CIcompdat)
 CIcompdat$ttt <- factor(CIcompdat$ttt,levels=cnames[[1]])
 ggplot(CIcompdat,aes(x=ttt,y=estimate,ymin=conf.low,ymax=conf.high,colour=method))+
-  geom_pointrange(position=position_dodge(width=0.2))+
-    scale_colour_brewer(palette="Set1")
+  geom_pointrange(position=position_dodge(width=0.2))
 ```
 
 The confidence intervals from the "easy" approach and the
@@ -1514,7 +1518,7 @@ v0 <- ggplot(subset(gmod_comp$mcmc_ests,variable!="units"),
              aes(variable,value))
 v0 + geom_violin(fill="gray") +
   geom_point(data=gmod_comp$allres,aes(colour=sum))+
-    scale_colour_brewer(palette="Set1")+facet_wrap(~type,scale="free")  
+    facet_wrap(~type,scale="free")  
 ```
 
 ## Diagnostics
@@ -1767,15 +1771,13 @@ gplot_pred1 <- gplot1 +
          geom_ribbon(data=g_pframe2,
                      aes(group=factor(year),
                          ymin=1+conf.low,ymax=1+conf.high),
-                     alpha=0.1)+
-    scale_colour_brewer(palette="Set1")
+                     alpha=0.1)
 gplot_pred2 <- gplot1 + 
   geom_line(data=g_pframe2,aes(colour=factor(year)))+
          geom_ribbon(data=g_pframe2,
                      aes(group=factor(year),
                          ymin=1+conf.low_boot,ymax=1+conf.high_boot),
-                     alpha=0.1)+
-    scale_colour_brewer(palette="Set1")
+                     alpha=0.1)
 ```
 
 The confidence intervals from the parametric bootstrap (right-hand plot) are quite similar:
@@ -1798,8 +1800,7 @@ ggplot(tickdata,aes(x=HEIGHT,y=1+TICKS,colour=YEAR))+
     stat_sum(aes(size=..n..),alpha=0.7)+
     scale_y_log10()+
     scale_size_continuous(breaks=c(2,6,10),range=c(2,7))+
-    geom_smooth(method="glm",method.args=list(family=quasipoisson))+
-    scale_colour_brewer(palette="Set1")
+    geom_smooth(method="glm",method.args=list(family=quasipoisson))
 ```    
 
 The quasi-Poisson GLM fits shown here ignore the grouping structure,
@@ -1912,7 +1913,7 @@ v0 <- ggplot(subset(tmod_comp$mcmc_ests,
              aes(variable,value))
 v0 + geom_violin(fill="gray") +
   geom_point(data=subset(tmod_comp$allres,type=="random"),aes(colour=sum))+
-    scale_colour_brewer(palette="Set1")+facet_wrap(~type,scale="free")
+    facet_wrap(~type,scale="free")
 ```
 
 For comparison, and because Elston et al. originally used
@@ -2052,8 +2053,7 @@ tmod_Results <- rbind(c4,c4B,cgA,cMG2,cPQL)
 ggplot(tmod_Results,aes(x=term,y=estimate,ymin=conf.low,ymax=conf.high))+
     geom_pointrange(position=position_dodge(width=0.5),
                     aes(colour=fun,lty=CI))+
-    coord_flip()+
-    scale_colour_brewer(palette="Set1")
+    coord_flip()
 ```
 
 ```{r comb_all}
