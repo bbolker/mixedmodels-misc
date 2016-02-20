@@ -63,7 +63,7 @@ img {
 <div id="header">
 <h1 class="title">GLMM FAQ</h1>
 <h4 class="author"><em>Ben Bolker and others</em></h4>
-<h4 class="date"><em>10:54 18 January 2016</em></h4>
+<h4 class="date"><em>11:12 20 February 2016</em></h4>
 </div>
 
 <div id="TOC">
@@ -89,8 +89,12 @@ img {
 </ul></li>
 <li><a href="#estimation">Estimation</a><ul>
 <li><a href="#what-methods-are-available-to-fit-estimate-glmms">What methods are available to fit (estimate) GLMMs?</a></li>
-<li><a href="#common-errors-convergence-failures-etc.">Common errors (convergence failures etc.)</a></li>
+<li><a href="#troubleshooting">Troubleshooting</a><ul>
+<li><a href="#convergence-warnings">Convergence warnings</a></li>
 <li><a href="#singular-models-random-effect-variances-estimated-as-zero-or-correlations-estimated-as---1">Singular models: random effect variances estimated as zero, or correlations estimated as +/- 1</a></li>
+<li><a href="#other-problems">Other problems</a></li>
+<li><a href="#errors-old">Errors (old)</a></li>
+</ul></li>
 <li><a href="#reml-for-glmms">REML for GLMMs</a></li>
 </ul></li>
 <li><a href="#model-diagnostics">Model diagnostics</a></li>
@@ -152,8 +156,8 @@ img {
 
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
-<p>This is a tentative draft of a FAQ list for the r-sig-mixed-models mailing list (the mailing list is at <code>r-sig-mixed-models@r-project.org</code>, with <a href="http://news.gmane.org/gmane.comp.lang.r.lme4.devel/">Gmane archives</a> available as well).</p>
-<p>The most commonly used functions for mixed modeling in R are - <em>linear mixed models</em>: <code>aov()</code>, <code>nlme::lme</code>, <code>lme4::lmer</code>; * <em>generalized linear mixed models</em> (GLMMs): <code>MASS::glmmPQL</code>, <code>lme4::glmer</code>, <code>MCMCglmm::MCMCglmm</code>; - <em>nonlinear mixed models</em>: <code>nlme::nlme</code>, <code>lme4::nlmer</code>.</p>
+<p>This is an informal FAQ list for the <code>r-sig-mixed-models</code> mailing list (the mailing list is at <code>r-sig-mixed-models@r-project.org</code>, with <a href="http://news.gmane.org/gmane.comp.lang.r.lme4.devel/">Gmane archives</a> available as well). There is a previous version posted on <a href="http://glmm.wikidot.com/faq">wikidot.com</a>, but I am getting tired of maintaining it in that format.</p>
+<p>The most commonly used functions for mixed modeling in R are - <em>linear mixed models</em>: <code>aov()</code>, <code>nlme::lme</code><a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>, <code>lme4::lmer</code>; - <em>generalized linear mixed models</em> (GLMMs): <code>MASS::glmmPQL</code>, <code>lme4::glmer</code>, <code>MCMCglmm::MCMCglmm</code>; - <em>nonlinear mixed models</em>: <code>nlme::nlme</code>, <code>lme4::nlmer</code>.</p>
 <p><strong>DISCLAIMERS:</strong></p>
 <ul>
 <li>(G)LMMs are hard - harder than you may think based on what you may have learned in your second statistics class, which probably focused on picking the appropriate sums of squares terms and degrees of freedom for the numerator and denominator of an <span class="math inline">\(F\)</span> test. `Modern’ mixed model approaches, although more powerful (they can handle more complex designs, lack of balance, crossed random factors, some kinds of non-Normally distributed responses, etc.), also require a new set of conceptual tools. In order to use these tools you should have at least a general acquaintance with classical mixed-model experimental designs but you should also, probably, read something about modern mixed model approaches. <span class="citation">Littell et al. (2006)</span> and <span class="citation">Pinheiro and Bates (2000)</span> are two places to start, although Pinheiro and Bates is probably more useful if you want to use R. Other useful references include <span class="citation">Gelman and Hill (2006)</span> (focused on Bayesian methods) and <span class="citation">Zuur et al. (2009)</span>. If you are going to use generalized linear mixed models, you should understand generalized linear models.</li>
@@ -284,27 +288,16 @@ img {
   c(chisq=Pearson.chisq,ratio=prat,rdf=rdf,p=pval)
 }</code></pre>
 <p>Example:</p>
-<pre class="r"><code>library(lme4)</code></pre>
-<pre><code>## Loading required package: Matrix</code></pre>
-<pre><code>## Loading required package: methods</code></pre>
-<pre class="r"><code>set.seed(101)  
+<pre class="r"><code>library(lme4)
+set.seed(101)  
 d &lt;- data.frame(y=rpois(1000,lambda=3),x=runif(1000),
                 f=factor(sample(1:10,size=1000,replace=TRUE)))
 m1 &lt;- glmer(y~x+(1|f),data=d,family=poisson)
 overdisp_fun(m1)</code></pre>
 <pre><code>##        chisq        ratio          rdf            p 
-## 1026.7791432    1.0298687  997.0000000    0.2497584</code></pre>
-<pre class="r"><code>library(glmmADMB)  ## 0.7.7</code></pre>
-<pre><code>## Loading required package: MASS</code></pre>
-<pre><code>## 
-## Attaching package: 'glmmADMB'</code></pre>
-<pre><code>## The following object is masked from 'package:MASS':
-## 
-##     stepAIC</code></pre>
-<pre><code>## The following object is masked from 'package:stats':
-## 
-##     step</code></pre>
-<pre class="r"><code>m2 &lt;- glmmadmb(y~x+(1|f),data=d,family=&quot;poisson&quot;)
+## 1026.7790909    1.0298687  997.0000000    0.2497588</code></pre>
+<pre class="r"><code>library(glmmADMB)  ## 0.7.7
+m2 &lt;- glmmadmb(y~x+(1|f),data=d,family=&quot;poisson&quot;)
 overdisp_fun(m2)</code></pre>
 <pre><code>##        chisq        ratio          rdf            p 
 ## 1026.7585031    1.0298480  997.0000000    0.2499024</code></pre>
@@ -318,7 +311,7 @@ overdisp_fun(m2)</code></pre>
 <li>alternative distributions</li>
 <li>Poisson-lognormal model (see above, “individual-level random effects”)</li>
 <li>negative binomial</li>
-<li><a href="http://r-forge.r-project.org/projects/glmmADMB/">glmmADMB</a> (R-forge) will fit two parameterizations of the negative binomial: family=“nbinom” gives the classic parameterization with var/mean=(1+mean/k) (“NB2” in Hardin and Hilbe’s terminology) while family=“nbinom1” gives a parameterization with var/mean=phi*mean (“NB1” to Hardin and Hilbe). The latter might also be called a “quasi-Poisson” parameterization because it matches mean-variance relationship assumed by quasi-Poisson models.</li>
+<li><a href="http://r-forge.r-project.org/projects/glmmADMB/">glmmADMB</a> (R-forge) and <a href="https://github.com/glmmtmb/glmmTMB/">glmmTMB</a> (Github) will fit two parameterizations of the negative binomial: family=“nbinom” gives the classic parameterization with var/mean=(1+mean/k) (“NB2” in Hardin and Hilbe’s terminology) while family=“nbinom1” gives a parameterization with <code>var/mean=phi*mean</code> (“NB1” to Hardin and Hilbe). The latter might also be called a “quasi-Poisson” parameterization because it matches mean-variance relationship assumed by quasi-Poisson models.</li>
 <li>gamlss.mx:gamlssNP</li>
 <li>WinBUGS/JAGS (via R2WinBUGS/Rjags)</li>
 <li>AD Model Builder (possibly via R2ADMB)</li>
@@ -410,10 +403,10 @@ findFn(&quot;corStruct&quot;)</code></pre>
 <p>(adapted from Bolker et al TREE 2009)</p>
 <table>
 <colgroup>
-<col width="23%"></col>
-<col width="25%"></col>
-<col width="25%"></col>
-<col width="25%"></col>
+<col width="22%"></col>
+<col width="24%"></col>
+<col width="26%"></col>
+<col width="26%"></col>
 </colgroup>
 <thead>
 <tr class="header">
@@ -434,7 +427,7 @@ findFn(&quot;corStruct&quot;)</code></pre>
 <td align="left">Laplace approximation</td>
 <td align="left">More accurate than PQL</td>
 <td align="left">Slower and less flexible than PQL</td>
-<td align="left">glmer (R:lme4,lme4a), glmm.admb (R:glmmADMB), AD Model Builder, HLM</td>
+<td align="left">glmer (R:lme4,lme4a), glmm.admb (R:glmmADMB), INLA, glmmTMB, AD Model Builder, HLM</td>
 </tr>
 <tr class="odd">
 <td align="left">Gauss-Hermite quadrature</td>
@@ -445,14 +438,70 @@ findFn(&quot;corStruct&quot;)</code></pre>
 <tr class="even">
 <td align="left">Markov chain Monte Carlo</td>
 <td align="left">Highly flexible, arbitrary number of random effects; accurate</td>
-<td align="left">Very slow, technically challenging, Bayesian framework</td>
-<td align="left">MCMCglmm (R:MCMCglmm), MCMCpack (R), WinBUGS/OpenBUGS (R interface: BRugs/R2WinBUGS), JAGS (R interface: rjags/R2jags), AD Model Builder (R interface: R2admb), glmm.admb (post hoc MCMC after Laplace fit) (R:glmmADMB)</td>
+<td align="left">Slow, technically challenging, Bayesian framework</td>
+<td align="left">MCMCglmm (R:MCMCglmm), rstanarm (R), brms (R), MCMCpack (R), WinBUGS/OpenBUGS (R interface: BRugs/R2WinBUGS), JAGS (R interface: rjags/R2jags), AD Model Builder (R interface: R2admb), glmm.admb (post hoc MCMC after Laplace fit) (R:glmmADMB)</td>
 </tr>
 </tbody>
 </table>
 </div>
-<div id="common-errors-convergence-failures-etc." class="section level2">
-<h2>Common errors (convergence failures etc.)</h2>
+<div id="troubleshooting" class="section level2">
+<h2>Troubleshooting</h2>
+<ul>
+<li>double-check the model specification and the data for mistakes</li>
+<li>center and scale continuous predictor variables (e.g. with <code>scale()</code>)</li>
+<li>try all available optimizers (e.g. several different implementations of BOBYQA and Nelder-Mead, L-BFGS-B from <code>optim</code>, <code>nlminb()</code>, …). While this will of course be slow for large fits, we consider it the gold standard; if all optimizers converge to values that are practically equivalent (it’s up to the user to decide what “practically equivalent means for their case”), then we would consider the model fit to be good enough. For example:</li>
+</ul>
+<pre class="r"><code>source(system.file(&quot;utils&quot;, &quot;allFit.R&quot;, package=&quot;lme4&quot;))
+modelfit.all &lt;- allFit(model)
+ss &lt;- summary(modelfit.all)</code></pre>
+<div id="convergence-warnings" class="section level3">
+<h3>Convergence warnings</h3>
+<p>Most of the current advice about troubleshooting <code>lme4</code> convergence problems can be found in the help page <code>?convergence</code>. That page explains that the convergence tests in the current version of <code>lme4</code> (1.1-11, February 2016) generate lots of false positives. We are considering raising the gradient warning threshold to 0.01 in future releases of <code>lme4</code>. In addition to the general troubleshooting tips above:</p>
+<ul>
+<li>double-check the Hessian calculation with the more expensive Richardson extrapolation method (see examples)</li>
+<li>restart the fit from the apparent optimum, or from a point perturbed slightly away from the optimum (<code>getME(model,c(&quot;theta&quot;,&quot;beta&quot;))</code> should retrieve the parameters in a form suitable to be used as the <code>start</code> parameter)</li>
+</ul>
+</div>
+<div id="singular-models-random-effect-variances-estimated-as-zero-or-correlations-estimated-as---1" class="section level3">
+<h3>Singular models: random effect variances estimated as zero, or correlations estimated as +/- 1</h3>
+<p>It is very common for overfitted mixed models to result in singular fits. Technically, singularity means that some of the <span class="math inline">\(\boldsymbol \theta\)</span> (variance-covariance Cholesky decomposition) parameters corresponding to diagonal elements of the Cholesky factor are exactly zero, which is the edge of the feasible space, or equivalently that the variance-covariance matrix has some zero eigenvalues (i.e. is positive semidefinite rather than positive definite), or (<em>almost</em> equivalently) that some of the variances are estimated as zero or some of the correlations are estimated as +/-1. This commonly occurs in two scenarios:</p>
+<ul>
+<li>small numbers of random-effect levels (e.g. &lt;5), as illustrated in <a href="http://rpubs.com/bbolker/4187">these simulations</a> and discussed (in a somewhat different, Bayesian context) by <span class="citation">Gelman (2006)</span>.</li>
+<li><p>complex random-effects models, e.g. models of the form <code>(f|g)</code> where <code>f</code> is a categorical variable with a relatively large number of levels, or models with several different random-slopes terms.</p></li>
+<li><p>When using <code>lme4</code>, singularity is most obviously detectable in the output of <code>summary.merMod()</code> or <code>VarCorr.merMod()</code> when a variance is estimated as 0 (or very small, i.e. orders of magnitude smaller than other variance components) or when a correlation is estimated as exactly <span class="math inline">\(\pm 1\)</span>. However, as pointed out by <span class="citation">D. Bates et al. (2015)</span>, singularities in larger variance-covariance matrices can be hard to detect: checking for small values among the diagonal elements of the Cholesky factor is a good start.</p></li>
+</ul>
+<pre class="r"><code>theta &lt;- getME(model,&quot;theta&quot;)
+## diagonal elements are identifiable because they are fitted
+##  with a lower bound of zero ...
+diag.element &lt;- getME(model,&quot;lower&quot;)==0
+any(theta[diag.element]&lt;1e-5)</code></pre>
+<ul>
+<li>In <code>MCMCglmm</code>, singular or near-singular models will provoke an error and a requirement to specify a stronger prior.</li>
+</ul>
+<p>At present there are a variety of strong opinions about how to resolve such problems. Briefly:</p>
+<ul>
+<li><span class="citation">Barr et al. (2013)</span> suggest always starting with the maximal model (i.e. the most random-effects component of the model that is <em>theoretically</em> identifiable given the experimental design) and then dropping terms when singularity or non-convergence occurs (please see the paper for detailed recommendations …)</li>
+<li><span class="citation">Matuschek et al. (2015)</span> and <span class="citation">D. Bates et al. (2015)</span> strongly disagree, suggesting that models should be simplified <em>a priori</em> whenever possible; they also provide <a href="https://github.com/dmbates/RePsychLing">tools</a> for diagnosing and mitigating singularity.</li>
+<li>One alternative (suggested by Robert LaBudde) for the small-numbers-of-levels scenario is to “fit the model with the random factor as a fixed effect, get the level coefficients in the sum to zero form, and then compute the standard deviation of the coefficients.” This is appropriate for users who are (a) primarily interested in measuring variation (i.e. the random effects are not just nuisance parameters, and the variability [rather than the estimated values for each level] is of scientific interest), (b) unable or unwilling to use other approaches (e.g. MCMC with half-Cauchy priors in WinBUGS), (c) unable or unwilling to collect more data. For the simplest case (balanced, orthogonal, nested designs with normal errors) these estimates of standard deviations should equal the classical method-of-moments estimates.</li>
+<li>Bayesian approaches allow the user to specify a informative prior that avoids singularity.
+<ul>
+<li>The <code>blme</code> package <span class="citation">(Chung et al. 2013)</span> provides a wrapper for the <code>lme4</code> machinery that adds a particular form of weak prior to get an approximate a Bayesian maximum <em>a posteriori</em> estimate that avoids singularity.</li>
+<li>The <code>MCMCglmm</code> package allows for priors on the variance-covariance matrix</li>
+<li>The <code>rstanarm</code> and <code>brms</code> packages provide wrappers for the Stan Hamiltonian MCMC engine that fit GLMMs via <code>lme4</code> syntax, again allowing a variety of priors to be set.</li>
+</ul></li>
+</ul>
+</div>
+<div id="other-problems" class="section level3">
+<h3>Other problems</h3>
+<ul>
+<li><p>When using <code>lme4</code> to fit GLMMs with link functions that do not automatically constrain the response to the allowable range of the distributional family (e.g. binomial models with a log link, where the estimated probability can be &gt;1, or inverse-Gamma models, where the estimated mean can be negative), it is not unusual to get the error</p>
+<pre><code>PIRLS step-halvings failed to reduce deviance in pwrssUpdate</code></pre>
+<p>This occurs because <code>lme4</code> doesn’t do anything to constrain the predicted values, so <code>NaN</code> values pop up, which aren’t handled gracefully. If possible, switch to a link function to one that constrains the response (e.g. logit link for binomial or log link for Gamma).</p></li>
+</ul>
+</div>
+<div id="errors-old" class="section level3">
+<h3>Errors (old)</h3>
+<p><strong>most or all of the errors listed here are obsolete/refer to several-years-old versions of <code>lme4</code>. This section is being retained for now for historical purposes, but will eventually be dropped (relying on Github to keep it in the historical record).</strong></p>
 <ul>
 <li>As pointed out by several users (<a href="https://stat.ethz.ch/pipermail/r-help/2009-April/195135.html">here</a>, <a href="https://stat.ethz.ch/pipermail/r-sig-mixed-models/2010q1/003473.html">here</a>, and <a href="https://stat.ethz.ch/pipermail/r-help/2012-December/332624.html">here</a>, for example), the AICs computed for lmer models in <code>summary</code> and <code>anova</code> are different; <code>summary</code> uses the REML specification as specified when fitting the model, while <code>anova</code> always uses REML=FALSE (to safeguard users against incorrectly using restricted MLs to compare models with different fixed effect components). (This behavior is slightly overzealous since users might conceivably be using <code>anova</code> to compare models with different <strong>random</strong> effects [although this also subject to boundary effects as described elsewhere in this document …])</li>
 <li><code>Error: Length(f1) == length(f2) is not TRUE</code>, typically accompanied by a warning that <code>numerical expression has xxx elements: only the first used</code>: make sure that your grouping variables are all factors.<br />
@@ -465,15 +514,6 @@ findFn(&quot;corStruct&quot;)</code></pre>
 <li><code>function 'cholmod_start' not provided by package 'Matrix'</code>: this error, and errors like it, are due to the <code>lme4</code> and <code>Matrix</code> package being out of sync. Here is a table giving versions that do seem to work: || Type || OS || R version || Source || lme4 version || Matrix version || works? || || Source || (Ubuntu 10.04) || 2.13.0 || CRAN || 0.999375-39 || 0.999375-50 || yes || || Source || (Ubuntu 10.04) || 2.13.0 || R-forge || 0.999375-40 || 0.9996875-0 || yes || || Source || (Ubuntu 10.04) || 2.13.0 || SVN || 0.999375-40 (r1322)|| 0.9996875-0 (r2678)|| yes ||</li>
 </ul>
 </div>
-<div id="singular-models-random-effect-variances-estimated-as-zero-or-correlations-estimated-as---1" class="section level2">
-<h2>Singular models: random effect variances estimated as zero, or correlations estimated as +/- 1</h2>
-<p>It is very common for somewhat overfitted models (i.e., models that are more complex than the data can support, e.g. because there are too few levels of the random effect – see previous section) to result in singular fits. Technically this means that some of the <span class="math inline">\(\boldsymbol \theta\)</span> (variance-covariance Cholesky decomposition) parameters are exactly zero, which is the edge of the feasible space, or equivalently that the variance-covariance matrix has some zero eigenvalues (i.e. is positive semidefinite rather than positive definite), or (<em>almost</em> equivalently) that some of the variances are estimated as zero or some of the correlations are estimated as +/-1. This is most commonly (but not always) a problem with small numbers of random-effect levels, as illustrated in <a href="http://rpubs.com/bbolker/4187">these simulations</a> and discussed (in a somewhat different, Bayesian context) by <span class="citation">Gelman (2006)</span>.</p>
-<p>There is a good deal of controversy … (<strong>fixme</strong>: discuss <span class="citation">Barr et al. (2013)</span> and rejoinders by <span class="citation">D. Bates et al. (2015)</span>, <span class="citation">Matuschek et al. (2015)</span>)</p>
-<ul>
-<li>One alternative (suggested by Robert LaBudde) is to “fit the model with the random factor as a fixed effect, get the level coefficients in the sum to zero form, and then compute the standard deviation of the coefficients.” This is appropriate for users who are (a) primarily interested in measuring variation (i.e. the random effects are not just nuisance parameters, and the variability [rather than the estimated values for each level] is of scientific interest), (b) unable or unwilling to use other approaches (e.g. MCMC with half-Cauchy priors in WinBUGS), (c) unable or unwilling to collect more data. For the simplest case (balanced, orthogonal, nested designs with normal errors) these estimates of standard deviations should equal the classical method-of-moments estimates.</li>
-<li>You could use the <code>blme</code> package, based on <span class="citation">Chung et al. (2013)</span>, which penalizes the likelihood expression to get an approximation of a Bayesian maximum <em>a posteriori</em> estimate with a weakly informative prior that pushes the estimates away from singularity.</li>
-<li>Another option is to use the <code>MCMCglmm</code> package with weakly (or strongly) informative priors on the variance-covariance matrix, or more generally to use a Bayesian approach with somewhat more informative priors.</li>
-</ul>
 </div>
 <div id="reml-for-glmms" class="section level2">
 <h2>REML for GLMMs</h2>
@@ -988,9 +1028,9 @@ withCallingHandlers(tryCatch(fun(n=nvec[j],tau=tauvec[i],...),
 <div id="package-versions-used" class="section level2">
 <h2>Package versions used</h2>
 <pre class="r"><code>sessionInfo()</code></pre>
-<pre><code>## R Under development (unstable) (2016-01-17 r69948)
+<pre><code>## R Under development (unstable) (2016-02-09 r70138)
 ## Platform: x86_64-pc-linux-gnu (64-bit)
-## Running under: Ubuntu 14.04.3 LTS
+## Running under: Ubuntu 14.04.4 LTS
 ## 
 ## locale:
 ##  [1] LC_CTYPE=en_CA.UTF8       LC_NUMERIC=C             
@@ -1004,8 +1044,8 @@ withCallingHandlers(tryCatch(fun(n=nvec[j],tau=tauvec[i],...),
 ## [1] methods   stats     graphics  grDevices utils     datasets  base     
 ## 
 ## other attached packages:
-## [1] lme4_1.1-11     Matrix_1.2-3    ggplot2_2.0.0   nlme_3.1-123   
-## [5] pander_0.6.0    knitr_1.12      rmarkdown_0.9.2
+## [1] lme4_1.1-12     Matrix_1.2-3    ggplot2_2.0.0   nlme_3.1-124   
+## [5] pander_0.6.0    knitr_1.12.3    rmarkdown_0.9.2
 ## 
 ## loaded via a namespace (and not attached):
 ##  [1] Rcpp_0.12.3      magrittr_1.5     splines_3.3.0    MASS_7.3-45     
@@ -1120,6 +1160,12 @@ withCallingHandlers(tryCatch(fun(n=nvec[j],tau=tauvec[i],...),
 <p>Zuur, Alain F., Elena N. Ieno, Neil J. Walker, Anatoly A. Saveliev, and Graham M. Smith. 2009. <em>Mixed Effects Models and Extensions in Ecology with R</em>. 1st ed. Springer.</p>
 </div>
 </div>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>in R, <code>foo::bar</code> (or <code>foo::bar()</code>) denotes “function <code>bar</code> in package <code>foo</code>”).<a href="#fnref1">↩</a></p></li>
+</ol>
 </div>
 
 
