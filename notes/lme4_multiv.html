@@ -110,12 +110,12 @@ $(document).ready(function () {
 
 <h1 class="title">Multivariate analysis with mixed modeling tools in R</h1>
 <h4 class="author"><em>Ben Bolker</em></h4>
-<h4 class="date"><em>16:46 14 March 2016</em></h4>
+<h4 class="date"><em>21:06 14 March 2016</em></h4>
 
 </div>
 
 
-<p>Multivariate analyses are one of the potential targets of modern mixed modeling tools. Mixed model approaches have some advantages over classical multivariate ANOVA (MANOVA) techniques; in particular, they allow for unbalanced data and relaxation of some of the usual assumptions of compound symmetry and sphericity (e.g. David Howell discusses these issues <a href="http://www.uvm.edu/~dhowell/StatPages/More_Stuff/Mixed-Models-Repeated/Mixed-Models-for-Repeated-Measures1.html">here</a>).</p>
+<p>Multivariate analyses are one of the potential targets of modern mixed modeling tools. Mixed model approaches have some advantages over classical multivariate ANOVA (MANOVA) techniques; in particular, they allow for unbalanced data and relaxation of some of the usual assumptions of compound symmetry and sphericity (e.g. David Howell discusses these issues <a href="http://www.uvm.edu/~dhowell/methods7/Supplements/Mixed%20Models%20Repeated/Mixed%20Models%20for%20Repeated%20Measures1.pdf">here</a>).</p>
 <p>In approximate order of increasing technical difficulty, one might be interested in fitting models where the different elements of the multivariate response vector are</p>
 <ol style="list-style-type: decimal">
 <li><em>exchangeable</em>, i.e. all elements have identical variance, and the correlations between pairs of elements are all identical (this correlation structure is known as <em>compound symmetry</em>)</li>
@@ -308,8 +308,16 @@ vc</code></pre>
 </div>
 <div id="lme" class="section level2">
 <h2><code>lme</code></h2>
-<pre class="r"><code>library(nlme)
-lme1 &lt;- lme(value~trait-1,random=~trait-1|id,data=mSpending)</code></pre>
+<pre class="r"><code>library(nlme)</code></pre>
+<pre><code>## 
+## Attaching package: 'nlme'</code></pre>
+<pre><code>## The following object is masked from 'package:optimx':
+## 
+##     coef&lt;-</code></pre>
+<pre><code>## The following object is masked from 'package:lme4':
+## 
+##     lmList</code></pre>
+<pre class="r"><code>lme1 &lt;- lme(value~trait-1,random=~trait-1|id,data=mSpending)</code></pre>
 <p>In the following model <code>varIdent</code> specifies different variances for each trait (response), while <code>corSymm(form=~1|id/obs)</code> specifies unstructured (symmetric) correlation matrices within each observation (response vector).</p>
 <pre class="r"><code>lme2 &lt;- update(lme1,weights=varIdent(form=~1|trait),
                correlation=corSymm(form=~1|id/obs))</code></pre>

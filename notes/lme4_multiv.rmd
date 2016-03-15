@@ -8,8 +8,9 @@ Multivariate analyses are one of the potential targets of modern mixed modeling 
 classical multivariate ANOVA (MANOVA) techniques; in particular,
 they allow for unbalanced data and relaxation of some of the
 usual assumptions of compound symmetry and sphericity
-(e.g. David Howell discusses these issues [here](http://www.uvm.edu/~dhowell/StatPages/More_Stuff/Mixed-Models-Repeated/Mixed-Models-for-Repeated-Measures1.html)).
+(e.g. David Howell discusses these issues [here][howell]).
 
+[howell]: http://www.uvm.edu/~dhowell/methods7/Supplements/Mixed%20Models%20Repeated/Mixed%20Models%20for%20Repeated%20Measures1.pdf
 In approximate order of increasing technical difficulty, one might be interested in fitting models where the different elements of the multivariate response vector are
 
 1. *exchangeable*, i.e. all elements have identical variance, and the correlations between pairs of elements are all identical (this correlation structure is known as *compound symmetry*)
