@@ -2,11 +2,21 @@
 Thoughts about design of statistical tools: what did R get right?
 ---
 
-The [recent Moore foundation grant to Julia-lang](https://www.moore.org/newsroom/in-the-news/2015/11/10/bringing-julia-from-beta-to-1.0-to-support-data-intensive-scientific-computing) got me thinking about 
+The [recent Moore foundation grant to Julia-lang](https://www.moore.org/newsroom/in-the-news/2015/11/10/bringing-julia-from-beta-to-1.0-to-support-data-intensive-scientific-computing) got me thinking about design of statistical/analytical software, especially domain-specific languages like R that are intended for a mixture of interactive and batch-based data/statistical analysis.
+
+John Myles White [says](http://www.johnmyleswhite.com/notebook/2014/11/29/whats-wrong-with-statistics-in-julia/)
+
+> ... This implies that idioms from R which depend upon non-standard evaluation are not appropriate for Julia, although it is possible to emulate some forms of non-standard evaluation using macros. In addition, Julia doesn’t allow programmers to reify scope. This implies that idioms from R that require access to the caller’s scope are not appropriate for Julia.
+
+This may be a big deal, although I haven't really wrapped my head around where this would be a problem (evaluating formula terms shouldn't hit this trap ... right?)
 
 ## update() with data by reference
 
-It's quite common to fit many versions of the same model. If full or transformed versions of the data are stored inside the fitted model object (e.g. as model frames, design matrices, etc.), then this can quickly become unwieldy. It would be useful to a have a clean, universal design that allows groups of models to share a reference to the same data set. (This could be handled through a smart `update` method ...)
+It's quite common to fit many versions of the same model. If full or transformed versions of the data are stored inside the fitted model object (e.g. as model frames, design matrices, etc.), then this can quickly become unwieldy. It would be useful to a have a clean, universal design that allows groups of models to share a reference to the same data set. The `update()` method in R is very handy (except for the perhaps-inevitable weakness that it operates by re-executing the "call" slot with modifications, which may be fragile when models are passed between environments), and a smart version of the `update()` method might allow for a deep copy/reference switch ...
+
+## enforce data argument for models
+
+Lots of headaches (for developers) would be alleviated if we knew that models would always be evaluated in the context of data arguments.
 
 ##  model structures: model matrices/frames/terms etc.
 
@@ -32,7 +42,7 @@ It might be nice if the variables output by `model.matrix` were themselves legal
 
 ## evaluation in different environments
 
-- the R idiom of passing most parameters to a subsidiary function by changing the head of the function and evaluating it in the parent environment is sometimes fragile
+- the R idiom of passing most parameters to a subsidiary function by changing the head of the function and evaluating it in the parent environment is sometimes fragile.
 
 ## simulate methods
 
@@ -53,6 +63,11 @@ a convention for simulation/prediction of marginalizing and conditioning in diff
 
 It's very useful to be able to set up an unevaluated model, optimizing it as a separate stage, as well as having a way to evaluate the objective (likelihood, posterior density, etc.) function of a model for user-specified parameters
 
+## factors
+
+Of course (`stringsAsFactors`).  See R Inferno chapter.
+
 ## misc
 
 [https://github.com/b-k/apophenia](Ben Klemens's apophenia modeling package) probably has some useful ideas
+
