@@ -2085,4 +2085,9 @@ with(as.data.frame(tmod_MG2$VCV),
 HPDinterval(mcmc(with(as.data.frame(tmod_MG2$VCV),BROOD/units)))
 ```
 
+# To do
+
+- re-do as many examples as possible with `rstanarm`, `brms`, `glmmTMB`, `lme4ord`, `INLA`, ...
+- re-do Banta/*Arabidopsis* example with more attention to overfitting random effects?
+
 # References
