@@ -4,9 +4,9 @@ guImmun,Rodriguez et al 1995,mlmRev,Bernoulli,2159,,
 guPrenat,Rodriguez et al 1995,mlmRev,Bernoulli,2449,,
 cbpp,Lesnoff et al 2004,lme4,binomial,56,15,
 contraception,Steele et al 1996,mlmRev,Bernoulli,1934,60,
-grouse_ticks,Elston et al 2001,lme4,Poisson/NB,403,118
-culcita,McKeon et al,ecostats_chap,Bernoulli
-gopher_tortoise,Ozgul et al,ecostats_chap,Poisson/NB
+grouse_ticks,Elston et al 2001,lme4,Poisson/NB,403,118,
+culcita,McKeon et al,ecostats_chap,Bernoulli,
+gopher_tortoise,Ozgul et al,ecostats_chap,Poisson/NB,
 owls,Roulin and Bersier 2007,glmmTMB/glmmadmb,Poisson/NB,599,27,zero-inflated
-Arabidopsis,Banta et al 2010,lme4,Poisson/NB,625,24
+Arabidopsis,Banta et al 2010,lme4,Poisson/NB,625,24,
  

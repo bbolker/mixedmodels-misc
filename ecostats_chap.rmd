@@ -1,5 +1,5 @@
 ---
-title: "GLMM worked examples"
+title: "GLMM worked examples: additional packages"
 author: Ben Bolker
 date: "`r format(Sys.time(), '%H:%M %d %B %Y')`"
 bibliography: glmm.bib
@@ -9,15 +9,6 @@ output:
     toc_depth: 2
 ---
 
-<!--
- * Jan 2016: lots of minor updates.  Dispense with coefplot2 
- * re-run 10 Aug 2015 with new lme4; tweaks (newlines after plots etc.)
- * update 27 Jan 2015: glmmADMB hacks
- * update 23 Dec 2014: tweaks for final upload (package installation etc.)
- * update 15 July 2014:
-change scapeMCMC to plotMCMC
- * re-run with new Mathjax targets etc.
--->
 ```{r opts,echo=FALSE}
 library("knitr")
 opts_chunk$set(tidy=FALSE,fig.width=6,fig.height=4)
@@ -28,14 +19,10 @@ grDevices::X11.options(type='cairo')
 
 # Introduction
 
-These are worked examples for a book chapter on mixed models in *Ecological Statistics: Contemporary Theory and Application*  editors Negrete, Sosa, and Fox
-(available from the [Oxford University Press catalog](http://ukcatalogue.oup.com/product/9780199672554.do) or from [Amazon.com](http://www.amazon.com/Ecological-Statistics-Contemporary-theory-application/dp/0199672555) or [Powell's Books](http://www.powells.com/biblio/62-9780199672554-1) or ...).
+Trying out new/additional packages for ecostats examples.
 
 Data and source code for this file are currently available at [Github](http://github.com/bbolker/mixedmodels-misc).
 
-There's a *lot* of material here. I have erred on the side of including things, and on the side of compact rather than elementary code. Try not to be overwhelmed, just skim it the first time and thereafter focus on the parts that are most relevant to your analyses.
-
-I use a very large set of packages in this example, because I am trying out a wide range of approaches. You should whittle these down to just the ones you need for any given analysis ... if you want to install all of them at once, the following code should be sufficient (remember that you only have to install packages one time on each computer you are using, but you have to use `library()` to load them in every new R session). The packages noted below as "not on CRAN" (`glmmADMB`) are hosted on R-forge (`http://r-forge.r-project.org`), but in order to install them you may have to install from `http://www.math.mcmaster.ca/bolker/R`, as below.
 
 ```{r install_pkgs,eval=FALSE}
 pkgs_CRAN <- c("lme4","MCMCglmm","blme",
@@ -100,19 +87,6 @@ vers <- sapply(pkgs_used,function(x) as.character(packageVersion(x)))
 print(vers,quote=FALSE)
 ```
 
-If you are using Windows and have problems using `glmmADMB` on some problems, there is a (slightly tedious) workaround:
-
-* check the [directory that contains the latest version of the glmmADMB binary component](http://www.admb-project.org/buildbot/glmmadmb/); find the most recent version of the binaries for your operating system (Windows, MacOS, Linux [Fedora or Ubuntu], and 32 vs 64 bits: check `sessionInfo()$platform` for more information).  For example, the most recent Windows binary as of this writing is `glmmadmb-mingw64-r2885-windows8-mingw64.exe`.  If you find more than one file that seems to apply, just pick one at random.
-* Once you've figured out what file to download, execute the following code (substituting the name of the appropriate binary file in the last line):
-```{r glmmadmb_hack,eval=FALSE}
-library("glmmADMB")
-bb <- glmmADMB:::get_bin_loc()[["bin_loc"]]
-bpath <- gsub("glmmadmb$","",bb)
-file.copy(bb,paste0(bpath,"glmmadmb.bak"))
-bburl <- "http://admb-project.org/buildbot/glmmadmb/"
-download.file(paste0(bburl,
-   "glmmadmb-mingw64-r2885-windows8-mingw64.exe"), dest=bb)
-```
 
 # Tundra carbon 
 
@@ -126,33 +100,8 @@ Read the data:
 mc1 <- read.csv("data/tundra.csv",na.strings=c("-","NA"))
 ```
 
-A first look at the data, plotting net ecosystem exchange during the growing season (`GS.NEE`) against year, using colour to distinguish sites, and superimposing a separate linear regresssion (with confidence bands) per site:
-
-```{r tundra_plot1,warning=FALSE}
-ggplot(mc1,aes(x=Year,y=GS.NEE,colour=Site))+geom_point()+
-    geom_smooth(method="lm",alpha=0.3)+
-    ## oob=squish retains the (truncated) confidence bands;
-    ## otherwise bands that went outside the limits would disappear
-    scale_y_continuous(limits=c(-150,400),oob=scales::squish)+
-    scale_colour_discrete(guide="none",palette="Dark2") ## suppress legend
-```
-
-We have suppressed the legend for the colours,
-because there are a lot of sites and their names will not be
-particularly meaningful except to tundra biologists.
-There is lots of variability among sites,
-both in the trend and in the uncertainty of the trend. The uncertainty
-is caused in part by noisiness of the data, and part by sparsity/shortness
-of the time series for individual sites.
-
-In some cases there were multiple observations per site in a single year.
-We could have handled this by adding a year-within-site random variable,
-but it proved to be easier to aggregate these cases by calculating the
-mean, and account for the different amount of sampling by weighting
-site-year combinations according to the number of samples.
-
-The following (rather complicated) function aggregates the data; in the course of our analysis we ended up needing to aggregate several different response variables according to several different sets of grouping variables.  We re-centred the year to have year=0 at the beginning of the observation period.
-```{r tundra_agg}
+Aggregate data as in original example:
+```{r tundra_agg,echo=FALSE}
 aggfun <- function(dat,agg=c("Year","Site"),response="Winter.adj",
                    baseYear=min(mc1$Year)) {
     ## select only site, year, and response
@@ -172,16 +121,6 @@ mc2 <- aggfun(mc1,response="GS.NEE")
 ## center year at the mean rather than the date of
 ## the first observation:
 mc2B <- aggfun(mc1,response="GS.NEE",baseYear=mean(mc1$Year))
-```
-
-The aggregated data show a similar picture:
-```{r tundra_plot2,warning=FALSE}
-ggplot(mc2,aes(x=cYear,y=GS.NEE,colour=Site))+
-    geom_point(aes(size=n),alpha=0.7)+
-    geom_smooth(method="lm",alpha=0.3,aes(weight=n))+
-    scale_y_continuous(limits=c(-150,400),oob=scales::squish)+
-    scale_colour_discrete(guide="none",palette="Dark2")+
-    scale_size_continuous(range=c(2,5),breaks=c(1,3,6))
 ```
 
 ## Fitting
