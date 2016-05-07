@@ -9,5 +9,3 @@ culcita,McKeon et al,ecostats_chap,Bernoulli,80,10,
 gopher_tortoise,Ozgul et al,ecostats_chap,Poisson/NB,30,10,
 owls,Roulin and Bersier 2007,glmmTMB/glmmadmb,Poisson/NB,599,27,zero-inflated
 Arabidopsis,Banta et al 2010,lme4,Poisson/NB,625,24,
-
- 
