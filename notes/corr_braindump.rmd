@@ -116,12 +116,14 @@ an `autocorr` argument.
 ```{r pkgs,message=FALSE}
 library(nlme)
 library(lme4)
+library(lme4ord)
 library(glmmTMB)
 library(brms)
 library(INLA)
 ## convenience/manipulation
 library(plyr)
 library(dplyr)
+library(reshape2)
 library(ggplot2); theme_set(theme_bw())
 ```
 
@@ -130,13 +132,18 @@ Simulate some data (function definition not shown):
 ```{r simfun,echo=FALSE}
 simCor1 <- function(phi=0.8,sdgrp=2,sdres=1,
                     npergrp=20,ngrp=20,
-                    seed=NULL) {
+                    seed=NULL,
+                    ## set linkinv/simfun for GLMM sims
+                    linkinv=identity,
+                    simfun=identity) {
     if (!is.null(seed)) set.seed(seed)
     cmat <- sdres*phi^abs(outer(0:(npergrp-1),0:(npergrp-1),"-"))
     errs <- MASS::mvrnorm(ngrp,mu=rep(0,npergrp),Sigma=cmat)
     ranef <- rnorm(ngrp,mean=0,sd=sdgrp)
     d <- data.frame(f=rep(1:ngrp,each=npergrp))
-    d$y <- ranef[as.numeric(d$f)] + c(t(errs)) ## unpack errors by row
+    eta <- ranef[as.numeric(d$f)] + c(t(errs)) ## unpack errors by row
+    mu <- linkinv(eta)
+    d$y <- simfun(mu)
     d$tt <- factor(rep(1:npergrp,ngrp))
     return(d)
 }
@@ -193,9 +200,9 @@ significantly in their structure ...
 ```{r thetafun}
 getTheta <- function(phi,sigma,nmax) {
     ## make corStruct: fake data sequence within a single block
-    cc <- Initialize(corAR1(phi),data=data.frame(t=seq(nmax)))
+    cc <- nlme::Initialize(nlme::corAR1(phi),data=data.frame(t=seq(nmax)))
     ## get inverse Cholesky factor
-    mm <- matrix(corFactor(cc),nrow=nmax) ## 
+    mm <- matrix(nlme::corFactor(cc),nrow=nmax) ## 
     ## check backsolve() idiom: all.equal(solve(mm),backsolve(mm,diag(nmax),upper.tri=FALSE))
     mm2 <- backsolve(mm,diag(nmax),upper.tri=FALSE) ## invert ...
     return(sigma*mm2[lower.tri(mm2,diag=TRUE)])     ## take lower tri & scale by SD
@@ -220,7 +227,8 @@ for convenience (it's good, and it produces output that are particularly conveni
 to `mkMerMod`). (Not quite sure why we need `nmax` explicitly ... ?)
 
 ```{r fitlme4}
-opt1 <- lme4::nloptwrap(c(1,0,1),devfun2,lower=c(0,-0.999,0),upper=c(Inf,0.999,Inf),nmax=20)
+opt1 <- lme4::nloptwrap(c(1,0,1),devfun2,
+         lower=c(0,-0.999,0),upper=c(Inf,0.999,Inf),nmax=20)
 ```
 
 We can make the result into a regular `merMod` object, but the variance-covariance matrix
@@ -341,14 +349,67 @@ the grouping structure?
 
 ## GLMM example?
 
+```{r lme4_fitfun,echo=FALSE}
+## ugh! the point was just to make a 'simple' version ...
+## suggests lme4 needs some refactoring!
+ar1_glmer <- function(form,data,family,nAGQ=1) {
+    glmod <- glFormula(form,data=data,family=family)
+    nmax <- length(glmod$reTrms$cnms[[2]])  ## hack ...
+    devfun <- do.call(mkGlmerDevfun,c(glmod,list(nAGQ=0)))
+    ## fine so far.
+    ## for AGQ=0 step ...
+    devfun2 <- function(theta) {
+        new_theta <- getTheta(phi=theta[2],sigma=theta[3],nmax)
+        devfun(c(theta[1],new_theta))
+    }
+    library(minqa)
+    ## optimizeGlmer is a bit of a nuisance (doesn't allow upper bounds,
+    ##  extracts stuff from rho$ ...)
+    opt1 <- lme4:::optwrap(bobyqa,fn=devfun2,par=c(1,0,1),
+                   lower=c(0,-0.999,0),
+                   upper=c(Inf,0.999,Inf),
+                   control=list(),
+                   adj=TRUE) ## bobyqa setting tweaks
+    rho <- environment(devfun)
+    rho$nAGQ <- nAGQ
+    rho$control <- attr(opt1,"control")
+    devfun <- updateGlmerDevfun(devfun, glmod$reTrms)
+    devfun2 <- function(pars,nmax=20) {
+        new_theta <- getTheta(phi=pars[2],sigma=pars[3],nmax)
+        devfun(c(pars[1],new_theta,pars[-(1:3)]))
+    }
+    nfix <- ncol(glmod$X)
+    lower <- c(0,-0.999,0,rep(-Inf,nfix))
+    rho$lower <- lower
+    ## devfun2(c(opt1$par,-0.1))        
+    ## devfun2(c(opt1$par,0))        
+    ## devfun2(c(opt1$par,0.1))        
+    opt2 <- lme4:::optwrap(bobyqa,fn=devfun2,
+                          par=c(opt1$par,rep(0,nfix)),
+                          lower=lower,
+                          upper=c(Inf,0.999,Inf,rep(Inf,nfix)),
+                          control=list(),
+                          adj=TRUE) ## bobyqa setting tweaks
+    rho$resp$setOffset(rho$baseOffset)
+    res <- mkMerMod(rho=rho,
+               opt=opt2,
+               reTrms=glmod$reTrm,
+               fr=glmod$fr)
+    ## hack fixed effects
+    res@beta <- tail(opt2$par,nfix)
+    return(res)
+}
+```
+
 Add a Poisson-distributed sampling layer atop the existing structure:
 
 ```{r mkpoiss}
-d$yp <- rpois(nrow(d),exp(d$y))
+dp <- simCor1(phi=0.8,sdgrp=2,sdres=1,seed=101,
+              linkinv=exp,simfun=function(x) rpois(length(x),lambda=x))
 ```
 
 ```{r pois_glmmPQL}
-MASS::glmmPQL(yp~1,random=~1|f,data=d,
+MASS::glmmPQL(y~1,random=~1|f,data=dp,
               family=poisson,
               correlation=corAR1(),verbose=FALSE)
 ```
@@ -361,16 +422,66 @@ marginal vs conditional autocorrelation ... ?
 `lme4ord` works reasonably well:
 ```{r lme4ord_pois,cache=TRUE}
 corObj <- nlme:::Initialize(nlme:::corAR1(0, form = ~ 1|f), d)
-lme4ord_pois_fit <- strucGlmer(yp ~ 1 + (1|f)+nlmeCorStruct(1, corObj = corObj, sig = 1),
+lme4ord_pois_fit <- strucGlmer(y ~ 1 + (1|f)+nlmeCorStruct(1, corObj = corObj, sig = 1),
            family=poisson,
-           data=d)
+           data=dp)
 ```
 
 I'm not actually sure whether I'm specifying the model correctly here,
-but the $\phi$ estimate is reasonable ...
-(`r round(getCorPar(lme4ord_pois_fit),3)`)
+but the $\phi$ estimate 
+(`r round(getCorPar(lme4ord_pois_fit),3)`) is reasonable, and the output is reasonably pretty (although getting the $\phi$ parameter out programmatically is a hassle, and the `summary` method needs work to include all the information given in the `print` method ...):
+```{r lme4ord_pois_display}
+print(lme4ord_pois_fit)
+```
+
+
+A hacked-up version of `glmer` (code hidden - I needed a few dozen lines of code, which seems harder than it should be) gets the same answer.
+
+```{r glmer_poishackfit}
+glmer_pois_fit <- ar1_glmer(y ~ (1|f) + (tt-1|f),data=dp,family=poisson)
+```
+$\phi=`r round(glmer_pois_fit@optinfo$val[2],3)`$
+
+Seems hard to get confidence intervals on the profile (`lme` provides back-transformed Wald intervals from the unconstrained scale) for either of these examples. This is a definite hole, but in the meantime I'll just get point estimates for 50 simulations to see how we do in the ensemble (i.e., are we getting estimates that are reasonably unbiased and reasonably precise relative to the true value $\phi^*=0.8$?)
+
+```{r ar1sim,echo=FALSE,cache=TRUE}
+ar1simres <- numeric(50)
+for (i in 1:50) {
+    dp_sim <- simCor1(phi=0.8,sdgrp=2,sdres=1,seed=100+i,
+              linkinv=exp,simfun=function(x) rpois(length(x),lambda=x))
+    ## need to reinitialize every time???
+    corObj <- nlme:::Initialize(nlme:::corAR1(0, form = ~ 1|f), d)
+    r <- strucGlmer(y ~ 1 + (1|f)+nlmeCorStruct(1, corObj = corObj, sig = 1),
+                    family=poisson,
+                    data=dp_sim)
+    ar1simres[i] <- getCorPar(r)
+}
+```
+
+```{r ar1simplot,echo=FALSE,fig.height=2}
+ggplot(data.frame(x=1,y=ar1simres))+
+    geom_violin(aes(x,y),fill="gray")+
+    geom_hline(yintercept=0.8,lty=2)+
+    labs(x="",y=expression(phi))+
+    coord_flip()+theme(axis.text.y=element_blank(),
+                       axis.ticks.y=element_blank())
+```
+
+This seems pretty reasonable (we'd expect a skewed distribution
+of estimates since we're closer to one boundary of the domain
+of $\phi$).
+
+```{r ar1simplot2,echo=FALSE}
+r <- readRDS("lme4ord_poissim0.rds")
+r <- setNames(r,seq(0.1,0.9,by=0.1))
+r2 <- melt(ldply(r,as.data.frame,.id="cor"),id.var="cor")
+print(ggplot(r2,aes(cor,value))+geom_violin(fill="gray")+
+    facet_wrap(~variable,scale="free"))
+```
+
 
 ## Technical notes
+
 
 - Need to remember to put in the `(1|f)` (group/IID) term as well as the autoregressive
 term (with AR only, this should match the fit of `gls(y~1,correlation=corAR1(~1|f))` but

@@ -1,0 +1,73 @@
+
+```{r pkg,message=FALSE}
+library("lme4")
+```
+
+```{r sim}
+set.seed(101)
+genotypes <- c("A","B","C")
+n <- 1000
+ngenes <- 100
+## sample cluster sizes up to a cumulative total of 1000
+clustsize <- 1+rpois(500,lambda=1)
+clust <- rep(1:500,clustsize)[1:n]
+dd <- data.frame(fgluc=rnorm(n),
+                 clust=factor(clust))
+genes <- setNames(do.call(data.frame,
+                 replicate(ngenes,sample(
+                     x=genotypes,size=n,replace=TRUE),
+                           simplify=FALSE)),
+                  paste0("gene",1:ngenes))
+dd2 <- cbind(dd,genes)
+```
+
+
+```{r}
+fitGene <- function(g) {
+    f <- reformulate(c(g,"(1|clust)"),response="fgluc")
+    lmer(f,data=dd2)
+}
+```
+
+See `?modular` for the basic idea.
+here we are taking the pre-computed information about the model
+structure (in particular the 'reTrms' component which describes
+the RE structure and involves an expensive permutation computation)
+and filling in the new formula and fixed-effect model matrix for
+each new predictor variable.
+I thought we might save some more time by returning just the
+optimized parameters and not the whole model structure, but that
+apparently that doesn't make much difference ...
+It might be possible to copy the existing structures at an even
+lower level (and hence gain a little bit more speed), but this
+is very low-hanging fruit ...
+
+```{r refitgene}
+lmod0 <- lFormula(fgluc ~ 1 + (1|clust), dd2)
+refitGene <- function(g,retmod=TRUE) {
+    f0 <- reformulate(g,response="fgluc")
+    f <- reformulate(c(g,"(1|clust)"),response="fgluc")
+    lmod <- lmod0
+    lmod$formula <- f
+    lmod$X <- model.matrix(f0,data=dd2)
+    devfun <- do.call(mkLmerDevfun, lmod)
+    opt <- optimizeLmer(devfun)
+    if (!retmod) opt else {
+        mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr)
+    }
+}
+```
+
+```{r}
+fitAll <- function(...) {
+    lapply(grep("^gene",names(dd2),value=TRUE),...)
+}
+```
+
+```{r}
+library(rbenchmark)
+benchmark(fitAll(fitGene),
+          fitAll(refitGene),
+          fitAll(refitGene,retmod=FALSE),
+          replications=10)
+```
