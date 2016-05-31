@@ -475,7 +475,11 @@ of $\phi$).
 r <- readRDS("lme4ord_poissim0.rds")
 r <- setNames(r,seq(0.1,0.9,by=0.1))
 r2 <- melt(ldply(r,as.data.frame,.id="cor"),id.var="cor")
+ncor <- length(levels(r2$cor))
+truevals <- expand.grid(cor=levels(r2$cor),variable=levels(r2$variable))
+truevals$value <- c(rep(4,ncor),rep(1,ncor),as.numeric(levels(r2$cor)))
 print(ggplot(r2,aes(cor,value))+geom_violin(fill="gray")+
+      geom_point(data=truevals)+
     facet_wrap(~variable,scale="free"))
 ```
 
