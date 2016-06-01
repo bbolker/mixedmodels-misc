@@ -125,6 +125,7 @@ library(plyr)
 library(dplyr)
 library(reshape2)
 library(ggplot2); theme_set(theme_bw())
+library(ggstance)
 ```
 
 Simulate some data (function definition not shown):
@@ -417,7 +418,7 @@ MASS::glmmPQL(y~1,random=~1|f,data=dp,
 In this case `glmmPQL` doesn't do anything insane, but:
 $\phi$ (autocorr parameter) doesn't match what we
 started with, but maybe this is just an issue of
-marginal vs conditional autocorrelation ... ?
+definitions (marginal vs conditional autocorrelation) ?
 
 `lme4ord` works reasonably well:
 ```{r lme4ord_pois,cache=TRUE}
@@ -442,46 +443,21 @@ glmer_pois_fit <- ar1_glmer(y ~ (1|f) + (tt-1|f),data=dp,family=poisson)
 ```
 $\phi=`r round(glmer_pois_fit@optinfo$val[2],3)`$
 
-Seems hard to get confidence intervals on the profile (`lme` provides back-transformed Wald intervals from the unconstrained scale) for either of these examples. This is a definite hole, but in the meantime I'll just get point estimates for 50 simulations to see how we do in the ensemble (i.e., are we getting estimates that are reasonably unbiased and reasonably precise relative to the true value $\phi^*=0.8$?)
+Seems hard to get confidence intervals on the profile (`lme` provides back-transformed Wald intervals from the unconstrained scale) for either of these examples. This is a definite hole, but in the meantime I'll just get point estimates for an ensemble of simulations (i.e., are we getting estimates that are reasonably unbiased and reasonably precise relative to the true values?)
 
-```{r ar1sim,echo=FALSE,cache=TRUE}
-ar1simres <- numeric(50)
-for (i in 1:50) {
-    dp_sim <- simCor1(phi=0.8,sdgrp=2,sdres=1,seed=100+i,
-              linkinv=exp,simfun=function(x) rpois(length(x),lambda=x))
-    ## need to reinitialize every time???
-    corObj <- nlme:::Initialize(nlme:::corAR1(0, form = ~ 1|f), d)
-    r <- strucGlmer(y ~ 1 + (1|f)+nlmeCorStruct(1, corObj = corObj, sig = 1),
-                    family=poisson,
-                    data=dp_sim)
-    ar1simres[i] <- getCorPar(r)
-}
-```
-
-```{r ar1simplot,echo=FALSE,fig.height=2}
-ggplot(data.frame(x=1,y=ar1simres))+
-    geom_violin(aes(x,y),fill="gray")+
-    geom_hline(yintercept=0.8,lty=2)+
-    labs(x="",y=expression(phi))+
-    coord_flip()+theme(axis.text.y=element_blank(),
-                       axis.ticks.y=element_blank())
-```
-
-This seems pretty reasonable (we'd expect a skewed distribution
-of estimates since we're closer to one boundary of the domain
-of $\phi$).
-
-```{r ar1simplot2,echo=FALSE}
-r <- readRDS("lme4ord_poissim0.rds")
-r <- setNames(r,seq(0.1,0.9,by=0.1))
+```{r ar1simplot2,echo=FALSE,fig.height=8}
+r <- readRDS("lme4ord_poissim1.rds")
 r2 <- melt(ldply(r,as.data.frame,.id="cor"),id.var="cor")
 ncor <- length(levels(r2$cor))
 truevals <- expand.grid(cor=levels(r2$cor),variable=levels(r2$variable))
 truevals$value <- c(rep(4,ncor),rep(1,ncor),as.numeric(levels(r2$cor)))
-print(ggplot(r2,aes(cor,value))+geom_violin(fill="gray")+
+print(ggplot(r2,aes(value,cor))+geom_violinh(fill="gray")+
       geom_point(data=truevals)+
-    facet_wrap(~variable,scale="free"))
+    facet_wrap(~variable,scale="free",ncol=1))
 ```
+
+Trying `brms::brm()` gives
+"Error: ARMA effects for family poisson are not yet implemented"
 
 
 ## Technical notes
