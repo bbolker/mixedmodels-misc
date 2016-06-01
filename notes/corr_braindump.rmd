@@ -174,9 +174,12 @@ glmmTMB_simple_fit <- glmmTMB(y~1 + (1|f) + ar1(tt-1|f), data=d,family=gaussian)
 ## compute summary info
 ## second element of VarCorr has autocorrelated bit;
 ##   get first column
-rawcov <- VarCorr(glmmTMB_simple_fit)$cond[[2]][,1]
-totvar <- rawcov[1]+sigma(glmmTMB_simple_fit)^2
-glmmTMB_simple_acfvec <- rawcov/totvar
+get_glmmTMB_acfvec <- function(x) {
+    rawcov <- VarCorr(x)$cond[[2]][,1]
+    totvar <- rawcov[1]+sigma(x)^2
+    return(rawcov/totvar)
+}    
+glmmTMB_simple_acfvec <- get_glmmTMB_acfvec(glmmTMB_simple_fit)
 ```
 
 For `lme4`, we start along the lines described in `?modular`:
@@ -455,6 +458,12 @@ print(ggplot(r2,aes(value,cor))+geom_violinh(fill="gray")+
       geom_point(data=truevals)+
     facet_wrap(~variable,scale="free",ncol=1))
 ```
+
+```{r glmmTMB_pois}
+glmmTMB_pois_fit <- glmmTMB(y~1 + (1|f) + ar1(tt-1|f), data=dp,
+                            family=poisson)
+```
+$\phi$ is approximately `r round(VarCorr(glmmTMB_pois_fit)$cond[[2]][2,1],3)` (matches the others).
 
 Trying `brms::brm()` gives
 "Error: ARMA effects for family poisson are not yet implemented"
