@@ -1,7 +1,7 @@
 dataset,orig_source,source,response,n_obs,n_groups,model,other
 toenail,De Backer et al 1998,HSAUR3,Bernoulli,1908,383,outcome~treatment*visit+(1|patientID),
-guImmun,Rodriguez et al 1995,mlmRev,Bernoulli,2159,?,
-guPrenat,Rodriguez et al 1995,mlmRev,Bernoulli,2449,?,
+guImmun,Rodriguez et al 1995,mlmRev,Bernoulli,2159,?,?,
+guPrenat,Rodriguez et al 1995,mlmRev,Bernoulli,2449,?,?,
 cbpp,Lesnoff et al 2004,lme4,binomial,56,15,cbind(incidence, size - incidence) ~ period + (1|herd),
 contraception,Steele et al 1996,mlmRev,Bernoulli,1934,60,use ~ age + I(age^2) + urban + livch + (1|district),
 grouse_ticks,Elston et al 2001,lme4,Poisson/NB,403,118,TICKS~YEAR+HEIGHT+(1|BROOD)+(1|INDEX)+(1|LOCATION),
