@@ -15,7 +15,7 @@ library("pander")
 
 # Introduction
 
-This is an informal FAQ list for the `r-sig-mixed-models` mailing list (the mailing list is at `r-sig-mixed-models@r-project.org`, with [Gmane archives](http://news.gmane.org/gmane.comp.lang.r.lme4.devel/) available as well). There is a previous version posted on [wikidot.com](http://glmm.wikidot.com/faq), but I am getting tired of maintaining it in that format.
+This is an informal FAQ list for the `r-sig-mixed-models` mailing list (the mailing list is at `r-sig-mixed-models@r-project.org`, with [Gmane archives](http://news.gmane.org/gmane.comp.lang.r.lme4.devel/) available as well). There is a previous version posted on [wikidot.com](http://glmm.wikidot.com/faq), but I am getting tired of maintaining it in that format. The source code of this document is available at https://github.com/bbolker/mixedmodels-misc/blob/master/glmmFAQ.rmd ; a rendered (HTML) version lives at http://tinyurl.com/glmmFAQ .
 
 The most commonly used functions for mixed modeling in R are 
 - *linear mixed models*: `aov()`, `nlme::lme`[^1], `lme4::lmer`; 
@@ -598,6 +598,8 @@ Also, note that at a minimum, the uncertainty of the fixed-effect intercept esti
 
 ### How do I compute a coefficient of determination ($R^2$), or an analogue, for (G)LMMs?
 
+#### Problem
+
 (*This topic applies to both LMMs and GLMMs, perhaps more so to LMMs, because the issues are even harder for GLMMs.*)
 
 Researchers often want to know if there is a simple (or at least implemented-in-R) way to get an analogue of $R^2$ or another simple goodness-of-fit metric for LMMs or GLMMs. This is a challenging question in both the GLM and LMM worlds (and therefore doubly so for GLMMs), because it turns out that the wonderful simplicity of $R^2$ breaks down in the extension to GLMs or LMMs. If you're trying to quantify "fraction of variance explained" in the GLM context, should you include or exclude sampling variation (e.g., Poisson variation around the expected mean)? [According to an `sos::findFn` search for "Nagelkerke", one of the common solutions to this problem, the `LogRegR2` function in the `descr` package computes several different "pseudo-$R^2$" measures for logistic regression.]  If you're trying to quantify it in the LMM context, should you include or exclude variation of different random-effects terms?
@@ -617,7 +619,9 @@ In one of those threads, Doug Bates said:
 > corresponds to an infinite precision matrix.  I don't know, really.
 > It depends on what you are trying to characterize.
 
-Also in one of those threads, Jarrett Byrnes contributed the following code:
+#### Simple/crude solutions
+
+In one of those threads, Jarrett Byrnes contributed the following code:
 ```{r r2corr}
 r2.corr.mer <- function(m) {
    lmfit <-  lm(model.response(model.frame(m)) ~ fitted(m))
@@ -625,11 +629,18 @@ r2.corr.mer <- function(m) {
 }
 ```
 
-$\Omega^2_0$ [@xu_measuring_2003], which is almost the same, based on comparing the residual variance of the full model against the residual variance of a (fixed) intercept-only null model: 
+$\Omega^2_0$ [@xu_measuring_2003], which is almost the same, is based on comparing the residual variance of the full model against the residual variance of a (fixed) intercept-only null model: 
 
 ```{r resvar,eval=FALSE}
 1-var(residuals(m))/(var(model.response(model.frame(m)))
 ```
+
+#### Sophisticated solutions
+
+@gelman_bayesian_2006 propose/discuss Bayesian measures of $R^2$ (I don't know if anyone has created a canned implementation of these measures in R).
+@nakagawa_general_2013 and @johnson_extension_2014 have also proposed a general methodology for computing $R^2$; J. Lefcheck gives examples [here](https://jonlefcheck.net/2013/03/13/r2-for-linear-mixed-effects-models/) and [here](https://github.com/jslefche/piecewiseSEM/blob/master/README.md#get-r2-for-individual-models), based on his implementation in the `piecewiseSEM` package ([CRAN](https://cran.r-project.org/web/packages/piecewiseSEM/index.html), [Github](https://github.com/jslefche/piecewiseSEM)).
+
+A related question is how to quantify "repeatability" (i.e., ratios of variance at different levels) in GLMMs, especially how to compute the "residual error" term for GLMMs: see @nakagawa_repeatability_2010 and the [rptR package](http://rptr.r-forge.r-project.org/).
 
 The bottom line is that there are some simple recipes (and some more complex recipes that may or may not have been coded up by someone), but that '''you have to think carefully about what information you want to get out of the coefficient of determination''', because no recipe will have all of the properties of $R^2$ in the simple linear model case.
 
