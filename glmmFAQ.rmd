@@ -26,7 +26,7 @@ The most commonly used functions for mixed modeling in R are
 
 **DISCLAIMERS:**
 
-- (G)LMMs are hard - harder than you may think based on what you may have learned in your second statistics class, which probably focused on picking the appropriate sums of squares terms and degrees of freedom for the numerator and denominator of an $F$ test. `Modern' mixed model approaches, although more powerful (they can handle more complex designs, lack of balance, crossed random factors, some kinds of non-Normally distributed responses, etc.), also require a new set of conceptual tools. In order to use these tools you should have at least a general acquaintance with classical mixed-model experimental designs but you should also, probably, read something about modern mixed model approaches. @littell_sas_2006 and @pinheiro_mixed-effects_2000 are two places to start, although Pinheiro and Bates is probably more useful if you want to use R. Other useful references include @gelman_data_2006 (focused on Bayesian methods) and @zuur_mixed_2009. If you are going to use generalized linear mixed models, you should understand generalized linear models.
+- (G)LMMs are hard - harder than you may think based on what you may have learned in your second statistics class, which probably focused on picking the appropriate sums of squares terms and degrees of freedom for the numerator and denominator of an $F$ test. 'Modern' mixed model approaches, although more powerful (they can handle more complex designs, lack of balance, crossed random factors, some kinds of non-Normally distributed responses, etc.), also require a new set of conceptual tools. In order to use these tools you should have at least a general acquaintance with classical mixed-model experimental designs but you should also, probably, read something about modern mixed model approaches. @littell_sas_2006 and @pinheiro_mixed-effects_2000 are two places to start, although Pinheiro and Bates is probably more useful if you want to use R. Other useful references include @gelman_data_2006 (focused on Bayesian methods) and @zuur_mixed_2009. If you are going to use generalized linear mixed models, you should understand generalized linear models.
 - All of the issues that arise with regular linear or generalized-linear modeling (e.g.: inadequacy of p-values alone for thorough statistical analysis; need to  understand how models are parameterized; need to understand the principle of marginality and how interactions can be treated; dangers of overfitting, which are not mitigated by stepwise procedures; the non-existence of free lunches) also apply, and can apply more severely, to mixed models.
 * When SAS (or Stata, or Genstat/AS-REML or ...) and R differ in their answers, R may not be wrong. Both SAS and R may be `right' but proceeding in a different way/answering different questions/using a different philosophical approach (or both may be wrong ...)
 - The advice in this FAQ comes with **absolutely no warranty of any sort**.
@@ -39,7 +39,7 @@ The following formula extensions for specifying different random-effects structu
 
 - `lme4`
 - `nlme` (nested effects only, although crossed effects can be specified with more work)
-- `glmmADMB` and `glmmTMB`
+- `glmmADMB` and `glmmTMB` 
 
 `MCMCglmm` uses a different specification, inherited from AS-REML
 
@@ -136,27 +136,28 @@ The `gof` function in the `aods3` package works for recent (development) version
 
 ### Fitting models with overdispersion?
 
-- quasilikelihood estimation: [MASS::glmmPQL](http://finzi.psych.upenn.edu/R/library/MASS/html/glmmPQL.html). Quasi- was deemed unreliable in lme4, and is no longer available. (Part of the problem was questionable numerical results in some cases;; the other problem was that DB felt that he did not have a sufficiently good understanding of the theoretical framework that would explain what the algorithm was actually estimating in this case.) [geepack::geelgm](http://finzi.psych.upenn.edu/R/library/geepack/html/geeglm.html) may be workable (haven't tried it)
+- quasilikelihood estimation: [MASS::glmmPQL](http://finzi.psych.upenn.edu/R/library/MASS/html/glmmPQL.html). Quasi- was deemed unreliable in `lme4`, and is no longer available. (Part of the problem was questionable numerical results in some cases; the other problem was that DB felt that he did not have a sufficiently good understanding of the theoretical framework that would explain what the algorithm was actually estimating in this case.) [geepack::geelgm](http://finzi.psych.upenn.edu/R/library/geepack/html/geeglm.html) may be workable (haven't tried it)
 - individual-level random effects (MCMCglmm **or** recent version of lme4, 0.999375-34 or later) [or WinBUGS or ADMB or ...]. If you want to a citation for this approach, try @elston_analysis_2001, who cite @lawson_disease_1999; apparently there is also an example in section 10.5 of @maindonald_data_2010, and (according to an R-sig-mixed-models post) this is also discussed by @rabehesketh_multilevel_2008. Also see @browne_variance_2005 for an example in the binomial context (i.e. logit-normal-binomial rather than lognormal-Poisson). Agresti's excellent (2002) book @agresti_categorical_2002 also discusses this (section 13.5), referring back to @breslow_extrapoisson_1984 and @hinde_compound_1982. [**Notes**: (a) I haven't checked all these references myself, (b) I can't find the reference any more, but I have seen it stated that individual-level random effect estimation is probably dodgy for PQL approaches as used in Elston et al 2001] 
 - alternative distributions
    - Poisson-lognormal model (see above, "individual-level random effects")
    - negative binomial
-   - [glmmADMB](http://r-forge.r-project.org/projects/glmmADMB/) (R-forge) and [glmmTMB](https://github.com/glmmtmb/glmmTMB/) (Github) will fit two parameterizations of the negative binomial: family="nbinom" gives the classic parameterization with var/mean=(1+mean/k) ("NB2" in Hardin and Hilbe's terminology) while family="nbinom1" gives a parameterization with `var/mean=phi*mean` ("NB1" to Hardin and Hilbe). The latter might also be called a "quasi-Poisson" parameterization because it matches mean-variance relationship assumed by quasi-Poisson models.
+       - `lme4::glmer.nb()` should fit a negative binomial, although it is somewhat slow and fragile compared to some of the other methods suggested here.
+       - [glmmADMB](http://r-forge.r-project.org/projects/glmmADMB/) (R-forge) and [glmmTMB](https://github.com/glmmtmb/glmmTMB/) (Github) will fit two parameterizations of the negative binomial: family="nbinom" gives the classic parameterization with var/mean=(1+mean/k) ("NB2" in Hardin and Hilbe's terminology) while family="nbinom1" gives a parameterization with `var/mean=phi*mean` ("NB1" to Hardin and Hilbe). The latter might also be called a "quasi-Poisson" parameterization because it matches the mean-variance relationship assumed by quasi-Poisson models.
   * gamlss.mx:gamlssNP
   * WinBUGS/JAGS (via R2WinBUGS/Rjags)
   * AD Model Builder (possibly via R2ADMB)
   * gnlmm in the `repeated` package ([off-CRAN](http://www.commanster.eu/rcode.html))
   * [ASREML](http://www.asreml.com/software/genstat/htmlhelp/server/GLMM.htm)
 
-Negative binomial models in glmmADMB and lognormal-Poisson models in glmer (or MCMCglmm) are probably the best quick alternatives. If you need to explore alternatives (different variance-mean relationships, different distributions), then ADMB and WinBUGS are the most flexible alternatives.
+Negative binomial models in `glmmADMB` or `glmmTMB` and lognormal-Poisson models in `glmer` (or `MCMCglmm`) are probably the best quick alternatives. If you need to explore alternatives (different variance-mean relationships, different distributions), then ADMB, TMB, WinBUGS, Stan are the most flexible alternatives.
 
 ## Gamma GLMMs
 
-While one (well, ok I) would naively think that GLMMs with Gamma distributions would be just as easy (or hard) as any other sort of GLMMs, it seems that they are in fact harder to implement (or at least not yet thoroughly/stably working in lme4). Basic simulated examples of Gamma GLMMs can fail in lme4 despite analogous problems with Poisson, binomial, etc. distributions.  Solutions:
-- the default inverse link seems particularly problematic; try other links if that is possible/makes sense
+While one (well, OK I) would naively think that GLMMs with Gamma distributions would be just as easy (or hard) as any other sort of GLMMs, it seems that they are in fact harder to implement (or at least not yet thoroughly/stably working in lme4). Basic simulated examples of Gamma GLMMs can fail in lme4 despite analogous problems with Poisson, binomial, etc. distributions.  Solutions:
+- the default inverse link seems particularly problematic; try other links (especially `family=Gamma(link="log")`) if that is possible/makes sense
 - consider whether a lognormal model (i.e. a regular LMM on logged data) would work/makes sense
 
-- glmmPQL
+- `glmmPQL`
 - glmmADMB
 - other packages (WinBUGS) etc. ?
 - gamlssNP?
@@ -165,11 +166,12 @@ While one (well, ok I) would naively think that GLMMs with Gamma distributions w
 
 ### Count data
 
-- MCMCglmm handles zero-truncated, zero-inflated, and zero-altered models, although specifying the models is a little bit tricky: see Sections 5.3 to 5.5 of the "CourseNotes" vignette
-- glmmADMB handles 
+- `MCMCglmm` handles zero-truncated, zero-inflated, and zero-altered models, although specifying the models is a little bit tricky: see Sections 5.3 to 5.5 of the "CourseNotes" vignette
+- `glmmADMB` handles 
   - zero-inflated models (with a single zero-inflation parameter -- i.e., the level of zero-inflation is assumed constant across the whole data set)
   - truncated Poisson and negative binomial distributions (which allows two-stage fitting of hurdle models)
-- gamlssNP in the gamlss.mx package should handle zero-inflation, and the gamlss.tr package should handle truncated (i.e. hurdle) models -- but I haven't tried them
+- `glmmTMB` ... ? 
+- `gamlssNP` in the `gamlss.mx` package should handle zero-inflation, and the gamlss.tr package should handle truncated (i.e. hurdle) models -- but I haven't tried them
 - roll-your-own: ADMB/R2admb, WinBUGS/R2WinBUGS ... 
 
 ### Continuous data
@@ -364,8 +366,8 @@ There is an [R FAQ entry](http://cran.r-project.org/doc/FAQ/R-FAQ.html#Why-are-p
 - Note that there are several different issues at play in finite-size (small-sample) adjustments, which apply slightly differently to LMMs and GLMMs.  
 - When the responses are normally distributed and the design is balanced, nested etc. (i.e. the classical LMM situation), the scaled deviances and differences in deviances are exactly F-distributed and looking at the experimental design (i.e., which treatments vary/are replicated at which levels) tells us what the relevant degrees of freedom are.
 - When the data are not classical (crossed, unbalanced, R-side effects), we might still guess that the deviances etc. are approximately F-distributed but that we don't know the real degrees of freedom -- this is what the Satterthwaite, Kenward-Roger, Fai-Cornelius, etc. approximations are supposed to do.  
-- When the responses are not normally distributed (as in GLMs and GLMMs), and when the scale parameter is not estimated (as in standard Poisson- and binomial-response models), then the deviance differences are only asymptotically F- or chi-square-distributed (i.e. not for our real, finite-size samples).  In standard GLM practice, we usually ignore this problem; there is some literature on finite-size corrections for GLMs under the rubrics of "Bartlett corrections" and "higher order asymptotics" (see McCullagh and Nelder, work by Cordeiro, and the cond package on CRAN [which works with GLMs, not GLMMs]), but it's rarely used.  (The bias correction/Firth approach implemented in the brglm package attempts to address the problem of finite-size bias, not finite-size non-chi-squaredness of the deviance differences.)
-    - When the scale parameter in a GLM is estimated rather than fixed (as in Gamma or quasi-likelihood models), it is sometimes recommended to use an F test to account for the uncertainty of the scale parameter (e.g. Venables and Ripley recommend `anova(...,test="F")` for quasi-likelihood models)
+- When the responses are not normally distributed (as in GLMs and GLMMs), and when the scale parameter is not estimated (as in standard Poisson- and binomial-response models), then the deviance differences are only asymptotically F- or chi-square-distributed (i.e. not for our real, finite-size samples).  In standard GLM practice, we usually ignore this problem; there is some literature on finite-size corrections for GLMs under the rubrics of "Bartlett corrections" and "higher order asymptotics" (see @McCullaghNelder1989, @cordeiro_improved_1994, @cordeiro_note_1988 and the `cond` package ([on CRAN](https://cran.r-project.org/web/packages/cond/index.html)) [which works with GLMs, not GLMMs]), but it's rarely used.  (The bias correction/Firth approach implemented in the `brglm` package attempts to address the problem of finite-size bias, not finite-size non-chi-squaredness of the deviance differences.)
+    - When the scale parameter in a GLM is estimated rather than fixed (as in Gamma or quasi-likelihood models), it is sometimes recommended to use an $F$ test to account for the uncertainty of the scale parameter (e.g. @venables_modern_2002 recommend `anova(...,test="F")` for quasi-likelihood models)
     - Combining these issues, one has to look pretty hard for information on small-sample or finite-size corrections for GLMMs: @feng_small_2004 and @bell_small_2010 look like good starting points, but it's not at all trivial.
 - Because the primary authors of `lme4` are not convinced of the utility of the general approach of testing with reference to an approximate null distribution, and because of the overhead of anyone else digging into the code to enable the relevant functionality (as a patch or an add-on), this situation is unlikely to change in the future.
 
@@ -638,7 +640,7 @@ $\Omega^2_0$ [@xu_measuring_2003], which is almost the same, is based on compari
 #### Sophisticated solutions
 
 @gelman_bayesian_2006 propose/discuss Bayesian measures of $R^2$ (I don't know if anyone has created a canned implementation of these measures in R).
-@nakagawa_general_2013 and @johnson_extension_2014 have also proposed a general methodology for computing $R^2$; J. Lefcheck gives examples [here](https://jonlefcheck.net/2013/03/13/r2-for-linear-mixed-effects-models/) and [here](https://github.com/jslefche/piecewiseSEM/blob/master/README.md#get-r2-for-individual-models), based on his implementation in the `piecewiseSEM` package ([CRAN](https://cran.r-project.org/web/packages/piecewiseSEM/index.html), [Github](https://github.com/jslefche/piecewiseSEM)).
+@nakagawa_general_2013 and @johnson_extension_2014 have also proposed a general methodology for computing $R^2$; J. Lefcheck gives examples [here](https://jonlefcheck.net/2013/03/13/r2-for-linear-mixed-effects-models/) and [here](https://github.com/jslefche/piecewiseSEM/blob/master/README.md#get-r2-for-individual-models), based on his implementation in the `piecewiseSEM` package ([CRAN](https://cran.r-project.org/web/packages/piecewiseSEM/index.html), [Github](https://github.com/jslefche/piecewiseSEM)). There is also an [r2 function](http://finzi.psych.upenn.edu/R/library/sjmisc/html/r2.html) in the [sjmisc package](https://cran.r-project.org/web/packages/sjmisc/index.html).
 
 A related question is how to quantify "repeatability" (i.e., ratios of variance at different levels) in GLMMs, especially how to compute the "residual error" term for GLMMs: see @nakagawa_repeatability_2010 and the [rptR package](http://rptr.r-forge.r-project.org/).
 
@@ -794,14 +796,14 @@ The following is modified from a contribution by Kingsford Jones, found 2010-03-
 
 ## Off-CRAN mixed modeling packages:
 
-### R-forge:
-- glmmADMB (R-forge, interface to AD Model Builder)
-- R2admb (R-forge; roll your own model file)
-- spida, p3d (Georges Monette)
+### R-forge and Github:
+
+- `glmmADMB` (R-forge, interface to AD Model Builder)
+- `spida`, `p3d` (Georges Monette)
 
 ### Other open source:
 - [bernor](http://www.stat.umn.edu/geyer/bernor/ bernor) package (logit-normal fitting), by Yun Ju Sung and Charles J. Geyer
-- glmm (in Jim Lindsey's `repeated` package: at [Lindsey's web site](http://www.commanster.eu/rcode.html)
+- `glmm` (in Jim Lindsey's `repeated` package: at [Lindsey's web site](http://www.commanster.eu/rcode.html)
 
 
 ### Commercial:
