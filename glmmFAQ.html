@@ -117,7 +117,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">GLMM FAQ</h1>
 <h4 class="author"><em>Ben Bolker and others</em></h4>
-<h4 class="date"><em>16:56 24 June 2016</em></h4>
+<h4 class="date"><em>20:31 30 June 2016</em></h4>
 
 </div>
 
@@ -755,7 +755,6 @@ g0 + geom_linerange(aes(ymin=pred-cmult*SE2,ymax=pred+cmult*SE2), position=pd) <
 <p>Current versions of lme4 have a <code>predict</code> method.</p>
 <pre class="r"><code>library(&quot;lme4&quot;)</code></pre>
 <pre><code>## Loading required package: Matrix</code></pre>
-<pre><code>## Loading required package: methods</code></pre>
 <pre><code>## 
 ## Attaching package: 'lme4'</code></pre>
 <pre><code>## The following object is masked from 'package:nlme':
@@ -898,7 +897,7 @@ cV &lt;- ranef(fm1, condVar = TRUE)   </code></pre>
 </div>
 <div id="sophisticated-solutions" class="section level4">
 <h4>Sophisticated solutions</h4>
-<p><span class="citation">Gelman and Pardoe (2006)</span> propose/discuss Bayesian measures of <span class="math inline">\(R^2\)</span> (I don’t know if anyone has created a canned implementation of these measures in R). <span class="citation">Nakagawa and Schielzeth (2013)</span> and <span class="citation">Johnson (2014)</span> have also proposed a general methodology for computing <span class="math inline">\(R^2\)</span>; J. Lefcheck gives examples <a href="https://jonlefcheck.net/2013/03/13/r2-for-linear-mixed-effects-models/">here</a> and <a href="https://github.com/jslefche/piecewiseSEM/blob/master/README.md#get-r2-for-individual-models">here</a>, based on his implementation in the <code>piecewiseSEM</code> package (<a href="https://cran.r-project.org/web/packages/piecewiseSEM/index.html">CRAN</a>, <a href="https://github.com/jslefche/piecewiseSEM">Github</a>). There is also an <a href="http://finzi.psych.upenn.edu/R/library/sjmisc/html/r2.html">r2 function</a> in the <a href="https://cran.r-project.org/web/packages/sjmisc/index.html">sjmisc package</a>.</p>
+<p><span class="citation">Gelman and Pardoe (2006)</span> propose/discuss Bayesian measures of <span class="math inline">\(R^2\)</span> (I don’t know if anyone has created a canned implementation of these measures in R). <span class="citation">Nakagawa and Schielzeth (2013)</span> and <span class="citation">Johnson (2014)</span> have also proposed a general methodology for computing <span class="math inline">\(R^2\)</span>; J. Lefcheck gives examples <a href="https://jonlefcheck.net/2013/03/13/r2-for-linear-mixed-effects-models/">here</a> and <a href="https://github.com/jslefche/piecewiseSEM/blob/master/README.md#get-r2-for-individual-models">here</a>, based on his implementation in the <code>piecewiseSEM</code> package (<a href="https://cran.r-project.org/web/packages/piecewiseSEM/index.html">CRAN</a>, <a href="https://github.com/jslefche/piecewiseSEM">Github</a>). There are also several functions that implement these approaches (the <a href="http://finzi.psych.upenn.edu/R/library/sjmisc/html/r2.html">r2 function</a> in the <a href="https://cran.r-project.org/web/packages/sjmisc/index.html">sjmisc package</a> and the <a href="http://www.inside-r.org/packages/cran/MuMIn/docs/r.squaredGLMM">r.squaredGLMM function</a> in the <a href="https://cran.r-project.org/web/packages/MuMIn/index.html">MuMIn package</a>).</p>
 <p>A related question is how to quantify “repeatability” (i.e., ratios of variance at different levels) in GLMMs, especially how to compute the “residual error” term for GLMMs: see <span class="citation">Nakagawa and Schielzeth (2010)</span> and the <a href="http://rptr.r-forge.r-project.org/">rptR package</a>.</p>
 <p>The bottom line is that there are some simple recipes (and some more complex recipes that may or may not have been coded up by someone), but that ‘’’you have to think carefully about what information you want to get out of the coefficient of determination’’’, because no recipe will have all of the properties of <span class="math inline">\(R^2\)</span> in the simple linear model case.</p>
 </div>
@@ -1113,7 +1112,7 @@ withCallingHandlers(tryCatch(fun(n=nvec[j],tau=tauvec[i],...),
 ## [11] LC_MEASUREMENT=en_CA.UTF8 LC_IDENTIFICATION=C      
 ## 
 ## attached base packages:
-## [1] methods   stats     graphics  grDevices utils     datasets  base     
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
 ## [1] lme4_1.1-13     Matrix_1.2-6    ggplot2_2.1.0   nlme_3.1-128   
@@ -1125,7 +1124,7 @@ withCallingHandlers(tryCatch(fun(n=nvec[j],tau=tauvec[i],...),
 ##  [9] stringr_1.0.0    plyr_1.8.4       tools_3.4.0      grid_3.4.0      
 ## [13] gtable_0.2.0     htmltools_0.3.5  yaml_2.1.13      digest_0.6.9    
 ## [17] nloptr_1.0.4     formatR_1.4      evaluate_0.9     labeling_0.3    
-## [21] stringi_1.1.1    scales_0.4.0</code></pre>
+## [21] stringi_1.1.1    compiler_3.4.0   scales_0.4.0</code></pre>
 </div>
 <div id="one-step-dependencies-of-the-lme4-package" class="section level2">
 <h2>One-step dependencies of the lme4 package</h2>
