@@ -97,6 +97,7 @@ Also see [this thread](https://stat.ethz.ch/pipermail/r-sig-mixed-models/2010q2/
 
 ## Overdispersion
 
+<a id="overdispersion"></a>
 ### Testing for overdispersion/computing overdispersion factor
 
 - with the usual caveats, plus a few extras -- counting degrees of freedom, etc. -- the usual procedure of calculating the sum of squared Pearson residuals and comparing it to the residual degrees of freedom should give at least a crude idea of overdispersion.  The following attempt counts each variance or covariance parameter as one model degree of freedom and presents the sum of squared Pearson residuals, the ratio of (SSQ residuals/rdf), the residual df, and the $p$-value based on the (approximately!!) appropriate $\chi^2$ distribution. **Do PLEASE note the usual, and extra, caveats noted here: this is an APPROXIMATE estimate of an overdispersion parameter**. Even in the GLM case, the expected deviance per point equaling 1 is only true as the distribution of individual deviates approaches normality, i.e. the usual $\lambda>5$ rules of thumb for Poisson values and $\textrm{min}(Np, N(1-p)) > 5$ for binomial values (e.g. see @venables_modern_2002, [p. 209](http://books.google.com/books?id=974c4vKurNkC&pg=PA209)). (And that's without the extra complexities due to GLMM, i.e. the "effective" residual df should be large enough to make the sums of squares converge on a $\chi^2$ distribution ...)
@@ -260,6 +261,9 @@ Most of the current advice about troubleshooting `lme4` convergence problems can
 
 - double-check the Hessian calculation with the more expensive Richardson extrapolation method (see examples)
 - restart the fit from the apparent optimum, or from a point perturbed slightly away from the optimum (`getME(model,c("theta","beta"))` should retrieve the parameters in a form suitable to be used as the `start` parameter)
+
+<a id="singular-fit"></a>
+<a id="zero-variance"></a>
 
 ### Singular models: random effect variances estimated as zero, or correlations estimated as +/- 1
 
