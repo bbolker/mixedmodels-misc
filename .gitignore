@@ -1,5 +1,6 @@
-*cache/*
-*_files/*
+*cache/
+*_files/
 figure/
 .Rhistory
 *~
+.#*
