@@ -1,0 +1,6 @@
+{
+  "name": "Mixedmodels-misc",
+  "tagline": "miscellaneous materials for mixed models, mostly in R",
+  "body": "This repository provides a variety of resources I've written, or compiled, about mixed models; the focus is on the tools I help develop and maintain (the `lme4`, `glmmTMB`, and `glmmADMB` packages for R).",
+  "note": "Don't delete this file! It's used internally to help with page regeneration."
+}
