@@ -1,0 +1,4 @@
+cd bib2xhtml-v3.0-15-gf506
+./bib2xhtml -h "GLMM bibliography" -s named -u ../glmm.bib glmmbib.html
+mv glmmbib.html ..
+cd ..
