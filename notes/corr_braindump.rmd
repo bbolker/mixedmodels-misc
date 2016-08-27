@@ -1,0 +1,678 @@
+---
+title: fitting mixed models with (temporal) correlations in R
+date: "`r format(Sys.time(), '%H:%M %d %B %Y')`"
+author: Ben Bolker
+---
+
+## Introduction
+
+This is a brain dump.
+
+Fitting (spatially or temporally) correlated
+data is an important use case for mixed models,
+especially (for example) for longitudinal data.
+While there may be other solutions (e.g. additive
+models, cf. recent Bates papers?), autocorrelated
+error structures seem like a simple, basic tool that
+should be available to people fitting mixed models in R.
+
+We're looking at the standard GLMM formulation:
+
+\newcommand{\X}{\mathbf X}
+\newcommand{\Z}{\mathbf Z}
+\newcommand{\bbeta}{\boldsymbol \beta}
+\newcommand{\bb}{\mathbf b}
+\newcommand{\boldeta}{\boldsymbol \eta}
+$$
+\begin{split}
+Y_i & \sim \textrm{Dist}(\eta_i) \\
+\eta & = \X \bbeta + \Z \bb \\
+\bb & \sim \textrm{MVN}(0,\Sigma)
+\end{split}
+$$
+The tricky part is how we define $\bb$ and $\Sigma$. We want this to be a combination of
+(at least) random intercepts (among-group variation) and autocorrelated residuals within
+groups. Writing $\bb$ out in a different way:
+$$
+\begin{split}
+b_{ij} & = \bb_{0,{ij}} + \epsilon_{ij} \\
+\epsilon_i & \sim \Sigma_{\textrm{AR}} 
+\end{split}
+$$
+where $i$ is the group index, $j$ is the index; $\bb_0$ refers to the
+"other" random effects, and $\Sigma_{\textrm{AR}}$ is the standard autoregressive
+covariance matrix, $\sigma^2 \rho^{j_1-j_2}$
+
+- If the conditional distributions are Gaussian (i.e. a linear rather than a generalized linear mixed model, then `lme` from the recommended `nlme` will fit a variety of correlation structures, via the `correlation` argument.
+- Implementing autocorrelation in Gaussian models with `lme4` is surprisingly tricky, because all of the *easy* ways to extend `lme4` in terms of using the modular structures (see `?modular` or the `lme4ord` package) are "G-side" (based on grouping factors) rather than "R-side" (based on structuring the residual error term). You can do a lot by defining an observation-level random effect (and overriding errors about having the same number of random effects as observations), but because it's impossible to shut off the residual error term or change its value (it is simply estimated from the penalized weighted residual sum of squares that's left over when the model has been fitted), it means that there will always (??) be a "nugget" effect left over, i.e. correlation functions will be of the form $g \cdot \phi(t)$, where $\phi(0)=1$ and $0<g<1$. `lme4` handles LMM and GLMMs completely differently; in principle we could fit Gaussian models either via LMM or via `glmer(.,family=gaussian)`, but the latter is largely untested (at present calling `glmer` with `family=gaussian` and an identity link redirects to `lmer`).
+
+### GLMMs
+
+In principle, we simply define some kind of correlation structure on the random-effects variance-covariance matrix of the latent variables; there is not a particularly strong distinction between a correlation structure on the observation-level random effects and one on some other grouping structure (e.g., if there were a random effect of year (with multiple measurements within each year) it might make sense to give the conditional modes a correlation structure).
+
+### General points
+
+- Flexibility is nice; in particular, we would like to be able to handle the full range of grouping structures along with a range of temporal correlation structures (AR1, exponential/continuous AR1, ARMA, ...)
+
+## Packages
+
+### nlme (lme)
+
+- *advantages*: well documented (Pinheiro and Bates 2000), utility/plotting methods (`ACF` and `plot.ACF`), large variety of correlation structures (`nlme`, `ape`, `ramps` packages).
+```{r findcors,message=FALSE,echo=FALSE,eval=FALSE}
+library(nlme)
+library(ape)
+library(ramps)
+w <- apropos("^cor",where=TRUE)
+w <- w[!names(w) %in% which(search() %in% c("package:brms",".GlobalEnv","package:stats"))]
+pkg <- search()[as.numeric(names(w))]
+names(w) <- pkg
+lapply(split(w,names(w)),function(x) unname(x[!grepl("\\.",x)]))
+```
+In principle we should be able to re-use correlation structures coded as `corStruct`s (e.g. see example below, `lme4ord`), although it is slightly more convenient for our purposes to have the Cholesky factor rather than the inverse-Cholesky factor returned by the `corFactor` method. (The inverse-Cholesky factor is much sparser for many correlation structures; it may be worth figuring out if we can use that to our advantage, although the blocks of the $\Lambda$ matrix we're constructing usually isn't very big anyway.)
+- *disadvantages*: `lme` is slower than `lme4`, doesn't handle crossed random effects as easily or as quickly. Can't handle repeated samples at the same location.
+
+### lme4
+
+Basically what needs to be done is to use correlation parameters (e.g. just $\phi$ for something like an autoregression structure) to generate the values for the Cholesky factor. See example below ...
+
+### MASS::glmmPQL
+
+- properties relatively poorly understood; PQL is known to be least accurate for small effective sample sizes per cluster (i.e. binary data, few observations per cluster)
+
+### lme4/flexLambda branch
+
+This is a branch of `lme4` that is very out of date, but could conceivably be brought up to date; see [here](https://github.com/lme4/lme4/blob/flexLambda/R/flexLmer.R) and [here](https://github.com/lme4/lme4/blob/flexLambda/R/reGenerators.R) for some of the relevant code; `ar1d`, compound-symmetric, and diagonal variance structures were implemented.
+
+### glmmTMB
+
+This is a (still-experimental) package built atop [Template Model Builder](https://cran.r-project.org/web/packages/TMB/index.html). There is code for the AR1 case, but I'm not sure how complete/tested it is.
+
+### lme4ord
+
+Steve Walker's experimental package; on [github](http://stevencarlislewalker.github.io/lme4ord/).
+
+## spaMM
+
+Uses hierarchical GLMs; on [CRAN](https://cran.r-project.org/web/packages/spaMM/index.html);
+[Rousset and Ferdy 2014](http://onlinelibrary.wiley.com/doi/10.1111/ecog.00566/abstract);
+[web page](http://kimura.univ-montp2.fr/~rousset/spaMM.htm).  (Can these do temporal models? I'm sure they
+could be adapted to do so, but it's not obvious.)
+
+## INLA
+
+Uses integrated nested Laplace approximation.  At least in principle
+`f(.,model="ar1")` works.
+
+## brms
+
+Built on Stan; has autocorrelation capabilities (AR, MA, ARMA) via
+an `autocorr` argument.
+
+## Simplest example
+
+### Gaussian
+
+```{r pkgs,message=FALSE}
+library(nlme)
+library(lme4)
+library(lme4ord)
+library(glmmTMB)
+library(brms)
+library(INLA)
+## convenience/manipulation
+library(plyr)
+library(dplyr)
+library(reshape2)
+library(ggplot2); theme_set(theme_bw())
+library(ggstance)
+```
+
+Simulate some data (function definition not shown):
+
+```{r simfun,echo=FALSE}
+simCor1 <- function(phi=0.8,sdgrp=2,sdres=1,
+                    npergrp=20,ngrp=20,
+                    seed=NULL,
+                    ## set linkinv/simfun for GLMM sims
+                    linkinv=identity,
+                    simfun=identity) {
+    if (!is.null(seed)) set.seed(seed)
+    cmat <- sdres*phi^abs(outer(0:(npergrp-1),0:(npergrp-1),"-"))
+    errs <- MASS::mvrnorm(ngrp,mu=rep(0,npergrp),Sigma=cmat)
+    ranef <- rnorm(ngrp,mean=0,sd=sdgrp)
+    d <- data.frame(f=rep(1:ngrp,each=npergrp))
+    eta <- ranef[as.numeric(d$f)] + c(t(errs)) ## unpack errors by row
+    mu <- linkinv(eta)
+    d$y <- simfun(mu)
+    d$tt <- factor(rep(1:npergrp,ngrp))
+    return(d)
+}
+```
+
+```{r sim}
+d <- simCor1(phi=0.8,sdgrp=2,sdres=1,seed=101)
+```
+
+`lme` works pretty well:
+```{r lmefit1}
+(lme_simple_fit <- lme(y~1,random=~1|f,data=d,correlation=corAR1()))
+```
+
+```{r lme_acf,echo=FALSE}
+cs1 <- lme_simple_fit$modelStruct$corStruct
+lme_simple_acfvec <- corMatrix(cs1)[[1]][1,]  ## first row of corr matrix
+```
+
+`glmmTMB` can do this (see notes below about the need for `tt-1` in the `ar1()` term:
+
+```{r glmmTMBfit1}
+glmmTMB_simple_fit <- glmmTMB(y~1 + (1|f) + ar1(tt-1|f), data=d,family=gaussian)
+```
+
+```{r glmmTMB_sum,echo=FALSE}
+## compute summary info
+## second element of VarCorr has autocorrelated bit;
+##   get first column
+get_glmmTMB_acfvec <- function(x) {
+    rawcov <- VarCorr(x)$cond[[2]][,1]
+    totvar <- rawcov[1]+sigma(x)^2
+    return(rawcov/totvar)
+}    
+glmmTMB_simple_acfvec <- get_glmmTMB_acfvec(glmmTMB_simple_fit)
+```
+
+For `lme4`, we start along the lines described in `?modular`:
+
+```{r lme4fit0}
+## process formula (override some sanity checks)
+lmod1 <- lFormula(y ~ (1|f) + (tt-1|f),
+                  data = d,
+                  control=lmerControl(check.nobs.vs.nRE="ignore"))
+## construct deviance function
+devfun <- do.call(mkLmerDevfun,lmod1)
+```
+
+Now we need a function to convert $\{\phi,\sigma\}$ into the
+appropriate Cholesky factor ($\theta$) values (note in this
+case $\sigma$ is the *ratio* of the variance of this term
+to the residual error ... shown in gory detail due to possible
+interest, should (??) generalize to any `corStruct` object,
+although things could get a little trickier when blocks differ
+significantly in their structure ...
+
+```{r thetafun}
+getTheta <- function(phi,sigma,nmax) {
+    ## make corStruct: fake data sequence within a single block
+    cc <- nlme::Initialize(nlme::corAR1(phi),data=data.frame(t=seq(nmax)))
+    ## get inverse Cholesky factor
+    mm <- matrix(nlme::corFactor(cc),nrow=nmax) ## 
+    ## check backsolve() idiom: all.equal(solve(mm),backsolve(mm,diag(nmax),upper.tri=FALSE))
+    mm2 <- backsolve(mm,diag(nmax),upper.tri=FALSE) ## invert ...
+    return(sigma*mm2[lower.tri(mm2,diag=TRUE)])     ## take lower tri & scale by SD
+}
+```
+
+Now we set up a wrapper function to take a `theta` vector consisting
+of $\{\sigma^2_g,\rho,\sigma^2_r\}$, convert it to a full `theta`
+vector, and pass it to our original deviance function:
+```{r devfun2,results="hide"}
+devfun2 <- function(theta,nmax) {
+    new_theta <- getTheta(phi=theta[2],sigma=theta[3],nmax)
+    devfun(c(theta[1],new_theta))
+}
+devfun2(c(1,0.5,1),nmax=20) ## test
+```
+
+Lower/upper limits ((-1,1) for `theta[2]`, the correlation parameter
+(actually (-0.999,0.999); limits need to be strictly (-1,1) or `corAR1` complains ...),
+`(0,Inf)` for the standard deviation parameters.  We use `nloptwrap`
+for convenience (it's good, and it produces output that are particularly convenient to pass
+to `mkMerMod`). (Not quite sure why we need `nmax` explicitly ... ?)
+
+```{r fitlme4}
+opt1 <- lme4::nloptwrap(c(1,0,1),devfun2,
+         lower=c(0,-0.999,0),upper=c(Inf,0.999,Inf),nmax=20)
+```
+
+We can make the result into a regular `merMod` object, but the variance-covariance matrix
+will be printed out in full.
+
+```{r lme4_mkMerMod}
+lme4_simple_fit <- mkMerMod(rho=environment(devfun),
+               opt=opt1,
+               reTrms=lmod1$reTrm,
+               fr=lmod1$fr)
+```
+
+The log-likelihoods for `glmmTMB_simple_fit` and `lme4_simple_fit` are similar (`lme4_simple_fit` is confused about the
+number of parameters ...)
+
+```{r logliks,echo=FALSE}
+c(logLik(glmmTMB_simple_fit),logLik(lme4_simple_fit))
+```
+
+Results match: 
+
+```{r lme4_sum,echo=FALSE}
+## check autocorr computation vs derivation from VarCorr
+sigma0 <- sigma(lme4_simple_fit)
+phi <- lme4_simple_fit@optinfo$val[2]
+sigma1 <- lme4_simple_fit@optinfo$val[3]
+corr1 <- phi^(0:19)
+covar1 <- corr1*(sigma1*sigma0)^2
+realcorr1 <- covar1/totvar
+rawcov <- VarCorr(lme4_simple_fit)[[2]][,1]
+lme4_simple_acfvec <- rawcov/totvar
+stopifnot(all.equal(realcorr1,unname(lme4_simple_acfvec),tolerance=1e-5))
+```
+
+```{r acfvec,echo=FALSE}
+acfvec_list <- list(glmmTMB=glmmTMB_simple_acfvec,
+                    lme4=lme4_simple_acfvec,
+                    lme=lme_simple_acfvec)
+dd_acf <- ldply(acfvec_list,
+                function(x) data.frame(lag=0:(length(x)-1),acf=x),
+                .id="platform")
+ggplot(dd_acf,aes(lag,acf,colour=platform))+geom_line()+
+    scale_colour_brewer(palette="Set1")
+```
+
+The results are all pretty close in terms of parameter values:
+
+```{r acfpars,echo=FALSE}
+dd_acf %>% group_by(platform) %>%
+    ## expected: 1, phi, phi^2, phi^3, phi^4
+    ## vs: 1-nugget, (1-nugget)*phi, (1-nugget)*phi^2
+    ## retrieving nugget/phi:
+    ## 
+    dplyr::summarise(phi=acf[2]/acf[1],
+              nugget=1-acf[1])
+```
+
+`glmmPQL` results look essentially identical to `lme` ...
+
+```{r glmmPQL1,results="hide"}
+MASS::glmmPQL(y~1,random=~1|f,data=d,
+              family=gaussian,
+              correlation=corAR1(),verbose=FALSE)
+```
+
+INLA ...
+```{r INLA}
+d$f2 <- d$f ## hack for INLA; needs unique names
+inla_simple_fit <- inla(y~1+f(f,model="iid")+f(tt,model="ar1",replicate=f),data=d,
+                        family="gaussian")
+```
+I *think* this is right (based on docs [here](http://www.r-inla.org/models/tools)),
+but I can't figure out how to extract the parameters ...
+
+`brms` ...
+
+```{r brmfit,cache=TRUE,results="hide",message=FALSE}
+m3 <- brm(y~1+(1|f),data=d,autocor=cor_ar(formula = ~1, p = 1, cov = FALSE))
+```
+
+```{r brm_pars,echo=FALSE}
+brm_pars <- broom::tidy(m3$fit) %>% filter(!grepl("^r_",term))
+## ugh
+ar_est <- unlist(c(brm_pars %>% filter(term=="ar[1]") %>% select(estimate)))
+ar_se <- unlist(c(brm_pars %>% filter(term=="ar[1]") %>% select(std.error)))
+
+```
+This gives an estimate for $\phi$ of `r round(ar_est,3)` (with a standard error
+of `r round(ar_se,3)` ...
+
+How does `lme4ord` do in this case?
+```{r lme4ord_attempt}
+corObj <- nlme:::Initialize(nlme:::corAR1(0, form = ~ 1|f), d)
+form1 <- y ~ 1 + (1|f) + nlmeCorStruct(1|f, corObj)
+form2 <- y ~ 1 + (1|f) + nlmeCorStruct(1|f, corObj=corObj)
+## next one is copied/adapted from lme4ord vignette ...
+form3 <- y ~ 1 + (1|f) + nlmeCorStruct(1, corObj = corObj, sig = 1)
+form4 <- y ~ 1 + (1|f) + nlmeCorStruct(1, corObj=corObj)
+lme4ord_simple_fit <- strucGlmer(form4, family=gaussian, data=d)
+## form1: no applicable method for 'corFactor' applied to an object of class "NULL"
+## form2: Cholmod error 'A and B inner dimensions must match' ...
+## form4: hangs ...
+```
+
+```{r lme4ord_cor,echo=FALSE}
+## get corr params from an lme4ord object (ugh)
+getCorPar <- function(x,unconstr=FALSE) {
+    transEnv <- environment(x$parsedForm$random$NA.nlmeCorStruct$Lambdat$trans)
+    corObj <- transEnv$object
+    return(coef(corObj,unconstr=unconstr))
+}    
+```
+
+Can't quite figure out what I'm doing here -- taking stabs in the dark.
+The one that works might not be correct - it gives $\phi=`r round(getCorPar(lme4ord_simple_fit),3)`$ -
+maybe it's ignoring
+the grouping structure?
+
+## GLMM example?
+
+```{r lme4_fitfun,echo=FALSE}
+## ugh! the point was just to make a 'simple' version ...
+## suggests lme4 needs some refactoring!
+ar1_glmer <- function(form,data,family,nAGQ=1) {
+    glmod <- glFormula(form,data=data,family=family)
+    nmax <- length(glmod$reTrms$cnms[[2]])  ## hack ...
+    devfun <- do.call(mkGlmerDevfun,c(glmod,list(nAGQ=0)))
+    ## fine so far.
+    ## for AGQ=0 step ...
+    devfun2 <- function(theta) {
+        new_theta <- getTheta(phi=theta[2],sigma=theta[3],nmax)
+        devfun(c(theta[1],new_theta))
+    }
+    library(minqa)
+    ## optimizeGlmer is a bit of a nuisance (doesn't allow upper bounds,
+    ##  extracts stuff from rho$ ...)
+    opt1 <- lme4:::optwrap(bobyqa,fn=devfun2,par=c(1,0,1),
+                   lower=c(0,-0.999,0),
+                   upper=c(Inf,0.999,Inf),
+                   control=list(),
+                   adj=TRUE) ## bobyqa setting tweaks
+    rho <- environment(devfun)
+    rho$nAGQ <- nAGQ
+    rho$control <- attr(opt1,"control")
+    devfun <- updateGlmerDevfun(devfun, glmod$reTrms)
+    devfun2 <- function(pars,nmax=20) {
+        new_theta <- getTheta(phi=pars[2],sigma=pars[3],nmax)
+        devfun(c(pars[1],new_theta,pars[-(1:3)]))
+    }
+    nfix <- ncol(glmod$X)
+    lower <- c(0,-0.999,0,rep(-Inf,nfix))
+    rho$lower <- lower
+    ## devfun2(c(opt1$par,-0.1))        
+    ## devfun2(c(opt1$par,0))        
+    ## devfun2(c(opt1$par,0.1))        
+    opt2 <- lme4:::optwrap(bobyqa,fn=devfun2,
+                          par=c(opt1$par,rep(0,nfix)),
+                          lower=lower,
+                          upper=c(Inf,0.999,Inf,rep(Inf,nfix)),
+                          control=list(),
+                          adj=TRUE) ## bobyqa setting tweaks
+    rho$resp$setOffset(rho$baseOffset)
+    res <- mkMerMod(rho=rho,
+               opt=opt2,
+               reTrms=glmod$reTrm,
+               fr=glmod$fr)
+    ## hack fixed effects
+    res@beta <- tail(opt2$par,nfix)
+    return(res)
+}
+```
+
+Add a Poisson-distributed sampling layer atop the existing structure:
+
+```{r mkpoiss}
+dp <- simCor1(phi=0.8,sdgrp=2,sdres=1,seed=101,
+              linkinv=exp,simfun=function(x) rpois(length(x),lambda=x))
+```
+
+```{r pois_glmmPQL}
+MASS::glmmPQL(y~1,random=~1|f,data=dp,
+              family=poisson,
+              correlation=corAR1(),verbose=FALSE)
+```
+
+In this case `glmmPQL` doesn't do anything insane, but:
+$\phi$ (autocorr parameter) doesn't match what we
+started with, but maybe this is just an issue of
+definitions (marginal vs conditional autocorrelation) ?
+
+`lme4ord` works reasonably well:
+```{r lme4ord_pois,cache=TRUE}
+corObj <- nlme:::Initialize(nlme:::corAR1(0, form = ~ 1|f), d)
+lme4ord_pois_fit <- strucGlmer(y ~ 1 + (1|f)+nlmeCorStruct(1, corObj = corObj, sig = 1),
+           family=poisson,
+           data=dp)
+```
+
+I'm not actually sure whether I'm specifying the model correctly here,
+but the $\phi$ estimate 
+(`r round(getCorPar(lme4ord_pois_fit),3)`) is reasonable, and the output is reasonably pretty (although getting the $\phi$ parameter out programmatically is a hassle, and the `summary` method needs work to include all the information given in the `print` method ...):
+```{r lme4ord_pois_display}
+print(lme4ord_pois_fit)
+```
+
+
+A hacked-up version of `glmer` (code hidden - I needed a few dozen lines of code, which seems harder than it should be) gets the same answer.
+
+```{r glmer_poishackfit}
+glmer_pois_fit <- ar1_glmer(y ~ (1|f) + (tt-1|f),data=dp,family=poisson)
+```
+$\phi=`r round(glmer_pois_fit@optinfo$val[2],3)`$
+
+Seems hard to get confidence intervals on the profile (`lme` provides back-transformed Wald intervals from the unconstrained scale) for either of these examples. This is a definite hole, but in the meantime I'll just get point estimates for an ensemble of simulations (i.e., are we getting estimates that are reasonably unbiased and reasonably precise relative to the true values?)
+
+```{r ar1simplot2,echo=FALSE,fig.height=8}
+r <- readRDS("lme4ord_poissim1.rds")
+r2 <- melt(ldply(r,as.data.frame,.id="cor"),id.var="cor")
+ncor <- length(levels(r2$cor))
+truevals <- expand.grid(cor=levels(r2$cor),variable=levels(r2$variable))
+truevals$value <- c(rep(4,ncor),rep(1,ncor),as.numeric(levels(r2$cor)))
+print(ggplot(r2,aes(value,cor))+geom_violinh(fill="gray")+
+      geom_point(data=truevals)+
+    facet_wrap(~variable,scale="free",ncol=1))
+```
+
+```{r glmmTMB_pois}
+glmmTMB_pois_fit <- glmmTMB(y~1 + (1|f) + ar1(tt-1|f), data=dp,
+                            family=poisson)
+```
+$\phi$ is approximately `r round(VarCorr(glmmTMB_pois_fit)$cond[[2]][2,1],3)` (matches the others).
+
+Trying `brms::brm()` gives
+"Error: ARMA effects for family poisson are not yet implemented"
+
+
+## Technical notes
+
+
+- Need to remember to put in the `(1|f)` (group/IID) term as well as the autoregressive
+term (with AR only, this should match the fit of `gls(y~1,correlation=corAR1(~1|f))` but
+does *not* match the way we simulated the data ...
+- If we use `ar1(tt|f)`, with `glmmTMB`
+we get a warning message ("AR1 not meaningful with intercept").
+*This is important*; it made me aware of a similar mistake I was making previously with my `lmer` hack
+below. Since `lme4` uses unstructured (i.e. general positive-definite) variance-covariance
+matrices by default, it normally doesn't matter how you parameterize the contrasts for
+a categorical variable -- the model fit/predications are invariant to linear transformations.
+This is no longer true when we use structured variance-covariance matrices (!), so we need
+`(tt-1|f)` rather than `(tt|f)` ...
+- We could gain slightly more efficiency out of the `lme4` hack by
+(1) manipulating `Lind` to account for the small number of *unique* values in
+the variance-covariance matrix; (2) writing code to get the unique values of the
+Cholesky factor of the AR1 matrix directly, rather than having to invert the
+inverse-Cholesky factor.
+- Could also consider fitting the correlation parameters on the logit scale ... although
+this is inconsistent with the way we fit the other variance-cov parameters (i.e. on simply bounded,
+not transformed, scale)
+
+## To do
+
+- finish simple Poisson GLMM example
+- see how far we can get through P&B `Ovary` data-set example (below)
+- other examples ... ?
+
+**Everything below here is more or less junk at the moment, but I'm keeping it in for now**
+
+## Harder example
+
+Using one of the examples from Pinheiro and Bates (`?Ovary`):
+
+```{r}
+plot(Ovary)
+```
+
+So far these `lme` and `lmer` fits are identical (no correlations yet) ...
+```{r}
+fm1Ovar.lme <- lme(follicles ~ sin(2*pi*Time) + cos(2*pi*Time),
+                   data = Ovary, random = pdDiag(~sin(2*pi*Time)))
+fm1Ovar.lmer <- lmer(follicles ~ sin(2*pi*Time) + cos(2*pi*Time)+
+                        (1+sin(2*pi*Time)||Mare),
+                    data = Ovary)
+all.equal(fixef(fm1Ovar.lme),fixef(fm1Ovar.lmer))
+all.equal(logLik(fm1Ovar.lme),logLik(fm1Ovar.lmer))
+all.equal(unname(as.numeric(VarCorr(fm1Ovar.lme)[,"StdDev"])),
+          unname(as.data.frame(VarCorr(fm1Ovar.lmer))[,"sdcor"]),
+          tolerance=1e-7)
+```
+
+What is the ACF?
+```{r}
+plot(ACF(fm1Ovar.lme),alpha=0.05)
+```
+
+Fitting with correlation in `lme` is easy:
+
+```{r}
+fm2Ovar.lme <- update(fm1Ovar.lme, correlation = corAR1())
+plot(ACF(fm2Ovar.lme,resType="normalized"),alpha=0.05)
+```
+
+How do we do this by hand in `lme4`?
+
+Add time-within-Mare factor `tt` to data:
+```{r}
+library(plyr)
+Ovary2 <- ddply(Ovary,"Mare",
+      mutate,
+      tt=factor(seq_along(Time)))
+```
+
+Use the stuff from `?modular` (have to override identifiability check):
+
+```{r}
+lmod <- lFormula(follicles ~ sin(2*pi*Time) + cos(2*pi*Time)+
+                        (0+sin(2*pi*Time)|Mare)+(0+tt|Mare),
+               data = Ovary2,
+               control=lmerControl(check.nobs.vs.nRE="ignore"))
+## check RE structure ...
+lmod$reTrm$cnms
+devfun <- do.call(mkLmerDevfun,lmod)
+```
+
+Now we need a function to convert $\{\phi,\sigma\}$ into the
+appropriate Cholesky factor ($\theta$) values (note in this
+case $\sigma$ is the *ratio* of the variance of this term
+to the residual error ...
+
+```{r}
+getTheta <- function(phi,sigma,nmax=31) {
+    cc <- Initialize(corAR1(phi),data=data.frame(t=seq(nmax)))
+    ## get inverse Cholesky factor
+    mm <- matrix(corFactor(cc),nrow=nmax) ## 
+    ## all.equal(solve(mm),backsolve(mm,diag(nmax),upper.tri=FALSE))
+    ## invert ...
+    mm2 <- backsolve(mm,diag(nmax),upper.tri=FALSE)
+    return(sigma*mm2[lower.tri(mm2,diag=TRUE)])
+}
+```
+
+```{r}
+devfun2 <- function(theta) {
+    new_theta <- c(theta[1],getTheta(theta[2],theta[3]))
+    devfun(new_theta)
+}
+devfun2(c(1,0.5,1))
+```
+
+It's not important at this point, but we could gain slightly more efficiency by
+(1) manipulating `Lind` to account for the small number of *unique* values in
+the variance-covariance matrix; (2) writing code to get the unique values of the
+Cholesky factor of the AR1 matrix directly, rather than having to invert the
+inverse-Cholesky factor.
+
+Lower/upper limits ((-1,1) for theta(1), (0,Inf) for theta[2], (0,Inf) for theta(3))
+(limits need to be strictly (-1,1) or `corAR1` complains ...)
+
+```{r}
+opt1 <- minqa::bobyqa(c(1,0,1),devfun2,lower=c(0,-0.999,0),upper=c(Inf,0.999,Inf))
+opt2 <- lme4::nloptwrap(c(1,0,1),devfun2,lower=c(0,-0.999,0),upper=c(Inf,0.999,Inf))
+all.equal(opt1$fval,opt2$fval)
+```
+
+We can make the result into a regular `merMod` object, but the variance-covariance matrix
+will be printed out in full. (It turns out that `opt2` is in a slightly more convenient
+format for `mkMerMod` ...)
+```{r}
+res <- mkMerMod(rho=environment(devfun),
+               opt=opt2,
+               reTrms=lmod$reTrm,
+               fr=lmod$fr)
+```
+
+```{r echo=FALSE,results="markup"}
+cap <- capture.output(print(res))
+cap_abb <- c(cap[1:8],"... [rows skipped] ...",paste(substr(cap[35:36],1,50),"..."),
+             cap[c(37,105:length(cap))])
+cat(cap_abb,sep="\n")
+```
+
+Retrieve autocorrelation function. We could get `rho <- res@optinfo$val[2]`
+
+```{r}
+sigma0 <- sigma(res)            ## resid var
+acovf <- VarCorr(res)[[2]][,1]  ## first row of var-cov matrix
+acfvec1 <- acovf/(acovf[1]+sigma0^2)  ## scale by *total* resid variance
+cs1 <- fm2Ovar.lme$modelStruct$corStruct
+acfvec2 <- corMatrix(cs1)[[1]][1,]  ## first row of corr matrix
+aa <- ACF(fm2Ovar.lme)
+par(las=1,bty="l")
+plot(ACF~lag,data=aa,log='y')
+matlines(0:14,cbind(acfvec1[1:length(acfvec2)],acfvec2)[1:15,])
+```
+
+Hmm: `lme` solution looks better on the face of it, but the log-likelihood
+of the `lme4` solution is higher (which would make sense since the model
+has an additional nugget parameter). I wonder what I screwed up?
+Did I miss a variance term somewhere?
+
+- can we use a `corExp()` (spatial) correlation matrix with `nugget=TRUE`, or is that just bogus??
+- use `broom`/`dotwhisker` to compare parameters across solutions? (`tidy.lme` needs work, also
+needs options to return corr/weight parameters as part of the result ...)
+- another, potentially more efficient, way to code an AR1 model is by messing with the $Z$ matrix; in particular,
+we code the model as $\y_i = \dots + $\sum \phi^{i=0} \epsilon_{t-i}$, where the $\epsilon_{t-i}$ are *independent*
+(I'm not sure about the consequences of truncating the infinite series here; for MA models this approach is exact,
+and more efficient because our matrices are sparser ...)
+We need a separate sequence of $\epsilon$ values for each group.
+Hmm ... this doesn't work that well
+
+### lme4ord
+
+```{r}
+library(lme4ord)
+corObj <- nlme:::Initialize(nlme:::corAR1(0, form = ~ 1|Mare), Ovary)
+## lme4ord can't handle as much within formulas? or formula processing
+## screws things up?
+Ovary3 <- transform(Ovary,sin2pit=2*pi*Time)
+try(strucGlmer(follicles~ sin(2*pi*Time) + cos(2*pi*Time)+
+               (1+sin2pit||Mare)+
+               nlmeCorStruct(1, corObj = corObj, sig = 1),
+           data=Ovary3))
+```
+
+## kronecker games
+
+We want to know the relationship between chol(kron(m1,m2)) and chol(m1),chol(m2) ...
+"three minutes' thought would suffice to find this out, but thought is irksome
+and three minutes is a long time". So let's
+```{r}
+set.seed(101)
+## make some cholesky factors
+c2 <- c1 <- matrix(0,3,3)
+c1[lower.tri(c1,diag=TRUE)] <- rnorm(6)
+c2[lower.tri(c2,diag=TRUE)] <- rnorm(6)
+## multiply them up to pos-def matrices
+m1 <- tcrossprod(c1)
+m2 <- tcrossprod(c2)
+## ignore signs completely for now ...
+all.equal(abs(c1),abs(t(chol(m1))))
+## check what we want to know 
+all.equal(chol(kronecker(m1,m2)),kronecker(chol(m1),chol(m2)))
+```
+
