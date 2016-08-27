@@ -1,4 +1,7 @@
-
+---
+author: Ben Bolker
+title: "efficiently fitting many mixed models with different fixed effects in `lme4`"
+---
 ```{r pkg,message=FALSE}
 library("lme4")
 ```
