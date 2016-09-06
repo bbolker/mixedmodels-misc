@@ -1,0 +1,6 @@
+*cache/
+*_files/
+figure/
+.Rhistory
+*~
+.#*
