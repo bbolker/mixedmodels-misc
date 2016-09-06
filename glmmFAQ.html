@@ -117,7 +117,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">GLMM FAQ</h1>
 <h4 class="author"><em>Ben Bolker and others</em></h4>
-<h4 class="date"><em>16:11 06 September 2016</em></h4>
+<h4 class="date"><em>16:17 06 September 2016</em></h4>
 
 </div>
 
@@ -127,9 +127,11 @@ $(document).ready(function () {
 <li><a href="#model-definition">Model definition</a><ul>
 <li><a href="#model-specification">Model specification</a></li>
 <li><a href="#should-i-treat-factor-xxx-as-fixed-or-random">Should I treat factor xxx as fixed or random?</a></li>
+<li><a href="#nested-or-crossed">Nested or crossed?</a></li>
 </ul></li>
 <li><a href="#model-extensions-overdispersion-zero-inflation">Model extensions (overdispersion, zero-inflation, …)</a><ul>
 <li><a href="#overdispersion">Overdispersion</a><ul>
+<li><a href="#testing-for-overdispersioncomputing-overdispersion-factor">Testing for overdispersion/computing overdispersion factor</a></li>
 <li><a href="#fitting-models-with-overdispersion">Fitting models with overdispersion?</a></li>
 </ul></li>
 <li><a href="#gamma-glmms">Gamma GLMMs</a></li>
@@ -209,7 +211,7 @@ $(document).ready(function () {
 
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
-<p>This is an informal FAQ list for the <code>r-sig-mixed-models</code> mailing list (the mailing list is at <code>r-sig-mixed-models@r-project.org</code>, with <a href="http://news.gmane.org/gmane.comp.lang.r.lme4.devel/">Gmane archives</a> available as well). There is a previous version posted on <a href="http://glmm.wikidot.com/faq">wikidot.com</a>, but I am getting tired of maintaining it in that format. The source code of this document is available at <a href="https://github.com/bbolker/mixedmodels-misc/blob/master/glmmFAQ.rmd" class="uri">https://github.com/bbolker/mixedmodels-misc/blob/master/glmmFAQ.rmd</a> ; a rendered (HTML) version lives at <a href="http://tinyurl.com/glmmFAQ" class="uri">http://tinyurl.com/glmmFAQ</a> .</p>
+<p>This is an informal FAQ list for the <code>r-sig-mixed-models</code> mailing list (the mailing list is at <code>r-sig-mixed-models@r-project.org</code>, with <a href="http://news.gmane.org/gmane.comp.lang.r.lme4.devel/">Gmane archives</a> available as well). There is a previous version posted on <a href="http://glmm.wikidot.com/faq">wikidot.com</a>, but I am getting tired of maintaining it in that format. The source code of this document is available at <a href="https://github.com/bbolker/mixedmodels-misc/blob/master/glmmFAQ.rmd" class="uri">https://github.com/bbolker/mixedmodels-misc/blob/master/glmmFAQ.rmd</a>; a rendered (HTML) version lives at <a href="http://tinyurl.com/glmmFAQ" class="uri">http://tinyurl.com/glmmFAQ</a>.</p>
 <p>The most commonly used functions for mixed modeling in R are - <em>linear mixed models</em>: <code>aov()</code>, <code>nlme::lme</code><a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>, <code>lme4::lmer</code>; - <em>generalized linear mixed models</em> (GLMMs): <code>MASS::glmmPQL</code>, <code>lme4::glmer</code>, <code>MCMCglmm::MCMCglmm</code>; - <em>nonlinear mixed models</em>: <code>nlme::nlme</code>, <code>lme4::nlmer</code>.</p>
 <p><strong>DISCLAIMERS:</strong></p>
 <ul>
@@ -305,7 +307,10 @@ $(document).ready(function () {
 <p>Some researchers (who treat fixed vs random as a philosophical rather than a pragmatic decision) object to this approach.</p>
 <p>Treating factors with small numbers of levels as random will in the best case lead to very small and/or imprecise estimates of random effects; in the worst case it will lead to various numerical difficulties such as lack of convergence, zero variance estimates, etc.. (A small <a href="http:/rpubs.com/bbolker/4187">simulation exercise</a> shows that at least the estimates of the standard deviation are downwardly biased in this case; it’s not clear whether/how this bias would affect the point estimates of fixed effects or their estimated confidence intervals.) In the classical method-of-moments approach these problems may not arise (because the sums of squares are always well defined as long as there are at least two units), but the underlying problems of lack of power are there nevertheless.</p>
 <p>Also see <a href="https://stat.ethz.ch/pipermail/r-sig-mixed-models/2010q2/003709.html">this thread</a> on the r-sig-mixed-models mailing list.</p>
-<p><a id="nested_vs_crossed"></a> ## Nested or crossed?</p>
+<p><a id="nested_or_crossed"></a></p>
+</div>
+<div id="nested-or-crossed" class="section level2">
+<h2>Nested or crossed?</h2>
 <ul>
 <li>Relatively few mixed effect modeling packages can handle crossed random effects, i.e. those where one level of a random effect can appear in conjunction with more than one level of another effect. (This definition is confusing, and I would happily accept a better one.) A classic example is crossed temporal and spatial effects. If there is random variation among temporal blocks (e.g. years) ‘’and’‘random variation among spatial blocks (e.g. sites),’‘and’‘if there is a consistent year effect across sites and’‘vice versa’’, then the random effects should be treated as crossed.</li>
 <li><code>lme4</code> does handled crossed effects, efficiently; if you need to deal with crossed REs in conjunction with some of the features that <code>nlme</code> offers (e.g. heteroscedasticity of residuals via <code>weights</code>/<code>varStruct</code>, correlation of residuals via <code>correlation</code>/<code>corStruct</code>, see p. 163ff of <span class="citation">Pinheiro and Bates (2000)</span> (section 4.2.2: <a href="http://tinyurl.com/crossedRE">Google books link</a>)</li>
@@ -318,7 +323,9 @@ $(document).ready(function () {
 <h1>Model extensions (overdispersion, zero-inflation, …)</h1>
 <div id="overdispersion" class="section level2">
 <h2>Overdispersion</h2>
-<p><a id="overdispersion"></a> ### Testing for overdispersion/computing overdispersion factor</p>
+<p><a id="overdispersion"></a></p>
+<div id="testing-for-overdispersioncomputing-overdispersion-factor" class="section level3">
+<h3>Testing for overdispersion/computing overdispersion factor</h3>
 <ul>
 <li>with the usual caveats, plus a few extras – counting degrees of freedom, etc. – the usual procedure of calculating the sum of squared Pearson residuals and comparing it to the residual degrees of freedom should give at least a crude idea of overdispersion. The following attempt counts each variance or covariance parameter as one model degree of freedom and presents the sum of squared Pearson residuals, the ratio of (SSQ residuals/rdf), the residual df, and the <span class="math inline">\(p\)</span>-value based on the (approximately!!) appropriate <span class="math inline">\(\chi^2\)</span> distribution. <strong>Do PLEASE note the usual, and extra, caveats noted here: this is an APPROXIMATE estimate of an overdispersion parameter</strong>. Even in the GLM case, the expected deviance per point equaling 1 is only true as the distribution of individual deviates approaches normality, i.e. the usual <span class="math inline">\(\lambda&gt;5\)</span> rules of thumb for Poisson values and <span class="math inline">\(\textrm{min}(Np, N(1-p)) &gt; 5\)</span> for binomial values (e.g. see <span class="citation">Venables and Ripley (2002)</span>, <a href="http://books.google.com/books?id=974c4vKurNkC&amp;pg=PA209">p. 209</a>). (And that’s without the extra complexities due to GLMM, i.e. the “effective” residual df should be large enough to make the sums of squares converge on a <span class="math inline">\(\chi^2\)</span> distribution …)</li>
 </ul>
@@ -352,6 +359,7 @@ overdisp_fun(m2)</code></pre>
 <pre><code>##        chisq        ratio          rdf            p 
 ## 1026.7585031    1.0298480  997.0000000    0.2499024</code></pre>
 <p>The <code>gof</code> function in the <code>aods3</code> package works for recent (development) versions of the <code>lme4</code> package – it provides essentially the same set of information.</p>
+</div>
 <div id="fitting-models-with-overdispersion" class="section level3">
 <h3>Fitting models with overdispersion?</h3>
 <ul>
