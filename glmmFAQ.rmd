@@ -9,8 +9,8 @@ output:
 ---
 
 ```{r setup,message=FALSE,echo=FALSE}
-library("knitr")
-library("pander")
+library(knitr)
+library(pander)
 ```
 
 # Introduction
@@ -45,7 +45,7 @@ The following formula extensions for specifying different random-effects structu
 
 (Modified from Robin Jeffries, UCLA:)
 
-```{r echo=FALSE}
+```{r glmm_syntax,echo=FALSE}
 spectab <- read.table(sep="&",header=TRUE,text="
 formula     & meaning
 `(1|group)` &  random group intercept
@@ -124,8 +124,10 @@ overdisp_fun <- function(model) {
 ```
 
 Example:
-```{r overdisp_ex,cache=TRUE,message=FALSE}
+```{r lme4,message=FALSE}
 library(lme4)
+```
+```{r overdisp_ex,cache=TRUE,message=FALSE}
 set.seed(101)  
 d <- data.frame(y=rpois(1000,lambda=3),x=runif(1000),
                 f=factor(sample(1:10,size=1000,replace=TRUE)))
@@ -136,7 +138,7 @@ m2 <- glmmadmb(y~x+(1|f),data=d,family="poisson")
 overdisp_fun(m2)
 ```
 
-The `gof` function in the `aods3` package works for recent (development) versions of the `lme4` package -- it provides essentially the same set of information.
+The `gof` function in the `aods3` package works for recent versions of the `lme4` package -- it provides essentially the same set of information.
 
 ### Fitting models with overdispersion?
 
@@ -217,7 +219,7 @@ How can one achieve this?
 - For LMMs, you can use the spatial/temporal correlation structures that are built into (n)lme
 - You can use the spatial/temporal correlation structures available for (n)lme, which include basic geostatistical (space) and ARMA-type (time) models. 
 ```{r findcors,eval=FALSE}
-library("sos")
+library(sos)
 findFn("corStruct")
 ```
 finds additional possibilities in the `ramps` (extended geostatistical) and `ape` (phylogenetic) packages.
@@ -235,7 +237,7 @@ finds additional possibilities in the `ramps` (extended geostatistical) and `ape
 
 (adapted from Bolker et al TREE 2009)
 
-```{r echo=FALSE,results="asis"}
+```{r glmmtab,echo=FALSE,results="asis"}
 methtab <- read.table(sep="|",header=TRUE,text="
 Method | Advantages | Disadvantages | Packages
 Penalized quasi-likelihood | Flexible, widely implemented | Likelihood inference may be inappropriate; biased for large variance or small means | PROC GLIMMIX (SAS), GLMM (GenStat), glmmPQL (R:MASS), ASREML-R
@@ -382,30 +384,62 @@ There is an [R FAQ entry](http://cran.r-project.org/doc/FAQ/R-FAQ.html#Why-are-p
 
 - use MASS::glmmPQL (uses old nlme rules approximately equivalent to SAS 'inner-outer' rules) for GLMMs, or (n)lme for LMMs
 * Guess the denominator df from standard rules (for standard designs) and apply them to t or F tests
-- Run the model in lme (if possible) and use the denominator df reported there (which follow a simple 'inner-outer' rule which should correspond to the canonical answer for simple/orthogonal designs), applied to t or F tests.  For the explicit specification of the rules that `lme` uses, see page 91 of Pinheiro and Bates -- this page is available on [Google Books](http://tinyurl.com/ntygq3) ...
-* use SAS, Genstat (AS-REML), Stata?
-- Assume infinite denominator df (i.e. Z/chi-squared test rather than t/F) if number of groups is large (>45? Various rules of thumb for how large is "approximately infinite" have been posed, including [in Angrist and Pischke's ''Mostly Harmless Econometrics''], 42 (in homage to Douglas Adams)
+- Run the model in lme (if possible) and use the denominator df reported there (which follow a simple 'inner-outer' rule which should correspond to the canonical answer for simple/orthogonal designs), applied to t or F tests.  For the explicit specification of the rules that `lme` uses, see page 91 of Pinheiro and Bates (*this page was previously available on [Google Books](http://tinyurl.com/ntygq3), but the link is no longer useful, so here are the relevant paragraphs*):
+
+> These conditional tests for fixed-effects terms require denominator degrees of freedom. In the case of the conditional $F$-tests, the numerator degrees of freedom are also required, being determined by the term itself. The denominator degrees of freedom are determined by the grouping level at which the term is estimated. A term is called inner relative to a factor if its value can change within a given level of the grouping factor. A term is outer to a grouping factor if its value does not changes within levels of the grouping factor. A term is said to be estimated at level $i$, if it is inner to the $i-1$st grouping factor and outer to the $i$th grouping factor. For example, the term `Machine` in the `fm2Machine` model is outer to `Machine %in% Worker` and inner to `Worker`, so it is estimated at level 2 (`Machine %in% Worker`). If a term is inner to all $Q$ grouping factors in a model, it is estimated at the level of the within-group errors, which we denote as the $Q+1$st level.
+>
+>  The intercept, which is the parameter corresponding to the column of all 1's in the model matrices $X_i$, is treated differently from all the other parameters, when it is present. As a parameter it is regarded as being estimated at level 0 because it is outer to all the grouping factors. However, its denominator degrees of freedom are calculated as if it were estimated at level $Q+1$. This is because the intercept is the one parameter that pools information from all the observations at a level even when the corresponding column in $X_i$ doesn't change with the level.
+>
+>    Letting $m_i$ denote the total number of groups in level $i$ (with the convention that $m_0=1$ when the fixed effects model includes an intercept and 0 otherwise, and $m_{Q+1}=N$) and $p_i$ denote the sum of the degrees of freedom corresponding to the terms estimated at level $i$, the $i$th level denominator degrees of freedom is defined as
+>
+> $$ \mathrm{denDF}_i = m_i - (m_{i-1} + p_i), i = 1, \dots, Q $$
+> 
+> This definition coincides with the classical decomposition of degrees of freedom in balanced, multilevel ANOVA designs and gives a reasonable approximation for more general mixed-effects models.
+
+- use SAS, Genstat (AS-REML), Stata?
+- Assume infinite denominator df (i.e. $Z$/$\chi^2$ test rather than $t$/$F$) if number of groups is large (>45? Various rules of thumb for how large is "approximately infinite" have been posed, including [in Angrist and Pischke's ''Mostly Harmless Econometrics''], 42 (in homage to Douglas Adams)
 
 ### Testing significance of random effects
 
-- perhaps you shouldn't (if the random effect is part of the experimental design, this procedure may be considered 'sacrificial pseudoreplication' (Hurlburt 1984); using stepwise approaches to eliminate non-significant terms in order to squeeze more significance out of the remaining terms is dangerous in any case)
-- **do not** compare lmer models with the corresponding lm fits, or glmer/glm; the log-likelihoods are not commensurate (i.e., they include different additive terms)
-- consider using RLRsim for simple tests
-- parametric bootstrap
-- profile likelihood (using more recent versions of lme4?) to evaluate likelihood at $\sigma^2=0$
-- keep in mind that LRT-based null hypothesis tests are conservative when the null value (such as $\sigma^2=0$) is on the boundary of the feasible space; in the simplest case (single random effect variance), the p-value is approximately twice as large as it should be [@pinheiro_mixed-effects_2000].
+- the most common way to do this is to use a likelihood ratio test, i.e. fit the full and reduced models (the reduced model is the model with the focal variance(s) set to zero). For example:
+```{r raneff_test,message=FALSE,cache=TRUE}
+library(lme4)
+m2 <- lmer(Reaction~Days+(1|Subject)+(0+Days|Subject),sleepstudy,REML=FALSE)
+m1 <- update(m2,.~Days+(1|Subject))
+m0 <- lm(Reaction~Days,sleepstudy)
+anova(m2,m1,m0) ## two sequential tests
+```
+With recent versions of `lme4`, goodness-of-fit (deviance) can be compared between `(g)lmer` and `(g)lm` models, although `anova()` must be called with the mixed (`(g)lmer`) model listed first.
+Keep in mind that LRT-based null hypothesis tests are conservative when the null value (such as $\sigma^2=0$) is on the boundary of the feasible space; in the simplest case (single random effect variance), the p-value is approximately twice as large as it should be [@pinheiro_mixed-effects_2000].
+
+- Consider *not* testing the significance of random effects. If the random effect is part of the experimental design, this procedure may be considered 'sacrificial pseudoreplication' (Hurlburt 1984). Using stepwise approaches to eliminate non-significant terms in order to squeeze more significance out of the remaining terms is dangerous in any case.
+- consider using the `RLRsim` package, which has a fast implementation of simulation-based tests of null hypotheses about zero variances, for simple tests. (However, it only applies to `lmer` models, and is a bit tricky to use for more complex models.)
+```{r RLRsim,message=FALSE}
+library(RLRsim)
+## compare m0 and m1
+exactLRT(m1,m0)
+## compare m1 and m2
+mA <- update(m2,REML=TRUE)
+m0 <- update(mA, . ~ . - (0 + Days|Subject))
+m.slope  <- update(mA, . ~ . - (1|Subject))
+exactRLRT(m0=m0,m=m.slope,mA=mA)
+```
+
+- Parametric bootstrap: fit the reduced model, then repeatedly simulate from it and compute the differences between the deviance of the reduced and the full model for each simulated data set.  Compare this null distribution to the observed deviance difference. This procedure is implemented in the `pbkrtest` package.
+```{r pboot_vartest_comp,cache=TRUE}
+(pb <- pbkrtest::PBmodcomp(m2,m1,seed=101))
+```
 
 ### Standard errors of variance estimates
 
-- Paraphrasing Doug Bates: the sampling distribution of variance estimates is in general strongly asymmetric: the standard error may be a poor characterization of the uncertainty. 
-- `Alternatives?` 
-   - The development version of `lme4`, `lme4a`, allows for computing likelihood profiles of variances and computing confidence intervals on their basis; see ch. 1 of FIXME Batesdraft. These confidence intervals will be based on the likelihood ratio test (i.e. asymptotic chi-squared distribution of the deviance), hence are subject to the usual caveats about the LRT with finite sample sizes. It's also not entirely clear whether the caveats about hypothesis testing against null values on the boundary of the feasible space apply ...
-   - Using an MCMC-based approach (the simplest/most canned is probably to use the `MCMCglmm` package, although its mode specifications are not identical to those of lme4) will provide posterior distributions of the variance parameters: quantiles or credible intervals (`HPDinterval()` in the `coda` package) will characterize the uncertainty.
-   - (don't say we didn't warn you ...) `[n]lme` fits contain an element called `apVar` which contains the approximate variance-covariance matrix (derived from the Hessian, the matrix of (numerically approximated) second derivatives of the likelihood (REML?) at the maximum (restricted?) likelihood values): you can derive the standard errors from this list element via `sqrt(diag(lme.obj$apVar))`. For whatever it's worth, though, [these estimates might not match](http://www.biostat.wustl.edu/archives/html/s-news/2003-07/msg00127.html) the [estimates that SAS gives](http://www.tau.ac.il/cc/pages/docs/sas8/stat/chap41/sect25.htm#mixedcpe) which are supposedly derived in the same way.
+- Paraphrasing Doug Bates: the sampling distribution of variance estimates is in general strongly asymmetric: the standard error may be a poor characterization of the uncertainty.
+- `lme4` allows for computing likelihood profiles of variances and computing confidence intervals on their basis; these likelihood profile confidence intervals are subject to the usual caveats about the LRT with finite sample sizes.
+- Using an MCMC-based approach (the simplest/most canned is probably to use the `MCMCglmm` package, although its mode specifications are not identical to those of lme4) will provide posterior distributions of the variance parameters: quantiles or credible intervals (`HPDinterval()` in the `coda` package) will characterize the uncertainty.
+- (don't say we didn't warn you ...) `[n]lme` fits contain an element called `apVar` which contains the approximate variance-covariance matrix (derived from the Hessian, the matrix of (numerically approximated) second derivatives of the likelihood (REML?) at the maximum (restricted?) likelihood values): you can derive the standard errors from this list element via `sqrt(diag(lme.obj$apVar))`. For whatever it's worth, though, [these estimates might not match](http://www.biostat.wustl.edu/archives/html/s-news/2003-07/msg00127.html) the [estimates that SAS gives](http://www.tau.ac.il/cc/pages/docs/sas8/stat/chap41/sect25.htm#mixedcpe) which are supposedly derived in the same way.
 
 ### P-values: MCMC and parametric bootstrap 
 
-Abandoning the approximate F/t-statistic route, one ends up with the more general problem of estimating p values.  There is a wider range of options here, although many of them are computationally intensive ...
+Abandoning the approximate $F$/$t$-statistic route, one ends up with the more general problem of estimating $p$-values.  There is a wider range of options here, although many of them are computationally intensive ...
 
 #### Markov chain Monte Carlo sampling:
 - pseudo-Bayesian: post-hoc sampling, typically (1) assuming flat priors and (2) starting from the MLE, possibly using the approximate variance-covariance estimate to choose a candidate distribution
@@ -454,8 +488,8 @@ The general recipe for computing predictions from a linear or generalized linear
 
 ### lme
 
-```{r lmepred}
-library("nlme") 
+```{r lmepred,cache=TRUE,message=FALSE}
+library(nlme) 
 fm1 <- lme(distance ~ age*Sex, random = ~ 1 + age | Subject,
            data = Orthodont) 
 plot(Orthodont,asp="fill") ## plot responses by individual
@@ -487,9 +521,9 @@ A similar answer is laid out in the responses to this [StackOverflow question](h
 
 Current versions of lme4 have a `predict` method.
 
-```{r lme4pred}
-library("lme4")
-library("ggplot2") # Plotting
+```{r lme4pred,cache=TRUE}
+library(lme4)
+library(ggplot2)
 data("Orthodont",package="MEMSS")
 fm1 <- lmer(
 	formula = distance ~ age*Sex + (age|Subject)
@@ -526,7 +560,7 @@ rm("Orthodont") ## clean up
 ### glmmadmb
 
 ```{r glmmadmbpred,cache=TRUE}
-library("glmmADMB")
+library(glmmADMB)
 data(Orthodont,package="nlme")
 fm2 <- glmmadmb(distance ~ age*Sex, random = ~ 1 + age | Subject,
                 data = Orthodont,
@@ -545,7 +579,7 @@ newdat$SE <- sqrt(predvar)
 newdat$SE2 <- sqrt(predvar+fm2$alpha^2)
 ```
 
-(Probably overly complicated) ggplot code:
+(Probably overly complicated) `ggplot` code:
 ```{r ggplot}
 library(ggplot2);  theme_set(theme_bw())
 pd <- position_dodge(width=0.4)
@@ -569,7 +603,7 @@ g1 + geom_linerange(data=newdat,
 
 If you want the standard errors of the conditional means, then you can extract them as follows:
 ```{r stder_condmeans}
-library("lme4")
+library(lme4)
 fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 cV <- ranef(fm1, condVar = TRUE)   
 ```
@@ -814,8 +848,8 @@ The following is modified from a contribution by Kingsford Jones, found 2010-03-
 
 
 ### Commercial:
-- OpenMx -- Advanced Structural Equation Modeling
-- ASReml-R (commercial, but 30 days' free use/free license for academic or developing-country use available).  Very good at complex LMMs (fast, flexible covariance structures, etc.), but only offers PQL for GLMMs, and the manual says: 
+- `OpenMx` -- Advanced Structural Equation Modeling
+- `ASReml-R` (commercial, but 30 days' free use/free license for academic or developing-country use available).  Very good at complex LMMs (fast, flexible covariance structures, etc.), but only offers PQL for GLMMs, and the manual says: 
 > we cannot recommend the use of this technique for general use. It is included in the current version of asreml() for advanced users. It is highly recommended that its use be accompanied by some form of cross-validatory assessment for the specific dataset concerned."
 Resources:
 - [short R wiki tutorial](http://rwiki.sciviews.org/doku.php?id=guides:tutorials:asreml)
@@ -825,26 +859,8 @@ Resources:
 
 ## Package versions used
 
-```{r}
+```{r sessioninfo}
 sessionInfo()
-```
-
-## One-step dependencies of the lme4 package
-
-```{r getdep,echo=FALSE,message=FALSE,cache=TRUE}
-library("packdep")
-d <- map.depends(contriburl=contrib.url("https://mirrors.nics.utk.edu/cran"))
-```
-
-```{r graph,echo=FALSE,message=FALSE,warning=FALSE,dev="png",fig.width=12,fig.height=12}
-library("igraph")
-s <- make_ego_graph(d, order=1, nodes=which(V(d)$name=="lme4"),
-                    mode="out")[[1]]
-V(s)$color = "SkyBlue2"
-V(s)[V(s)$name == "lme4"]$color = "red"
-plot(s, vertex.label=V(s)$name,
-     layout = layout.kamada.kawai(s), vertex.size=1.5,
-     vertex.label.family = "sans")
 ```
 
 # Bibliography
