@@ -118,13 +118,15 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">GLMM FAQ</h1>
 <h4 class="author"><em>Ben Bolker and others</em></h4>
-<h4 class="date"><em>20:03 17 December 2016</em></h4>
+<h4 class="date"><em>14:03 07 March 2017</em></h4>
 
 </div>
 
 <div id="TOC">
 <ul>
-<li><a href="#introduction">Introduction</a></li>
+<li><a href="#introduction">Introduction</a><ul>
+<li><a href="#other-sources-of-help">Other sources of help</a></li>
+</ul></li>
 <li><a href="#model-definition">Model definition</a><ul>
 <li><a href="#model-specification">Model specification</a></li>
 <li><a href="#should-i-treat-factor-xxx-as-fixed-or-random">Should I treat factor xxx as fixed or random?</a></li>
@@ -211,27 +213,41 @@ $(document).ready(function () {
 
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
-<p>This is an informal FAQ list for the <code>r-sig-mixed-models</code> mailing list (the mailing list is at <code>r-sig-mixed-models@r-project.org</code>, with <a href="http://news.gmane.org/gmane.comp.lang.r.lme4.devel/">Gmane archives</a> available as well). There is a previous version posted on <a href="http://glmm.wikidot.com/faq">wikidot.com</a>, but I am getting tired of maintaining it in that format. The source code of this document is available at <a href="https://github.com/bbolker/mixedmodels-misc/blob/master/glmmFAQ.rmd" class="uri">https://github.com/bbolker/mixedmodels-misc/blob/master/glmmFAQ.rmd</a>; a rendered (HTML) version lives at <a href="http://tinyurl.com/glmmFAQ" class="uri">http://tinyurl.com/glmmFAQ</a>.</p>
+<p>This is an informal FAQ list for the <code>r-sig-mixed-models</code> mailing list.</p>
 <p>The most commonly used functions for mixed modeling in R are - <em>linear mixed models</em>: <code>aov()</code>, <code>nlme::lme</code><a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>, <code>lme4::lmer</code>; - <em>generalized linear mixed models</em> (GLMMs): <code>MASS::glmmPQL</code>, <code>lme4::glmer</code>, <code>MCMCglmm::MCMCglmm</code>; - <em>nonlinear mixed models</em>: <code>nlme::nlme</code>, <code>lme4::nlmer</code>.</p>
+<div id="other-sources-of-help" class="section level2">
+<h2>Other sources of help</h2>
+<ul>
+<li>the mailing list is <code>r-sig-mixed-models@r-project.org</code>
+<ul>
+<li>sign up <a href="https://stat.ethz.ch/pipermail/r-sig-mixed-models/">here</a></li>
+<li>archives <a href="https://stat.ethz.ch/pipermail/r-sig-mixed-models/">here</a></li>
+<li>or Google search with the tag <code>site:https://stat.ethz.ch/pipermail/r-sig-mixed-models/</code></li>
+</ul></li>
+<li>The source code of this document is available at <a href="https://github.com/bbolker/mixedmodels-misc/blob/master/glmmFAQ.rmd" class="uri">https://github.com/bbolker/mixedmodels-misc/blob/master/glmmFAQ.rmd</a>; a rendered (HTML) version lives at <a href="http://bbolker.github.io/mixedmodels-misc/glmmFAQ.html" class="uri">http://bbolker.github.io/mixedmodels-misc/glmmFAQ.html</a>).</li>
+<li>there is a previous version posted on <a href="http://glmm.wikidot.com/faq">wikidot.com</a>, but I am getting tired of maintaining it in that format.</li>
+<li>Searching on StackOverflow with the <a href="http://stackoverflow.com/questions/tagged/r%20mixed-models?mode=all">[r] [mixed-models] tags</a>, or on CrossValidated with the <a href="http://stats.stackexchange.com/questions/tagged/mixed-model">[mixed-model] tag</a> may be helpful (these sites also have an <code>[lme4]</code> tag).</li>
+</ul>
 <p><strong>DISCLAIMERS:</strong></p>
 <ul>
-<li>(G)LMMs are hard - harder than you may think based on what you may have learned in your second statistics class, which probably focused on picking the appropriate sums of squares terms and degrees of freedom for the numerator and denominator of an <span class="math inline">\(F\)</span> test. ‘Modern’ mixed model approaches, although more powerful (they can handle more complex designs, lack of balance, crossed random factors, some kinds of non-Normally distributed responses, etc.), also require a new set of conceptual tools. In order to use these tools you should have at least a general acquaintance with classical mixed-model experimental designs but you should also, probably, read something about modern mixed model approaches. <span class="citation">Littell et al. (2006)</span> and <span class="citation">Pinheiro and Bates (2000)</span> are two places to start, although Pinheiro and Bates is probably more useful if you want to use R. Other useful references include <span class="citation">Gelman and Hill (2006)</span> (focused on Bayesian methods) and <span class="citation">Zuur et al. (2009)</span>. If you are going to use generalized linear mixed models, you should understand generalized linear models.</li>
+<li>(G)LMMs are hard - harder than you may think based on what you may have learned in your second statistics class, which probably focused on picking the appropriate sums of squares terms and degrees of freedom for the numerator and denominator of an <span class="math inline">\(F\)</span> test. ‘Modern’ mixed model approaches, although more powerful (they can handle more complex designs, lack of balance, crossed random factors, some kinds of non-Normally distributed responses, etc.), also require a new set of conceptual tools. In order to use these tools you should have at least a general acquaintance with classical mixed-model experimental designs but you should also, probably, read something about modern mixed model approaches. <span class="citation">Littell et al. (2006)</span> and <span class="citation">Pinheiro and Bates (2000)</span> are two places to start, although Pinheiro and Bates is probably more useful if you want to use R. Other useful references include <span class="citation">Gelman and Hill (2006)</span> (focused on Bayesian methods) and <span class="citation">Zuur et al. (2009)</span>. If you are going to use generalized linear mixed models, you should understand generalized linear models (<span class="citation">Dobson and Barnett (2008)</span>, <span class="citation">Faraway (2006)</span>, and <span class="citation">McCullagh and Nelder (1989)</span> are standard references; the last is the canonical reference, but also the most challenging).</li>
 <li>All of the issues that arise with regular linear or generalized-linear modeling (e.g.: inadequacy of p-values alone for thorough statistical analysis; need to understand how models are parameterized; need to understand the principle of marginality and how interactions can be treated; dangers of overfitting, which are not mitigated by stepwise procedures; the non-existence of free lunches) also apply, and can apply more severely, to mixed models.</li>
 <li>When SAS (or Stata, or Genstat/AS-REML or …) and R differ in their answers, R may not be wrong. Both SAS and R may be `right’ but proceeding in a different way/answering different questions/using a different philosophical approach (or both may be wrong …)</li>
 <li>The advice in this FAQ comes with <strong>absolutely no warranty of any sort</strong>.</li>
 </ul>
 </div>
+</div>
 <div id="model-definition" class="section level1">
 <h1>Model definition</h1>
 <div id="model-specification" class="section level2">
 <h2>Model specification</h2>
-<p>The following formula extensions for specifying different random-effects structures are used by</p>
+<p>The following formula extensions for specifying random-effects structures in R are used by</p>
 <ul>
 <li><code>lme4</code></li>
 <li><code>nlme</code> (nested effects only, although crossed effects can be specified with more work)</li>
 <li><code>glmmADMB</code> and <code>glmmTMB</code></li>
 </ul>
-<p><code>MCMCglmm</code> uses a different specification, inherited from AS-REML</p>
+<p><code>MCMCglmm</code> uses a different specification, inherited from AS-REML.</p>
 <p>(Modified from Robin Jeffries, UCLA:)</p>
 <table style="width:92%;">
 <colgroup>
@@ -307,10 +323,10 @@ $(document).ready(function () {
 <p>Some researchers (who treat fixed vs random as a philosophical rather than a pragmatic decision) object to this approach.</p>
 <p>Treating factors with small numbers of levels as random will in the best case lead to very small and/or imprecise estimates of random effects; in the worst case it will lead to various numerical difficulties such as lack of convergence, zero variance estimates, etc.. (A small <a href="http:/rpubs.com/bbolker/4187">simulation exercise</a> shows that at least the estimates of the standard deviation are downwardly biased in this case; it’s not clear whether/how this bias would affect the point estimates of fixed effects or their estimated confidence intervals.) In the classical method-of-moments approach these problems may not arise (because the sums of squares are always well defined as long as there are at least two units), but the underlying problems of lack of power are there nevertheless.</p>
 <p>Also see <a href="https://stat.ethz.ch/pipermail/r-sig-mixed-models/2010q2/003709.html">this thread</a> on the r-sig-mixed-models mailing list.</p>
-<p><a id="nested_or_crossed"></a></p>
 </div>
 <div id="nested-or-crossed" class="section level2">
 <h2>Nested or crossed?</h2>
+<p><a id="nested_or_crossed"></a></p>
 <ul>
 <li>Relatively few mixed effect modeling packages can handle crossed random effects, i.e. those where one level of a random effect can appear in conjunction with more than one level of another effect. (This definition is confusing, and I would happily accept a better one.) A classic example is crossed temporal and spatial effects. If there is random variation among temporal blocks (e.g. years) ‘’and’‘random variation among spatial blocks (e.g. sites),’‘and’‘if there is a consistent year effect across sites and’‘vice versa’’, then the random effects should be treated as crossed.</li>
 <li><code>lme4</code> does handled crossed effects, efficiently; if you need to deal with crossed REs in conjunction with some of the features that <code>nlme</code> offers (e.g. heteroscedasticity of residuals via <code>weights</code>/<code>varStruct</code>, correlation of residuals via <code>correlation</code>/<code>corStruct</code>, see p. 163ff of <span class="citation">Pinheiro and Bates (2000)</span> (section 4.2.2: <a href="http://tinyurl.com/crossedRE">Google books link</a>)</li>
@@ -543,7 +559,7 @@ any(theta[diag.element]&lt;1e-5)</code></pre>
 <p>At present there are a variety of strong opinions about how to resolve such problems. Briefly:</p>
 <ul>
 <li><span class="citation">Barr et al. (2013)</span> suggest always starting with the maximal model (i.e. the most random-effects component of the model that is <em>theoretically</em> identifiable given the experimental design) and then dropping terms when singularity or non-convergence occurs (please see the paper for detailed recommendations …)</li>
-<li><span class="citation">Matuschek et al. (2015)</span> and <span class="citation">D. Bates et al. (2015)</span> strongly disagree, suggesting that models should be simplified <em>a priori</em> whenever possible; they also provide <a href="https://github.com/dmbates/RePsychLing">tools</a> for diagnosing and mitigating singularity.</li>
+<li><span class="citation">Matuschek et al. (2017)</span> and <span class="citation">D. Bates et al. (2015)</span> strongly disagree, suggesting that models should be simplified <em>a priori</em> whenever possible; they also provide <a href="https://github.com/dmbates/RePsychLing">tools</a> for diagnosing and mitigating singularity.</li>
 <li>One alternative (suggested by Robert LaBudde) for the small-numbers-of-levels scenario is to “fit the model with the random factor as a fixed effect, get the level coefficients in the sum to zero form, and then compute the standard deviation of the coefficients.” This is appropriate for users who are (a) primarily interested in measuring variation (i.e. the random effects are not just nuisance parameters, and the variability [rather than the estimated values for each level] is of scientific interest), (b) unable or unwilling to use other approaches (e.g. MCMC with half-Cauchy priors in WinBUGS), (c) unable or unwilling to collect more data. For the simplest case (balanced, orthogonal, nested designs with normal errors) these estimates of standard deviations should equal the classical method-of-moments estimates.</li>
 <li>Bayesian approaches allow the user to specify a informative prior that avoids singularity.
 <ul>
@@ -714,7 +730,7 @@ exactRLRT(m0=m0,m=m.slope,mA=mA)</code></pre>
 <li>Parametric bootstrap: fit the reduced model, then repeatedly simulate from it and compute the differences between the deviance of the reduced and the full model for each simulated data set. Compare this null distribution to the observed deviance difference. This procedure is implemented in the <code>pbkrtest</code> package.</li>
 </ul>
 <pre class="r"><code>(pb &lt;- pbkrtest::PBmodcomp(m2,m1,seed=101))</code></pre>
-<pre><code>## Parametric bootstrap test; time: 69.11 sec; samples: 1000 extremes: 0;
+<pre><code>## Parametric bootstrap test; time: 42.34 sec; samples: 1000 extremes: 0;
 ## Requested samples: 1000 Used samples: 575 Extremes: 0
 ## large : Reaction ~ Days + (1 | Subject) + (0 + Days | Subject)
 ## small : Reaction ~ Days + (1 | Subject)
@@ -726,11 +742,13 @@ exactRLRT(m0=m0,m=m.slope,mA=mA)</code></pre>
 </div>
 <div id="standard-errors-of-variance-estimates" class="section level3">
 <h3>Standard errors of variance estimates</h3>
+<p><a id="variance-standard-errors"></a></p>
 <ul>
 <li>Paraphrasing Doug Bates: the sampling distribution of variance estimates is in general strongly asymmetric: the standard error may be a poor characterization of the uncertainty.</li>
 <li><code>lme4</code> allows for computing likelihood profiles of variances and computing confidence intervals on their basis; these likelihood profile confidence intervals are subject to the usual caveats about the LRT with finite sample sizes.</li>
 <li>Using an MCMC-based approach (the simplest/most canned is probably to use the <code>MCMCglmm</code> package, although its mode specifications are not identical to those of lme4) will provide posterior distributions of the variance parameters: quantiles or credible intervals (<code>HPDinterval()</code> in the <code>coda</code> package) will characterize the uncertainty.</li>
 <li>(don’t say we didn’t warn you …) <code>[n]lme</code> fits contain an element called <code>apVar</code> which contains the approximate variance-covariance matrix (derived from the Hessian, the matrix of (numerically approximated) second derivatives of the likelihood (REML?) at the maximum (restricted?) likelihood values): you can derive the standard errors from this list element via <code>sqrt(diag(lme.obj$apVar))</code>. For whatever it’s worth, though, <a href="http://www.biostat.wustl.edu/archives/html/s-news/2003-07/msg00127.html">these estimates might not match</a> the <a href="http://www.tau.ac.il/cc/pages/docs/sas8/stat/chap41/sect25.htm#mixedcpe">estimates that SAS gives</a> which are supposedly derived in the same way.</li>
+<li>it’s not a full solution, but there is some more information <a href="https://rpubs.com/bbolker/waldvar">here</a>. I have some delta-method computations there that are off by a factor of 2 for the residual standard deviation, as well as some computations based on reparameterizing the deviance function.</li>
 </ul>
 </div>
 <div id="p-values-mcmc-and-parametric-bootstrap" class="section level3">
@@ -952,7 +970,7 @@ cV &lt;- ranef(fm1, condVar = TRUE)   </code></pre>
 </div>
 <div id="sophisticated-solutions" class="section level4">
 <h4>Sophisticated solutions</h4>
-<p><span class="citation">Gelman and Pardoe (2006)</span> propose/discuss Bayesian measures of <span class="math inline">\(R^2\)</span> (I don’t know if anyone has created a canned implementation of these measures in R). <span class="citation">Nakagawa and Schielzeth (2013)</span> and <span class="citation">Johnson (2014)</span> have also proposed a general methodology for computing <span class="math inline">\(R^2\)</span>; J. Lefcheck gives examples <a href="https://jonlefcheck.net/2013/03/13/r2-for-linear-mixed-effects-models/">here</a> and <a href="https://github.com/jslefche/piecewiseSEM/blob/master/README.md#get-r2-for-individual-models">here</a>, based on his implementation in the <code>piecewiseSEM</code> package (<a href="https://cran.r-project.org/web/packages/piecewiseSEM/index.html">CRAN</a>, <a href="https://github.com/jslefche/piecewiseSEM">Github</a>). There are also several functions that implement these approaches (the <a href="http://finzi.psych.upenn.edu/R/library/sjmisc/html/r2.html">r2 function</a> in the <a href="https://cran.r-project.org/web/packages/sjmisc/index.html">sjmisc package</a> and the <a href="http://www.inside-r.org/packages/cran/MuMIn/docs/r.squaredGLMM">r.squaredGLMM function</a> in the <a href="https://cran.r-project.org/web/packages/MuMIn/index.html">MuMIn package</a>).</p>
+<p><span class="citation">Gelman and Pardoe (2006)</span> propose/discuss Bayesian measures of <span class="math inline">\(R^2\)</span> (I don’t know if anyone has created a canned implementation of these measures in R). <span class="citation">Nakagawa and Schielzeth (2013)</span> and <span class="citation">Johnson (2014)</span> have also proposed a general methodology for computing <span class="math inline">\(R^2\)</span>; J. Lefcheck gives examples <a href="https://jonlefcheck.net/2013/03/13/r2-for-linear-mixed-effects-models/">here</a> and <a href="https://github.com/jslefche/piecewiseSEM/blob/master/README.md#get-r2-for-individual-models">here</a>, based on his implementation in the <code>piecewiseSEM</code> package (<a href="https://cran.r-project.org/web/packages/piecewiseSEM/index.html">CRAN</a>, <a href="https://github.com/jslefche/piecewiseSEM">Github</a>). There are also several functions that implement these approaches (the <a href="http://finzi.psych.upenn.edu/R/library/sjstats/html/r2.html">r2 function</a> in the <a href="https://cran.r-project.org/package=sjstats">sjstats package</a> and the <a href="http://www.inside-r.org/packages/cran/MuMIn/docs/r.squaredGLMM">r.squaredGLMM function</a> in the <a href="https://cran.r-project.org/web/packages/MuMIn/index.html">MuMIn package</a>).</p>
 <p>A related question is how to quantify “repeatability” (i.e., ratios of variance at different levels) in GLMMs, especially how to compute the “residual error” term for GLMMs: see <span class="citation">Nakagawa and Schielzeth (2010)</span> and the <a href="http://rptr.r-forge.r-project.org/">rptR package</a>.</p>
 <p>The bottom line is that there are some simple recipes (and some more complex recipes that may or may not have been coded up by someone), but that ‘’’you have to think carefully about what information you want to get out of the coefficient of determination’’’, because no recipe will have all of the properties of <span class="math inline">\(R^2\)</span> in the simple linear model case.</p>
 </div>
@@ -1154,7 +1172,7 @@ withCallingHandlers(tryCatch(fun(n=nvec[j],tau=tauvec[i],...),
 <div id="package-versions-used" class="section level2">
 <h2>Package versions used</h2>
 <pre class="r"><code>sessionInfo()</code></pre>
-<pre><code>## R Under development (unstable) (2016-12-05 r71733)
+<pre><code>## R Under development (unstable) (2017-02-13 r72168)
 ## Platform: x86_64-pc-linux-gnu (64-bit)
 ## Running under: Ubuntu 14.04.5 LTS
 ## 
@@ -1170,18 +1188,18 @@ withCallingHandlers(tryCatch(fun(n=nvec[j],tau=tauvec[i],...),
 ## [1] methods   stats     graphics  grDevices utils     datasets  base     
 ## 
 ## other attached packages:
-## [1] ggplot2_2.2.0  RLRsim_3.1-3   lme4_1.1-13    Matrix_1.2-7.1
-## [5] pander_0.6.0   knitr_1.15.1   rmarkdown_1.2 
+## [1] ggplot2_2.2.1.9000 RLRsim_3.1-3       lme4_1.1-13       
+## [4] Matrix_1.2-8       pander_0.6.0       knitr_1.15.1      
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] Rcpp_0.12.8      magrittr_1.5     splines_3.4.0    MASS_7.3-45     
-##  [5] munsell_0.4.3    colorspace_1.3-1 lattice_0.20-34  minqa_1.2.4     
+##  [1] Rcpp_0.12.9      magrittr_1.5     splines_3.4.0    MASS_7.3-46     
+##  [5] munsell_0.4.3    colorspace_1.3-2 lattice_0.20-34  minqa_1.2.4     
 ##  [9] plyr_1.8.4       stringr_1.1.0    tools_3.4.0      grid_3.4.0      
-## [13] nlme_3.1-128     gtable_0.2.0     mgcv_1.8-16      htmltools_0.3.5 
-## [17] assertthat_0.1   lazyeval_0.2.0   yaml_2.1.14      rprojroot_1.1   
-## [21] digest_0.6.10    tibble_1.2       nloptr_1.0.4     evaluate_0.10   
-## [25] labeling_0.3     stringi_1.1.2    compiler_3.4.0   scales_0.4.1    
-## [29] backports_1.0.4</code></pre>
+## [13] nlme_3.1-131     gtable_0.2.0     mgcv_1.8-16      htmltools_0.3.5 
+## [17] assertthat_0.1   lazyeval_0.2.0   yaml_2.1.14      rprojroot_1.2   
+## [21] digest_0.6.12    tibble_1.2       nloptr_1.0.4     evaluate_0.10   
+## [25] rmarkdown_1.3    labeling_0.3     stringi_1.1.2    compiler_3.4.0  
+## [29] scales_0.4.1     backports_1.0.5</code></pre>
 </div>
 </div>
 <div id="bibliography" class="section level1 unnumbered">
@@ -1223,8 +1241,14 @@ withCallingHandlers(tryCatch(fun(n=nvec[j],tau=tauvec[i],...),
 <div id="ref-Crawley2002">
 <p>Crawley, Michael J. 2002. <em>Statistical Computing: An Introduction to Data Analysis Using S-PLUS</em>. John Wiley &amp; Sons.</p>
 </div>
+<div id="ref-dobson_introduction_2008">
+<p>Dobson, Annette J., and Adrian Barnett. 2008. <em>An Introduction to Generalized Linear Models, Third Edition</em>. 3rd ed. Chapman; Hall/CRC.</p>
+</div>
 <div id="ref-elston_analysis_2001">
 <p>Elston, D. A., R. Moss, T. Boulinier, C. Arrowsmith, and X. Lambin. 2001. “Analysis of Aggregation, a Worked Example: Numbers of Ticks on Red Grouse Chicks.” <em>Parasitology</em> 122 (5): 563–69.</p>
+</div>
+<div id="ref-faraway_extending_2006">
+<p>Faraway, Julian J. 2006. <em>Extending Linear Models with R: Generalized Linear, Mixed Eﬀects and Nonparametric Regression Models</em>. Chapman &amp; Hall/CRC.</p>
 </div>
 <div id="ref-feng_small_2004">
 <p>Feng, Ziding, Thomas Braun, and Charles McCulloch. 2004. “Small Sample Inference for Clustered Data.” In <em>Proceedings of the Second Seattle Symposium in Biostatistics</em>, edited by D. Y. Lin and P. J. Heagerty, 179:71–87. New York, NY: Springer. <a href="http://www.springerlink.com/content/h2g33m7127790343/" class="uri">http://www.springerlink.com/content/h2g33m7127790343/</a>.</p>
@@ -1262,8 +1286,8 @@ withCallingHandlers(tryCatch(fun(n=nvec[j],tau=tauvec[i],...),
 <div id="ref-maindonald_data_2010">
 <p>Maindonald, J., and J. Braun. 2010. <em>Data Analysis and Graphics Using R, an Example-Based Approach</em>. 3rd ed. Cambridge University Press.</p>
 </div>
-<div id="ref-matuschek_balancing_2015">
-<p>Matuschek, Hannes, Reinhold Kliegl, Shravan Vasishth, Harald Baayen, and Douglas Bates. 2015. “Balancing Type I Error and Power in Linear Mixed Models.” <em>ArXiv:1511.01864 [Stat]</em>, November. <a href="http://arxiv.org/abs/1511.01864" class="uri">http://arxiv.org/abs/1511.01864</a>.</p>
+<div id="ref-matuschek_balancing_2017">
+<p>Matuschek, Hannes, Reinhold Kliegl, Shravan Vasishth, Harald Baayen, and Douglas Bates. 2017. “Balancing Type I Error and Power in Linear Mixed Models.” <em>Journal of Memory and Language</em> 94: 305–15. doi:<a href="https://doi.org/10.1016/j.jml.2017.01.001">10.1016/j.jml.2017.01.001</a>.</p>
 </div>
 <div id="ref-McCullaghNelder1989">
 <p>McCullagh, P., and J. A. Nelder. 1989. <em>Generalized Linear Models</em>. London: Chapman; Hall.</p>
