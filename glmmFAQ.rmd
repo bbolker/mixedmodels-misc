@@ -15,7 +15,7 @@ library(pander)
 
 # Introduction
 
-This is an informal FAQ list for the `r-sig-mixed-models` mailing list (the mailing list is at `r-sig-mixed-models@r-project.org`, with [Gmane archives](http://news.gmane.org/gmane.comp.lang.r.lme4.devel/) available as well). There is a previous version posted on [wikidot.com](http://glmm.wikidot.com/faq), but I am getting tired of maintaining it in that format. The source code of this document is available at https://github.com/bbolker/mixedmodels-misc/blob/master/glmmFAQ.rmd; a rendered (HTML) version lives at http://tinyurl.com/glmmFAQ.
+This is an informal FAQ list for the `r-sig-mixed-models` mailing list.
 
 The most commonly used functions for mixed modeling in R are 
 - *linear mixed models*: `aov()`, `nlme::lme`[^1], `lme4::lmer`; 
@@ -23,6 +23,17 @@ The most commonly used functions for mixed modeling in R are
 - *nonlinear mixed models*: `nlme::nlme`, `lme4::nlmer`.
 
 [^1]: in R, `foo::bar` (or `foo::bar()`) denotes "function `bar` in package `foo`").
+
+## Other sources of help
+
+- the mailing list is `r-sig-mixed-models@r-project.org`
+    - sign up [here](https://stat.ethz.ch/pipermail/r-sig-mixed-models/)
+	- archives [here](https://stat.ethz.ch/pipermail/r-sig-mixed-models/)
+	- or Google search with the tag `site:https://stat.ethz.ch/pipermail/r-sig-mixed-models/`
+- The source code of this document is available at https://github.com/bbolker/mixedmodels-misc/blob/master/glmmFAQ.rmd; a rendered (HTML) version lives at http://bbolker.github.io/mixedmodels-misc/glmmFAQ.html).
+- there is a previous version posted on [wikidot.com](http://glmm.wikidot.com/faq), but I am getting tired of maintaining it in that format.
+- Searching on StackOverflow with the [[r] [mixed-models] tags](http://stackoverflow.com/questions/tagged/r%20mixed-models?mode=all), or on CrossValidated with the [[mixed-model] tag](http://stats.stackexchange.com/questions/tagged/mixed-model) may be helpful (these sites also have an `[lme4]` tag).
+
 
 **DISCLAIMERS:**
 
