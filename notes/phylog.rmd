@@ -1,0 +1,95 @@
+---
+title: "Brain dump: phylogenetic comparative methods in the lme4-verse"
+author: Ben Bolker
+date: "`r format(Sys.time(), '%H:%M %d %B %Y')`"
+---
+
+- The standard problem of *phylogenetic comparative methods* is to analyze relationships among data where the observations are gathered from nodes (usually tips) of a phylogenetic tree - for example, regression analyses of body temperature as a function of body size for animals within a clade
+- More generally, we can frame this in the usual GLMM way as
+$$
+\begin{split}
+y & \sim D(\mu,\phi) \\
+\mu & = g^{-1}(\eta) = g^{-1}(X \beta + Z b) \\
+b & \sim \textrm{MVN}(0,\Sigma)
+\end{split}
+$$
+where the part that makes it specifically phylogenetic is that $\Sigma$ captures the *phylogenetic correlation*. The PC is the correlation among observations due to relatedness; recently diverged taxa have higher correlation than more anciently diverged taxa. In the extreme case of a *star phylogeny* (all taxa diverged from each other simultaneously at some point in the past) the phylogenetic correlation collapses to a diagonal matrix and we get back to the simple, uncorrelated regression.
+
+Various P(G)LMM (phylogenetic [generalized] linear mixed model] approaches have been proposed. Many depend on Pagel's lambda transformation, which gives the correlation matrix a particularly simple form (but has been [criticized](http://www.carlboettiger.info/2013/10/11/is-it-time-to-retire-pagels-lambda.html) ...)
+
+An alternative approach is to model the phylogenetic correlation as a *Gaussian process*. In particular, suppose that the evolutionary process is a Brownian motion (an almost certainly incorrect/oversimplified model of evolution, but one that many phylogenetic methods are built on). In that case, the phylogenetic variability of a particular observation can be written as the sum of the evolutionary changes that occurred on all of the branches in the phylogeny in its past. If we set up the $Z$ matrix appropriately, we can model everything with a sequence of *independent* errors, rather than having to do fancy things to impose a correlation structure on the random effects.
+
+```{r}
+library(ape)
+set.seed(101)
+r <- makeNodeLabel(rtree(4))
+plot(r,show.node.label=TRUE)
+```
+
+Information in a `phylo` object is contained in the *edge matrix*:
+
+>    edge: a two-column matrix of mode numeric where each row represents
+          an edge of the tree; the nodes and the tips are symbolized
+          with numbers; the tips are numbered 1, 2, ..., and the nodes
+          are numbered after the tips. For each row, the first column
+          gives the ancestor.
+
+```{r}
+t(r$edge)
+```
+
+and a list of *edge lengths*
+
+```{r}
+r$edge.length
+```
+
+Inspecting this tree, we can figure out (see `$tip.label` and `$node.label` for label-to-number correspondences):
+
+- tips are 1-4, nodes are 5-7
+- tip 1 (`t1`) involves branches 2 (6 $\to$ 1) and 1 (5 $\to$ 6).
+- tip 2 (`t3`) involves branches 3 (6 $\to$ 2) and 1 (5 $\to$ 6)
+- tip 3 (`t2`) involves branches 5 (7 $\to$ 3) and 4 (5 $\to$ 7)
+- tip 4 (`t4`) involves branches 6 (7 $\to$ 4) and 4 (5 $\to$ 7)
+
+So, for example, we can say that the 'error' value corresponding to tip 1 is
+$\ell_1 b_1 + \ell_2 b_2$,  where $\ell_i$ is the (square root of??) the branch length
+and the $b_i$ are independent, homoscedastic Normal variates. Alternately, the $Z$ matrix is
+
+$$
+\begin{pmatrix}
+\ell_1 & \ell_2 &   0     & 0 & 0 & 0 \\
+\ell_1 &    0   &  \ell_3 & 0 & 0 & 0 \\
+0 & 0 &  0  & \ell_4 & \ell_5 & 0 \\
+0 & 0 &  0  & \ell_4 & 0 & \ell_6
+\end{pmatrix}
+$$
+where $\ell_i$ is the length of the $i^\textrm{th}$ branch,
+so that the species effects are $Z b$.
+
+If we can build the corresponding $Z$ matrix, then we can insert it in
+the `lme4` modular model-fitting process (see `?modular`).
+
+Here's a (probably not very efficent) way to construct the Z matrix.
+(There must be a way to not walk the tree multiple times from every tip ...)
+```{r}
+## set up matrix
+phylo.to.Z <- function(r) {
+    ntip <- length(r$tip.label)
+    Z <- Matrix(0.0,ncol=length(r$edge.length),nrow=ntip)
+    nodes <- (ntip+1):max(r$edge)
+    root <- nodes[!(nodes %in% r$edge[,2])]
+    for (i in 1:ntip) {
+        cn <- i  ## current node
+        while (cn != root) {
+            ce <- which(r$edge[,2]==cn)   ## find current edge
+            Z[i,ce] <- r$edge.length[ce]  ## set Z to branch length
+            cn <- r$edge[ce,1]            ## find previous node
+        }
+    }
+    return(Z)
+}
+phylo.to.Z(r)
+```
+
+(This could benefit from the repeated-entry sparse matrix class that Steve Walker wrote.)
