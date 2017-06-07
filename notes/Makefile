@@ -1,4 +1,4 @@
-SRCDIR=../
+SRCDIR=../../notes
 
 %.html: ${SRCDIR}/%.rmd
 	Rscript -e "rmarkdown::render(\"$<\",output_dir='.')"
