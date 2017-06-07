@@ -309,6 +309,11 @@ At present there are a variety of strong opinions about how to resolve such prob
 	- The `rstanarm` and `brms` packages provide wrappers for the Stan Hamiltonian MCMC engine that fit GLMMs via `lme4` syntax, again allowing a variety of priors to be set.
 - If a variance component is zero, dropping it from the model will have no effect on any of the estimated quantities (although it will affect the AIC, as the variance parameter is counted even though it has no effect). @pasch_interspecific_2013 gives one example where random effects were dropped because the variance components were consistently estimated as zero. Conversely, if one chooses for philosophical grounds to retain these parameters, it won't change any of the answers.
 
+### Setting residual variances to zero
+
+For some problems it would be convenient to be able to set the residual variance term to zero. This is difficult in `lme4`, because the model is parameterized internally in such a way that the residual variance is profiled out (i.e., calculated directly from a residual deviance term) and the random-effects variances are scaled by the residual variance.
+
+It is possible to use `blmer` to fix the residual variance to a very small (albeit not exactly zero) value.
 
 ### Other problems
 
