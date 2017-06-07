@@ -1,0 +1,138 @@
+---
+title: "Mixed model package comparison"
+author: "Ben Bolker"
+date: "'{r Sys.time()}'"
+output: html_document:
+    toc: true
+	toc_depth: 2
+---
+
+For now, this page is only covering "basic" mixed modeling packages (although the line is admittedly somewhat blurry).
+
+## In a nutshell 
+
+### R packages
+
+- `MCMCglmm`. Uses MCMC instead of ML to fit the model. Bayesian priors can be included.  Some complex variance structures (heterogeneous yes, AR1 no).
+- `nlme`  One of the first widely-used mixed-models software for S-PLUS. Ported from S-PLUS to R. Nested random effects easily modeled. Crossed random effects difficult. Stable (maintenance-mode).  Multiple functions (lme for linear, nlme for nonlinear, gls for no random terms).  Complex (and custom) variance structures possible. No GLMMs.
+- `lme4`. Under active development, especially for GLMMs.  No complex variance structures.  Uses sparse matrix algebra, handles crossed random effects well. Much faster than `nlme`.
+- `glmmADMB` interface to `ADMB` (see below); flexible, but slower than other R packages.
+
+## non-R
+
+- [ADMB](http://admb-project.org/). Automatic Differentiation Model Builder.  Mostly used in Forestry/Fish/Wildlife.  Started out as a commercial product, but now open-source.  Non-linear models handled. ADMB-RE, implements random effects in non-linear models via Laplace, importance sampling, GHQ in some cases.
+- **SAS** Commercial.  Full-featured. 
+   - `PROC MIXED` implements modern LMMs; it is very widely used with lots of examples, but can be very slow.
+   - `PROC GLIMMIX` added generalized models; it now incorporates Laplace approximation and adaptive Gaussian quadrature, but falls back to PQL for models with complex correlation structures. It also has other features such as simpler syntax to request predictable functions of random effects. 
+   - `HPMIXED` is "High Performance" to address the slow speed of MIXED, but low-featured.
+   - `PROC NLMIXED` is for non-linear and linear models (i.e. models that cannot be fitted in `PROC MIXED/GLIMMIX`, such as those with unusual variance-covariance structures or variances that are functions of fixed or random predictors).  It also fits GLMMs via Laplace/GHQ (but *not* crossed effects). Multiple denominator degrees of freedom methods (Kenward-Roger, Satterthwaite, Containment).
+- **ASREML** Commercial: free licenses available for academic and developing-country use. Available as a standalone, R package (`ASREML-R`, or in Genstat. Uses sparse matrices and Average Information for speed.  Widely used in plant and animal breeding.  Numerous error structures supported.  Splines well-integrated.  Generalized models: PQL only, warnings in documentation.  Wald-type tests.  Constraints on parameters allowed.
+
+(To add: npmlreg, regress (from Gabor Grothendieck))
+
+## Linear mixed models
+
+
+```{r tabdat,echo=FALSE}
+data.frame(package=c("nlme","lme4","lmm","lmm","asreml","statmod"
+```
+--------------------------------------------------------------------------------------------------
+package   function   estimation   inference        inference    random effects  residuals      other
+                                  (tests)          (conf ints)  (G structure)   (R structure)
+--------  --------   -----------  -------------------- -----------  --------------  -------------  -------
+`nlme`    `lme`      ML, REML     Wald (`summary`)
+                                  LRT (`anova`),
+								  sequential and marginal conditional F tests (`anova`) || Wald intervals on fixed and RE parameters (`intervals`) || multiple (nested) random effects; _
+diagonal, blocked structures (`pdClasses`); _
+crossed possible, but slow || spatial and temporal correlations (`corStruct`), _
+continuous and discrete heteroscedasticity (`varStruct`) || ||
+|| lme4         || lmer[[footnote]]faster than nlme but currently more limited 'model space'[[/footnote]]   ML, REML    ||ML, REML    || F statistics (sans denominator df: `summary`), likelihood ratio test (`anova`), _
+post-hoc MCMC (`mcmcsamp`)[[footnote]]for models with intercept variation in RE groups only[[/footnote]] ||  post-hoc MCMC `mcmcsamp` || nested and crossed RE, [[$$\Sigma$$]] diagonal or block diagonal[[footnote]]grouped RE terms assumed to be general positive diagonal; (block) diagonality achieved by separating grouping terms (e.g., `(1|g) + (0+x1+x2|g)`)[[/footnote]] || none || ||
+|| lme4a       || lmer[[footnote]]development version of lme4[[/footnote]] || as above  || as above || as above + likelihood profiles, fast parametric bootstrapping `bootMer` || as above||none || ||
+|| lmm          || ecmeml.lmm ||ML(ECME algorithm) || || ||
+|| lmm          || fastml.lmm ||ML(rapidly Converging algorithm)|| || || ||
+|| asreml || asreml ||Sparse matrix, Average Information REML || Wald `anova` || Standard errors || Multiple crossed/nested/blocked/splines || (Blocked) AR1xAR1, Matern, Factor Analytic, Heteroskedastic ||
+|| statmod	  || mixedModel2[[footnote]]     This function is equivalent to ‘lme(fixed=formula,random=~1|random)’, except that the block variance component is not constrained to be non-negative, but is faster and more accurate for small to moderate size data sets. It  is slower than ‘lme’ when the number of observations is large. (P)  This function tends to be fast and reliable, compared to competitor functions which fit randomized block models, when then number of observations is small, say no more than 200. However it becomes quadratically slow as the number of observations increases because of the need to do two eigenvalue decompositions of order nearly equal to the number of observations. So it is a good choice when fitting large numbers of small data sets, but not a good choice for fitting large data sets.[[/footnote]] || REML ||  ||   || ||
+|| SAS || PROC MIXED ||REML,ML, MIVQUE0, or Type1–Type3(method= option)||wald t and F test|| ||multiple,complex (you can define the co-variance structure by type option in random statement)|| ||
+|| SAS || PROC GLIMMIX ||pseduo _
+ likelihood(default),Laplace,GHQ,REML,PQL||Wald, LRT(COVTEST Statement) ,Type III test for fixed effects || Wald (default),LRT ||Multiple,nested or crossed ||  ||
+|| SAS || HPMIXED ||REML||wald t, F test, type III test and chisq test||wald intervals on fixed effect and random effect (CL option)||multiple,complex|| || ||
+|| HLM || HLM||REML,FML||    ||   || Multilevel,nested and or crossed random effects|| || ||
+|| MLWiN || ||ML,MCMC||     ||   || Multilevel,nested/crossed random effects||
+|| Stata? ||xtmixed//xtreg(random-intercept model) ||REML,ML||Wald,LR test (with ML)||Wald||multilevel,nested/crossed,4 types of covariance structure _
+diagonal-blocked structures,Heteroskedastic random effects ||Heteroskedastic (residuals()), _ independent/exchangeable/unstructured/banded/exponential|| ||
+
+
+## GLMMs
+
+||~ package  ||~ function        ||~ estimation          ||~ inference (tests) ||~ inference (confidence intervals) ||~ families                  ||~ random effects ||~ other ||
+|| lme4             ||  glmer || Laplace, AGHQ || Wald (`summary`), LRT (`anova`), _
+simulation tests of simple random effects (`RLRsim` package)    ||  Wald (by hand)  || Poisson, binomial  || multiple: nested, crossed || ||
+|| glmmML       || glmmML || Laplace, AGHQ || Wald ||  ||  Poisson, binomial [logit, cloglog] || single || ||
+|| glmmAK       || logpoissonRE || MCMC || Wald ||  || Poisson || single (normal or G-spline) || ||
+|| MCMCglmm || MCMCglmm || MCMC   || 'Bayesian p-value' || credible intervals (coda::HPDinterval) || Gaussian, Poisson, categorical, _
+multinomial, exponential, geometric, _
+categorical, various zero-inflated/altered || multiple, complex || ||
+|| MASS          || glmmPQL     || PQL || Wald (summary) || Wald ||binomial, Poisson, Gamma, ... _
+(see `?family`) ||  || spatial/temporal _
+correlation structures _
+(`?nlme::corClasses`) ||
+|| [http://cran.r-project.org/web/packages/gamlss.mx/index.html gamlss.mx] || glmmNP || GHQ/Expectation-maximization ||  || || many (see gamlss.family in the gamlss.dist package) || single ("two-level") || ||
+|| glmmBUGS  || glmmBUGS  || MCMC || || ||Poisson, Binomial || || spatial effects||
+|| hglm || hglm or hglm2 || hierarchical likelihood ||Wald (summary) || || see `?family`|| || ||
+|| HGLMMM ||HGLMfit || hierarchical likelihood _
+first order Laplace ? ||Wald (summary) _
+LRT (HGLMLRTest())|| || Binomial(logit),poisson(log),Normal(Identity), _
+Gamma(log, inverse) ||complex,multiple|| profile(LapFix=TRUE)  ||
+|| [http://www.stat.umn.edu/geyer/bernor/ bernor ] || bnlogl || Monte Carlo sampling || ||   || Bernoulli (logit link) ||
+|| [http://r-forge.r-project.org/projects/glmmadmb glmmADMB] || glmm.admb || Laplace || Wald (summary), LRT (anova), MCMC || || Poisson, negative binomial, Bernoulli (+ zero-inflation) || single (multiple under development) || profiles ||
+|| [http://www.commanster.eu/rcode.html repeated] || glmm || GHQ || Wald (summary) ||Wald (by hand) || see `?family` || single || ||
+|| [http://www.r-inla.org/home R-INLA] || inla || nested Laplace || || || Poisson,Binomial [logit,probit,cloglog] _
+Negative Binomial ...|| || Spatial and temporal correlation models||
+|| SAS PROC GLIMMIX || PROC GLIMMIX||pseduo _
+ likelihood(default),Laplace,GHQ,REML,PQL||Wald, LRT(COVTEST Statement) _
+Type III test for fixed effects || Wald (default),LRT ||Binomial,Poisson,Gamma(check the Dist option)||multiple,nested and crossed||profile or non-profile ||
+|| SAS PROC NLMIXED || PROC NLMIXED||GHQ, First-order method...(Check "method=" option) _
+Laplace (QPOINTS=1 option) || Wald, LRT ||Wald || Normal,Binomial,Poisson,Binary,Gamma _
+Negative Binomial, General (custom defined), zero-inflated || number of random effects < 5 _
+limited to only 2 levels ||
+
+
+## NLMMs and other extensions
+
+[[# NLMMexts]]
+||~ package  ||~ function        ||~ estimation          ||~ inference (tests) ||~ inference (confidence intervals) ||~ families                  ||~ random effects ||~ other ||
+|| nlme         || nlme || ML OR REML ||Wald t (summary) _
+Wald F (anova) || use intervals()  || no specific family required ?||nested  || ||
+|| lme4         || nlmer ||Laplace or PQL _
+                                    (method option) || wald (summary)||wald (hand?) || no family required|| nested or crossed || ||
+
+
+[[# accessors]]
+## Accessors
+
+||~  ||~  ||~ lme (nlme) ||~ glmmPQL (MASS) ||~ [g]lmer (lme4) ||~ [g]lmer (lme4a) ||~ MCMCglmm ||~ glmm.admb ||
+|| summary ||   ||  estimate, std err, t, df, p ||estimate, std err, t, df, p ||  lmer: estimate, std err, t  _
+glmer: est, std err, Z, p (Wald/asymptotic) || like lme4 || post.mean, CI, eff.sample||estimate,std.error,z values, p||
+|| coef || all coefficients _
+(predicted values for each group) ||= @<&#10003;>@ ||= @<&#10003;>@||= @<&#10003;>@||= @<&#10003;>@ ||= @<&#10003;>@||= @<&#10003;>@||
+|| fixef || fixed effect parameters ([[$ \beta $]]) ||= @<&#10003;>@ ||= @<&#10003;>@||= @<&#10003;>@||= @<&#10003;>@ || ||= @<&#10003;>@||
+|| ranef || random effect estimates ([[$ u $]]) ||= @<&#10003;>@ ||= @<&#10003;>@||= @<&#10003;>@||= @<&#10003;>@ || ||= @<&#10003;>@||
+|| logLik || (marginal) log-likelihood ||= @<&#10003;>@||= @<&#10003;>@||= @<&#10003;>@||= @<&#10003;>@ || ||= @<&#10003;>@||
+|| AIC || marginal AIC ||= @<&#10003;>@||= @<&#10003;>@||= @<&#10003;>@||= @<&#10003;>@ || ||= @<&#10003;>@||
+|| confint || confidence intervals ||= @<&#10003;>@||= @<&#10003;>@|| || || ||= @<&#10003;>@||
+|| intervals || confidence intervals ||= @<&#10003;>@||= @<&#10003;>@|| || || || ||
+|| plot || diagnostic plots || ||= @<&#10003;>@|| || ||= @<&#10003;>@ (not diagnostic plots)||= @<&#10003;>@||
+|| predict || predicted values,  _
+allowing new data ||= @<&#10003;>@||= @<&#10003;>@||= @<&#10003;>@|| ||= @<&#10003;>@ ||= @<&#10003;>@||
+|| simulate || simulated values _
+from fitted model ||= @<&#10003;>@|| ||= @<&#10003;>@ ||= @<&#10003;>@ (for lmer) || ||= @<&#10003;>@||
+|| fitted || fitted values ||= @<&#10003;>@||= @<&#10003;>@||= @<&#10003;>@||= @<&#10003;>@ ||= @<&#10003;>@ ||= @<&#10003;>@||
+|| update || update model ||= @<&#10003;>@||= @<&#10003;>@||= @<&#10003;>@||= @<&#10003;>@ || ||= @<&#10003;>@||
+|| residuals || ||= @<&#10003;>@||= @<&#10003;>@||= @<&#10003;>@|| || ||= @<&#10003;>@||
+|| VarCorr || variance-covariance matrices _
+of random effects ||= @<&#10003;>@  ||= @<&#10003;>@  ||= @<&#10003;>@||= @<&#10003;>@ || ||= @<&#10003;>@||
+|| coefplot || plot of coefficients _
+and confidence/credible intervals ||= @<&#10003;>@ ||= @<&#10003;>@||= @<&#10003;>@|| || ||= @<&#10003;>@||
+|| anova || ||= @<&#10003;>@|| ||= @<&#10003;>@|| ||= @<&#10003;>@ (no p-values) ||= @<&#10003;>@(compare two models)||
+|| drop1 ||  || ||= @<&#10003;>@ (no LRT)||= @<&#10003;>@|| ||= @<&#10003;>@(no p-values) || ||

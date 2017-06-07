@@ -1,0 +1,3 @@
+nlme,lme,"ML, REML","Wald (`summary`), LRT(`anova`), sequential and marginal F tests (`anova`)","Wald intervals on constrained scale (fixed and RE) (`intervals`)","multiple nested random effects; diagonal, blocked structures (`pdClasses`); crossing possible but slow/awkward","spatial/temporal/phylogenetic correlations (`corStruct`), heteroscedasticity (`varStruct`)",""
+lme4,lmer,"ML, REML","F statistics without denominator df, LRT"
+

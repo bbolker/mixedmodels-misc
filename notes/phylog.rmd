@@ -223,7 +223,7 @@ MCMC_time <- system.time(
                        thin=nitt/1000,verbose=FALSE))
 ```
 
-`MCMCglmm` fit takes about `r round(MCMC_time["elapsed"]/60)` minutes ... effective sample size is 1000, which means the initial suggested 5 million steps may be overkill ?
+`MCMCglmm` fit takes about `r round(MCMC_time["elapsed"]/60)` minutes ... effective sample size is 1000, which means the initial suggested 5 million steps may be overkill ? (However, with only 5e4 parameter sets we get wonky-looking trace plots/effective sample size of only 200, so 5e5 may be necessary ...)
 
 
 ```{r MCMCres}
