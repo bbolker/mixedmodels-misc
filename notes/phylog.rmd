@@ -190,6 +190,17 @@ phylo_glmm <- function(formula,data,family,phylo,phyloZ) {
     opt <- optimizeGlmer(devfun, stage=2)
     mkMerMod(environment(devfun), opt, glmod$reTrms, fr = glmod$fr)
 }
+
+phylo_lmm <- function(formula,data,phylo,phyloZ,control) {
+  lmod <- lFormula(formula=formula,data = data,control=control)
+  lmod$reTrms <- modify_phylo_retrms(lmod$reTrms,phylo,
+                                     phylonm="phylo",phyloZ)
+  devfun <- do.call(mkLmerDevfun, lmod)
+  opt <- optimizeLmer(devfun)
+  # devfun <- updateLmerDevfun(devfun, lmod$reTrms)
+  # opt <- optimizeLmer(devfun, stage=2)
+  mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr)
+}
 ```
 
 ## glmmTMB fits: nuts and bolts
@@ -267,7 +278,7 @@ lme4_res <- rbind(coef(summary(phylo_glmm_fit))[,1:2],
 
 From Garamszegi ch. 11 code examples. 
 ```{r MCMCglmm,cache=TRUE}
-nitt <- 5e5 ## was 5e6
+nitt <- 5e3 ## was 5e6
 inv.phylo <- inverseA(phylo,nodes="TIPS",scale=TRUE)
 prior <- list(G=list(G1=list(V=1,nu=0.02)),R=list(V=1,nu=0.02))
 MCMC_time <- system.time(
@@ -299,14 +310,36 @@ Don't know if I got this right or not, but the answers look quite different ... 
 simulate Poisson errors?
 
 ```{r tmbfit,cache=TRUE}
+
+### Don't need this in BB's update
+fit_TMBstruc <- function(TMBStruc,verbose=FALSE) {
+    obj <- with(TMBStruc, TMB:::MakeADFun(data.tmb, parameters, map = mapArg, 
+                                          random = randomArg, profile = NULL, silent = !verbose, 
+                                          DLL = "glmmTMB"))
+    optTime <- system.time(fit <- with(obj, nlminb(start = par, 
+                                                   objective = fn, gradient = gr)))
+    fit$parfull <- obj$env$last.par.best
+    sdr <- TMB:::sdreport(obj)
+    return(list(fit=fit,sdr=sdr))
+}
+
+###
+
 TMBstruc <- glmmTMB(phen_pois~cofactor+(1|phylo)+(1|obs),
                     data=dat,family=poisson,
-                    doFit=FALSE)
-TMBstruc_new <- modify_TMBstruc(TMBstruc,phylo,"phylo",phyloZ)
-glmmTMB_fit <- glmmTMB:::fitTMB(TMBstruc_new)
-tt <- tidy(glmmTMB_fit,scales=c(ran_pars="vcov",fixed=NA))
-glmmTMB_res <- tt[,c("term","estimate","std.error")]
+                    debug=TRUE) # doFit=FALSE) in BB's update
 
+TMBstruc_new <- modify_TMBstruc(TMBstruc,phylo,"phylo",phyloZ)
+
+# glmmTMB_fit <- glmmTMB:::fitTMB(TMBstruc_new)
+# tt <- tidy(glmmTMB_fit,scales=c(ran_pars="vcov",fixed=NA))
+# glmmTMB_res <- tt[,c("term","estimate","std.error")]
+
+glmmTMB_fit <- fit_TMBstruc(TMBstruc_new)
+glmmTMB_res <- matrix(c(glmmTMB_fit$fit$par[1:2],exp(glmmTMB_fit$fit$par[3:4])^2),
+                      ncol=1,
+                      dimnames=list(c("intercept","cofactor","var.phylo","var.obs"),
+                                    NULL))
 ```
 
 ## result comparison
@@ -319,6 +352,35 @@ MCMCglmm_res
 
 `lme4` and `glmmTMB` get very close to the same answer.
 Close but not identical to `MCMCglmm`, in part because of priors ...
+
+
+## Result comparison with Gaussian example in chapter 11
+
+```{r G_results}
+datG <- read.table("data/data_simple.txt",header=TRUE)
+datG$obs <- factor(seq(nrow(datG)))
+phylo_lmm_fit <- phylo_lmm(phen~cofactor+(1|phylo) +(1|obs),
+                           data=datG,phylo=phylo,
+                           control=lmerControl(check.nobs.vs.nlev="ignore",check.nobs.vs.nRE="ignore"),
+                           phyloZ=phyloZ)
+lme4_resLMM <- rbind(coef(summary(phylo_lmm_fit))[,1:2],
+                     cbind(matrix(unlist(VarCorr(phylo_lmm_fit))),NA))
+
+TMBstruc <- glmmTMB(phen~cofactor+(1|phylo)+(1|obs),
+              data=datG,family=gaussian,
+              debug=TRUE)
+TMBstruc_new <- modify_TMBstruc(TMBstruc,phylo,"phylo",phyloZ)
+glmmTMB_fit <- fit_TMBstruc(TMBstruc_new)
+glmmTMB_res <- matrix(c(glmmTMB_fit$fit$par[1:2],exp(glmmTMB_fit$fit$par[3:4])^2),
+                    ncol=1,
+                    dimnames=list(c("intercept","cofactor","var.phylo","var.obs"),
+                      NULL))
+
+print(lme4_resLMM)
+print(glmmTMB_res)
+
+```
+
 
 ## To do
 
