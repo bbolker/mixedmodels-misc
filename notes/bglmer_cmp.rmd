@@ -64,11 +64,17 @@ dwplot(resFrame)+theme_bw()+
     scale_colour_brewer(palette="Set1")
 ```
 
-Conclusions:
+### Conclusions
 
 - all approaches give generally similar answers
 - even this fairly large data set isn't enough to give accurate answers about interactions (unpenalized models give ridiculous answers)
 - it's a bit worrying that 2/12 parameters aren't covered here (i.e., confidence intervals for `c.con.tr3` and `c.con.tr3:c.diff.tr2`); this could be a weird single simulation (I don't have the patience to redo this hundreds of times - `brms` in particular runs slowly)
+
+### To do
+
+- add timings?
+- more simulations (check coverage etc.)?
+- add `MCMCglmm`, others?
 
 ### Session info
 

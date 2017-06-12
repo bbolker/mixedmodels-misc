@@ -1,7 +1,10 @@
 ---
-title: "Brain dump: phylogenetic comparative methods in the lme4-verse"
+title: "Phylogenetic comparative methods in the lme4-verse"
 author: Ben Bolker
 date: "`r format(Sys.time(), '%H:%M %d %B %Y')`"
+output:
+    html_document:
+    mathjax: default
 ---
 
 ```{r pkgs,message=FALSE}
@@ -12,11 +15,14 @@ library(Matrix)
 library(MCMCglmm)
 library(MASS) ## glmmPQL + ape::corBrownian()
 library(pez)
+## n.b. at present need 'modular' devel branch:
+## devtools::install_github("glmmTMB/glmmTMB/glmmTMB",ref="modular")
 library(glmmTMB)
 ## utils
+library(dplyr)
 library(coda)
 library(lattice)
-library(broom)
+library(broom) ## need install_github("bbolker/broom")
 library(dotwhisker)
 ```
 
@@ -210,19 +216,6 @@ modify_TMBstruc <- function(tmbstruc,phylo,phylonm="phylo",
     tmbstruc$parameters$b <- rep(0,ncol(tmbstruc$data.tmb$Z))
     return(tmbstruc)
 }
-## glmmTMB is not quite modular enough.  Would like to be use do_fit=FALSE
-## (or something) and get an object complete enough to finish the fit with ...
-## this is a stopgap/proof of concept, copying critical code from inside glmmTMB
-fit_TMBstruc <- function(TMBStruc,verbose=FALSE) {
-    obj <- with(TMBStruc, TMB:::MakeADFun(data.tmb, parameters, map = mapArg, 
-                                          random = randomArg, profile = NULL, silent = !verbose, 
-                                          DLL = "glmmTMB"))
-    optTime <- system.time(fit <- with(obj, nlminb(start = par, 
-                                                   objective = fn, gradient = gr)))
-    fit$parfull <- obj$env$last.par.best
-    sdr <- TMB:::sdreport(obj)
-    return(list(fit=fit,sdr=sdr))
-}
 ```
 
 
@@ -308,13 +301,12 @@ simulate Poisson errors?
 ```{r tmbfit,cache=TRUE}
 TMBstruc <- glmmTMB(phen_pois~cofactor+(1|phylo)+(1|obs),
                     data=dat,family=poisson,
-                    debug=TRUE)
+                    doFit=FALSE)
 TMBstruc_new <- modify_TMBstruc(TMBstruc,phylo,"phylo",phyloZ)
-fit <- fit_TMBstruc(TMBstruc_new)
-glmmTMB_res <- matrix(c(fit$fit$par[1:2],exp(fit$fit$par[3:4])^2),
-                      ncol=1,
-                      dimnames=list(c("intercept","cofactor","var.phylo","var.obs"),
-                                    NULL))
+glmmTMB_fit <- glmmTMB:::fitTMB(TMBstruc_new)
+tt <- tidy(glmmTMB_fit,scales=c(ran_pars="vcov",fixed=NA))
+glmmTMB_res <- tt[,c("term","estimate","std.error")]
+
 ```
 
 ## result comparison
@@ -335,9 +327,10 @@ Close but not identical to `MCMCglmm`, in part because of priors ...
 - When is residual var unidentifiable (e.g. all terminal branch lengths identical)?
 - how easily could we implement an O-U process (this would require that Z be recomputed each time with changing $\alpha$ [and reference level]: could be considerably more difficult/mess up some of the linear algebra tricks?)
 - holes
-     - `tidy` method for `MCMCglmm_fit` should return SDs for random effects too
+     - `tidy`:
+	      - method for `MCMCglmm_fit` should return SDs for random effects too
+		  - clean up/document `scales` argument
      - `lme4` + `profile`?
-	 - `glmmTMB`: improve modularity so we can get standard errors etc.
 - known/existing methods for PGLMM in R:
    - `pez::pglmm`
    - `glmmPQL/gls` + `ape::cor.*`
