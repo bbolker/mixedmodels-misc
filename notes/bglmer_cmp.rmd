@@ -1,0 +1,77 @@
+---
+title: package comparison
+date: "`r Sys.time()`"
+---
+
+<!-- http://zevross.com/blog/2014/07/09/making-use-of-external-r-code-in-knitr-and-r-markdown/ -->
+
+```{r pkgs,message=FALSE}
+## fitting methods
+library(lme4)
+library(blme)
+library(glmmTMB)
+library(brms)
+## plotting/manipulation
+library(broom)  ## install_github("bbolker/broom")
+library(dotwhisker)
+library(dplyr)
+library(ggplot2)
+```
+
+```{r read_chunk,echo=FALSE}
+knitr::read_chunk("bglmer_runs.R")
+```
+
+Define a formula (which we'll use repeatedly) and make a data frame that represents a fully crossed, randomized-block design with three factors for the fixed effects (3x3x2) and two random effects (`id` and `item.new`).
+
+```{r setup_runs,eval=FALSE}
+```
+
+Simulate a Bernoulli response:
+
+```{r simulate_data,eval=FALSE}
+```
+
+Fit the model with `lme4`, `blme`, `glmmTMB`, and `brms` (the first and third are un-penalized, the second and fourth set a zero-centered prior on the fixed effects):
+
+```{r run_models,eval=FALSE}
+```
+
+Retrieve the stored data:
+```{r get_data}
+resList <- readRDS("bglmer_runs.rds")
+```
+
+Tweak labels a bit and put the results together:
+```{r fix_data,warning=FALSE,echo=FALSE}
+## lme4 non-pos-def Hessian warnings suppressed ...
+tt <- lapply(resList,tidy)
+## fix brms term names
+tt$brms <- tt$brms %>% filter(grepl("^(b|sd)_",term)) %>%
+    mutate(term=gsub("^b_","",term),
+           term=gsub("__",".",term),
+           term=gsub("([a-z\\.]+)\\.Intercept","Intercept.\\1",term),
+           term=gsub("Intercept","(Intercept)",term))
+resFrame <- bind_rows(tt,.id="model")
+```
+
+Plot:
+
+```{r do_plot}
+dwplot(resFrame)+theme_bw()+
+    geom_vline(xintercept=1,lty=2)+
+    scale_x_continuous(limits=c(-5,5),oob=scales::squish)+
+    scale_colour_brewer(palette="Set1")
+```
+
+Conclusions:
+
+- all approaches give generally similar answers
+- even this fairly large data set isn't enough to give accurate answers about interactions (unpenalized models give ridiculous answers)
+- it's a bit worrying that 2/12 parameters aren't covered here (i.e., confidence intervals for `c.con.tr3` and `c.con.tr3:c.diff.tr2`); this could be a weird single simulation (I don't have the patience to redo this hundreds of times - `brms` in particular runs slowly)
+
+### Session info
+
+```{r si}
+sessionInfo()
+```
