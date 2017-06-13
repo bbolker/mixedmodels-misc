@@ -168,12 +168,12 @@ nitt <- 1e5 ## was 5e6
 inv.phylo <- inverseA(phylo,nodes="TIPS",scale=TRUE)
 prior <- list(G=list(G1=list(V=1,nu=0.02)),R=list(V=1,nu=0.02))
 MCMC_time <- system.time(
-    MCMCglmm_fit <- MCMCglmm(phen_pois~cofactor,random=~phylo,
+    MCMCglmm_fit_pois <- MCMCglmm(phen_pois~cofactor,random=~phylo,
                        family="poisson",ginverse=list(phylo=inv.phylo$Ainv),
                        prior=prior,data=dat_pois,nitt=nitt,burnin=1000,
                        thin=nitt/1000,verbose=FALSE))
 
-ss <- summary(MCMCglmm_fit)
+ss <- summary(MCMCglmm_fit_pois)
 MCMCglmm_pois_res <- with(ss,rbind(solutions[,1:3],Gcovariances[,1:3],Rcovariances[,1:3]))
 
 print(MCMCglmm_pois_res)
@@ -234,12 +234,12 @@ nitt <- 1e5 ## was 5e6
 inv.phylo <- inverseA(phylo,nodes="TIPS",scale=TRUE)
 prior <- list(G=list(G1=list(V=1,nu=0.02)),R=list(V=1,nu=0.02))
 MCMC_time <- system.time(
-    MCMCglmm_fit <- MCMCglmm(phen~cofactor,random=~phylo,
+    MCMCglmm_fit_gaus <- MCMCglmm(phen~cofactor,random=~phylo,
                        family="gaussian",ginverse=list(phylo=inv.phylo$Ainv),
                        prior=prior,data=dat_gaus,nitt=nitt,burnin=1000,
                        thin=nitt/1000,verbose=FALSE))
 
-ss <- summary(MCMCglmm_fit)
+ss <- summary(MCMCglmm_fit_gaus)
 MCMCglmm_gaus_res <- with(ss,rbind(solutions[,1:3],Gcovariances[,1:3],Rcovariances[,1:3]))
 
 print(MCMCglmm_gaus_res)
@@ -287,3 +287,48 @@ print(summary(gls_gauscor_fit))
 
 ```
 
+
+
+## poisson results
+
+```{r poisson_res}
+tt_glmer_nocor_pois <- tidy(basic_pois_fit)
+tt_glmer_cor_pois <- tidy(phylo_pois_fit)
+tt_MCMCglmm_cor_pois <- tidy(MCMCglmm_fit_pois)
+
+print(tt_glmer_nocor_pois)
+print(tt_glmer_cor_pois)
+print(tt_MCMCglmm_cor_pois)
+
+tt_comb <- bind_rows(glmer_nocor=tt_glmer_nocor_pois,
+                     glmer_cor=tt_glmer_cor_pois,
+                     MCMCglmm_cor=tt_MCMCglmm_cor_pois,
+                     .id="model") %>% filter(effect=="fixed")
+
+print(dwplot(tt_comb)+ theme_bw())
+```
+
+## Gaussian results
+
+```{r gaus_res}
+tt_lmer_nocor_gaus <- tidy(basic_gaus_fit)
+tt_lmer_cor_gaus <- tidy(phylo_gaus_fit)
+tt_MCMCglmm_cor_gaus <- tidy(MCMCglmm_fit_gaus)
+
+print(tt_lmer_nocor_gaus)
+print(tt_lmer_cor_gaus)
+print(tt_MCMCglmm_cor_gaus)
+
+tt_comb <- bind_rows(lmer_nocor=tt_lmer_nocor_gaus,
+                     lmer_cor=tt_lmer_cor_gaus,
+                     MCMCglmm_cor=tt_MCMCglmm_cor_gaus,
+                     .id="model") %>% filter(effect=="fixed")
+
+print(dwplot(tt_comb)+ theme_bw())
+```
+
+
+## Todo
+- show the estimates with/without phylo-correlation structure
+- need to add TMB (ATM TMB and lme4 results are the same)
+- no tidy method for glmmPQL and gls 
