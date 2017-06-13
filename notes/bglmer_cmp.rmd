@@ -16,13 +16,14 @@ library(broom)  ## install_github("bbolker/broom")
 library(dotwhisker)
 library(dplyr)
 library(ggplot2)
+library(knitr)
 ```
 
 ```{r read_chunk,echo=FALSE}
 knitr::read_chunk("bglmer_runs.R")
 ```
 
-Define a formula (which we'll use repeatedly) and make a data frame that represents a fully crossed, randomized-block design with three factors for the fixed effects (3x3x2) and two random effects (`id` and `item.new`).
+Define a formula (which we'll use repeatedly) and make a data frame that represents a fully crossed, randomized-block design with three factors for the fixed effects (3x2x2) and two random effects (`id` and `item.new`).
 
 ```{r setup_runs,eval=FALSE}
 ```
@@ -32,7 +33,7 @@ Simulate a Bernoulli response:
 ```{r simulate_data,eval=FALSE}
 ```
 
-Fit the model with `lme4`, `blme`, `glmmTMB`, and `brms` (the first and third are un-penalized, the second and fourth set a zero-centered prior on the fixed effects):
+Fit the model with  `blme`, `lme4`, `glmmTMB`, and `brms` (`lme4` and `glmmTMB` are un-penalized, `blme` and `brms` set a zero-centered prior on the fixed effects):
 
 ```{r run_models,eval=FALSE}
 ```
@@ -62,6 +63,14 @@ dwplot(resFrame)+theme_bw()+
     geom_vline(xintercept=1,lty=2)+
     scale_x_continuous(limits=c(-5,5),oob=scales::squish)+
     scale_colour_brewer(palette="Set1")
+```
+
+### Timings
+
+```{r timings}
+ttt <- attr(resList,"times")
+names(ttt) <- names(resList)
+kable(round(t(sapply(ttt,"[[","elapsed")),1))
 ```
 
 ### Conclusions
