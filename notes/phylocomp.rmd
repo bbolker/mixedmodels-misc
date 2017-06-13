@@ -1,0 +1,289 @@
+---
+title: "Phylogenetic comparative methods in the lme4-verse Part 2"
+author: Michael Li 
+date: "`r format(Sys.time(), '%H:%M %d %B %Y')`"
+output:
+    html_document:
+    mathjax: default
+---
+
+```{r pkgs,message=FALSE,warning=FALSE}
+library(ape)
+library(lme4)
+library(Matrix)
+## additional possibilities for PGLMMs ...
+library(MCMCglmm)
+library(MASS) ## glmmPQL + ape::corBrownian()
+library(pez)
+## n.b. at present need 'modular' devel branch:
+## devtools::install_github("glmmTMB/glmmTMB/glmmTMB",ref="modular")
+library(glmmTMB)
+## utils
+library(dplyr)
+library(coda)
+library(lattice)
+library(broom) ## need install_github("bbolker/broom")
+library(dotwhisker)
+library(nlme)
+```
+
+```{r phylocode,echo=FALSE,warning=FALSE,message=FALSE}
+phylo.to.Z <- function(r) {
+    ntip <- length(r$tip.label)
+    Zid <- Matrix(0.0,ncol=length(r$edge.length),nrow=ntip)
+    nodes <- (ntip+1):max(r$edge)
+    root <- nodes[!(nodes %in% r$edge[,2])]
+    for (i in 1:ntip) {
+        cn <- i  ## current node
+        while (cn != root) {
+            ce <- which(r$edge[,2]==cn)   ## find current edge
+            Zid[i,ce] <- 1   ## set Zid to 1
+            cn <- r$edge[ce,1]            ## find previous node
+        }
+    }
+    Z <- t(r$edge.length * t(Zid))
+    return(Z)
+}
+
+#' split a square (block) matrix into component blocks 
+#' @param M square matrix
+#' @param ind indices (0,n1,n2,...) giving the endpoint of each block
+split_blkMat <- function(M,ind) {
+    res <- list()
+    if (length(ind)==1) return(list(M))
+    for (i in 1:(length(ind)-1)) {
+        v <- (ind[i]+1):ind[i+1]
+        res[[i]] <- M[v,v]
+    }
+    return(res)
+}
+
+#' modify reTrms object
+#' @param rt a reTrms object
+#' @param phylo a phylo object (phylogenetic tree)
+#' @param phylonm name of phylogenetic term in model
+#' @param phyloZ Z matrix built on branch length
+modify_phylo_retrms <- function(rt,phylo,phylonm="phylo",
+                                phyloZ=phylo.to.Z(phylo)) {
+    ## FIXME: better way to specify phylonm
+    ## need to replace Zt, Lind, Gp, flist, Ztlist
+    ## we have the same number of parameters (theta, lower),
+    ##  same number of obs
+    n.edge <- nrow(phylo$edge)
+    phylo.pos <- which(names(rt$cnms)==phylonm)
+    inds <- c(0,cumsum(sapply(rt$Ztlist,nrow)))
+    ## Zt: substitute phylo Z for previous dummy (scalar-intercept) Z
+    rt[["Ztlist"]][[phylo.pos]] <- t(phyloZ)
+    ## reconstitute Zt from new Ztlist
+    rt[["Zt"]] <- do.call(rbind,rt[["Ztlist"]])
+    ## Gp: substitute new # random effects (n.edge) for old # (n.phylo)
+    Gpdiff <- diff(rt$Gp)  ## old numbers
+    Gpdiff_new <- Gpdiff
+    Gpdiff_new[phylo.pos] <- n.edge  ## replace
+    rt[["Gp"]] <- as.integer(c(0,cumsum(Gpdiff_new)))          ## reconstitute
+    ## Lind: replace phylo block with the same element, just more values
+    Lind_list <- split(rt[["Lind"]],rep(seq_along(Gpdiff),Gpdiff))
+    Lind_list[[phylo.pos]] <- rep(Lind_list[[phylo.pos]][1],n.edge)
+    rt[["Lind"]] <- unlist(Lind_list)
+    ## Lambdat: replace block-diagonal element in Lambdat with a
+    ##   larger diagonal matrix
+    Lambdat_list <- split_blkMat(rt[["Lambdat"]],inds)
+    Lambdat_list[[phylo.pos]] <- Diagonal(n.edge,1.0)
+    rt[["Lambdat"]] <- Matrix::.bdiag(Lambdat_list)
+    ## flist: 
+    rt[["flist"]] <- as.list(rt[["flist"]])
+    rt[["flist"]][[phylonm]] <- factor(paste0("edge_",seq(n.edge)))
+    return(rt)
+}
+
+#' 
+phylo_glmm <- function(formula,data,family,phylo,phyloZ) {
+    glmod <- glFormula(formula=formula,data = data, family = family)
+    glmod$reTrms <- modify_phylo_retrms(glmod$reTrms,phylo,
+                                        phylonm="phylo",phyloZ)
+    devfun <- do.call(mkGlmerDevfun, glmod)
+    opt <- optimizeGlmer(devfun)
+    devfun <- updateGlmerDevfun(devfun, glmod$reTrms)
+    opt <- optimizeGlmer(devfun, stage=2)
+    mkMerMod(environment(devfun), opt, glmod$reTrms, fr = glmod$fr)
+}
+
+phylo_lmm <- function(formula,data,phylo,phyloZ,control) {
+  lmod <- lFormula(formula=formula,data = data,control=control)
+  lmod$reTrms <- modify_phylo_retrms(lmod$reTrms,phylo,
+                                     phylonm="phylo",phyloZ)
+  devfun <- do.call(mkLmerDevfun, lmod)
+  opt <- optimizeLmer(devfun)
+  # devfun <- updateLmerDevfun(devfun, lmod$reTrms)
+  # opt <- optimizeLmer(devfun, stage=2)
+  mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr)
+}
+```
+
+```{r getdat}
+if (!file.exists("data/phylo.nex")) {
+    dir.create("data")
+    download.file("http://mpcm-evolution.org/OPM/Chapter11_OPM/data.zip",
+                  dest="data/OPM_ch11_data.zip")
+    setwd("data")
+    untar("OPM_ch11_data.zip")
+    setwd("..")
+}
+phylo <- read.nexus("data/phylo.nex")
+dat_pois <- read.table("data/data_pois.txt",header=TRUE)
+dat_pois$obs <- factor(seq(nrow(dat_pois)))
+dat_gaus <- read.table("data/data_simple.txt",header=TRUE)
+dat_gaus$obs <- factor(seq(nrow(dat_gaus)))
+```
+
+```{r calc_phyloZ,cache=TRUE}
+system.time(phyloZ <- phylo.to.Z(phylo))
+```
+
+### lme4 fit
+
+```{r phylofit_pois}
+basic_pois_fit <- glmer(phen_pois~cofactor+(1|phylo),
+                        data=dat_pois,family=poisson)
+
+basic_pois_res <- rbind(coef(summary(basic_pois_fit))[,1:2],
+      cbind(matrix(unlist(VarCorr(basic_pois_fit))),NA))
+
+phylo_pois_fit <- phylo_glmm(phen_pois~cofactor+(1|phylo)+(1|obs),
+                             data=dat_pois,phylo=phylo,family=poisson,
+                             phyloZ=phyloZ)
+
+lme4_pois_res <- rbind(coef(summary(phylo_pois_fit))[,1:2],
+      cbind(matrix(unlist(VarCorr(phylo_pois_fit))),NA))
+
+print(basic_pois_res)
+print(lme4_pois_res)
+```
+
+
+### MCMCglmm
+
+```{r MCMCglmm_posi,cache=TRUE}
+nitt <- 1e5 ## was 5e6
+inv.phylo <- inverseA(phylo,nodes="TIPS",scale=TRUE)
+prior <- list(G=list(G1=list(V=1,nu=0.02)),R=list(V=1,nu=0.02))
+MCMC_time <- system.time(
+    MCMCglmm_fit <- MCMCglmm(phen_pois~cofactor,random=~phylo,
+                       family="poisson",ginverse=list(phylo=inv.phylo$Ainv),
+                       prior=prior,data=dat_pois,nitt=nitt,burnin=1000,
+                       thin=nitt/1000,verbose=FALSE))
+
+ss <- summary(MCMCglmm_fit)
+MCMCglmm_pois_res <- with(ss,rbind(solutions[,1:3],Gcovariances[,1:3],Rcovariances[,1:3]))
+
+print(MCMCglmm_pois_res)
+```
+
+### glmmPQL
+
+```{r glmmPQL_pois,cache=TRUE}
+rownames(dat_pois) <- as.character(dat_pois$phylo)
+dat_pois$allGrp <- factor(1) ## dummy grouping var because glmmPQL needs a group ...
+glmmPQL_poisnocor_fit <- glmmPQL(phen_pois~cofactor,random=~1|phylo,
+        data=dat_pois,
+        family="poisson",
+        # correlation=corBrownian(phy=phylo),
+        verbose=FALSE)
+
+glmmPQL_poiscor_fit <- glmmPQL(phen_pois~cofactor,random=~1|phylo,
+        data=dat_pois,
+        family="poisson",
+        correlation=corBrownian(phy=phylo),
+        verbose=FALSE)
+
+print(fixef(glmmPQL_poisnocor_fit))
+print(fixef(glmmPQL_poiscor_fit))
+```
+
+
+
+
+
+### lme4 fit
+
+```{r phylofit_gaus}
+basic_gaus_fit <- lmer(phen~cofactor+(1|phylo),
+                        data=dat_gaus,
+control=lmerControl(check.nobs.vs.nlev="ignore",check.nobs.vs.nRE="ignore"))
+
+basic_gaus_res <- rbind(coef(summary(basic_gaus_fit))[,1:2],
+      cbind(matrix(unlist(VarCorr(basic_gaus_fit))),NA))
+
+phylo_gaus_fit <- phylo_lmm(phen~cofactor+(1|phylo)+(1|obs),
+                             data=dat_gaus,phylo=phylo,
+control=lmerControl(check.nobs.vs.nlev="ignore",check.nobs.vs.nRE="ignore"),
+                           phyloZ=phyloZ)
+
+lme4_gaus_res <- rbind(coef(summary(phylo_gaus_fit))[,1:2],
+      cbind(matrix(unlist(VarCorr(phylo_gaus_fit))),NA))
+
+print(basic_gaus_res)
+print(lme4_gaus_res)
+```
+
+
+### MCMCglmm
+
+```{r MCMCglmm_gaus,cache=TRUE}
+nitt <- 1e5 ## was 5e6
+inv.phylo <- inverseA(phylo,nodes="TIPS",scale=TRUE)
+prior <- list(G=list(G1=list(V=1,nu=0.02)),R=list(V=1,nu=0.02))
+MCMC_time <- system.time(
+    MCMCglmm_fit <- MCMCglmm(phen~cofactor,random=~phylo,
+                       family="gaussian",ginverse=list(phylo=inv.phylo$Ainv),
+                       prior=prior,data=dat_gaus,nitt=nitt,burnin=1000,
+                       thin=nitt/1000,verbose=FALSE))
+
+ss <- summary(MCMCglmm_fit)
+MCMCglmm_gaus_res <- with(ss,rbind(solutions[,1:3],Gcovariances[,1:3],Rcovariances[,1:3]))
+
+print(MCMCglmm_gaus_res)
+```
+
+### glmmPQL
+
+```{r glmmPQL_gaus,cache=TRUE}
+rownames(dat_gaus) <- as.character(dat_gaus$phylo)
+dat_gaus$allGrp <- factor(1) ## dummy grouping var because glmmPQL needs a group ...
+glmmPQL_gausnocor_fit <- glmmPQL(phen~cofactor,random=~1|phylo,
+        data=dat_gaus,
+        family="gaussian",
+        # correlation=corBrownian(phy=phylo),
+        verbose=FALSE)
+
+glmmPQL_gauscor_fit <- glmmPQL(phen~cofactor,random=~1|phylo,
+        data=dat_gaus,
+        family="gaussian",
+        correlation=corBrownian(phy=phylo),
+        verbose=FALSE)
+
+print(fixef(glmmPQL_gausnocor_fit))
+print(fixef(glmmPQL_gauscor_fit))
+```
+
+
+
+### gls
+
+```{r gls_gaus}
+gls_gausnocor_fit <- gls(phen~cofactor,
+        data=dat_gaus,
+        # correlation=corBrownian(phy=phylo),
+        verbose=FALSE)
+
+gls_gauscor_fit <- gls(phen~cofactor,
+        data=dat_gaus,
+        correlation=corBrownian(phy=phylo),
+        verbose=FALSE)
+
+print(summary(gls_gausnocor_fit))
+print(summary(gls_gauscor_fit))
+
+
+```
+
