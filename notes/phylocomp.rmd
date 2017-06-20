@@ -328,6 +328,31 @@ print(dwplot(tt_comb)+ theme_bw())
 ```
 
 
+## Pez example
+
+```{r pez,echo=FALSE,warning=FALSE,message=FALSE,results="hide",include=FALSE}
+
+example("communityPGLMM",echo = FALSE)
+
+```
+
+```{r pez test}
+
+pez_gaus <- communityPGLMM(Y ~ X, data = dat, family = "gaussian", sp = dat$sp,
+                       site = dat$site, random.effects = list(re.1, re.3), REML = FALSE,
+                       verbose = FALSE)
+
+print(summary(pez_gaus))
+
+lmer_gaus <- lmer(Y ~ X + (1 | sp) + (0 + X | sp), data=dat, REML = FALSE)
+
+print(summary(lmer_gaus))
+
+```
+
+Phylo-structure is not in (re.2, re.4).
+
+
 ## Todo
 - show the estimates with/without phylo-correlation structure
 - need to add TMB (ATM TMB and lme4 results are the same)
