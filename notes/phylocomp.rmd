@@ -332,3 +332,6 @@ print(dwplot(tt_comb)+ theme_bw())
 - show the estimates with/without phylo-correlation structure
 - need to add TMB (ATM TMB and lme4 results are the same)
 - no tidy method for glmmPQL and gls 
+- cannot do random slopes 
+- cannot do more than one random effect, for example: 1|speices + 1|site 
+- binomial (glmer/ phylo_glmm) get different fits compare to pez (communityPGLMM)
