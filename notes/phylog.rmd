@@ -297,7 +297,7 @@ MCMCglmm_res <- with(ss,rbind(solutions[,1:3],Gcovariances[,1:3],Rcovariances[,1
 ```{r glmmPQL,cache=TRUE}
 rownames(dat) <- as.character(dat$phylo)
 dat$allGrp <- factor(1) ## dummy grouping var because glmmPQL needs a group ...
-glmmPQL_fit <- glmmPQL(phen_pois~cofactor,random=~1|allGrp,
+glmmPQL_fit <- glmmPQL(phen_pois~cofactor,random=~1|phylo,
         data=dat,
         family="poisson",
         correlation=corBrownian(phy=phylo),
