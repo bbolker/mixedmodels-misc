@@ -7,7 +7,7 @@ output:
     mathjax: default
 ---
 
-### Setup
+## Setup
 
 ```{r pkgs,message=FALSE,warning=FALSE}
 library(ape)
@@ -66,7 +66,8 @@ split_blkMat <- function(M,ind) {
 #' @param phylonm name of phylogenetic term in model
 #' @param phyloZ Z matrix built on branch length
 modify_phylo_retrms <- function(rt,phylo,phylonm,
-                                phyloZ=phylo.to.Z(phylo),sp,site) {
+                                phyloZ=phylo.to.Z(phylo),sp) {
+    rep_phylo <- rt$Zt@Dim[2]/length(unique(sp)) ## number of column (aka same as number of obs)
     ## FIXME: better way to specify phylonm
     ## need to replace Zt, Lind, Gp, flist, Ztlist
     ## we have the same number of parameters (theta, lower),
@@ -75,7 +76,7 @@ modify_phylo_retrms <- function(rt,phylo,phylonm,
     phylo.pos <- which(names(rt$cnms)==phylonm)
     inds <- c(0,cumsum(sapply(rt$Ztlist,nrow)))
     ## Zt: substitute phylo Z for previous dummy (scalar-intercept) Z
-    rt[["Ztlist"]][[phylo.pos]] <- do.call(cbind,replicate(length(unique(site)),t(phyloZ),simplify = FALSE))
+    rt[["Ztlist"]][[phylo.pos]] <- do.call(cbind,replicate(rep_phylo,t(phyloZ),simplify = FALSE))
     ## reconstitute Zt from new Ztlist
     rt[["Zt"]] <- do.call(rbind,rt[["Ztlist"]])
     ## Gp: substitute new # random effects (n.edge) for old # (n.phylo)
@@ -99,10 +100,10 @@ modify_phylo_retrms <- function(rt,phylo,phylonm,
 }
 
 #' 
-phylo_glmm <- function(formula,data,family,phylo,phylonm,phyloZ) {
+phylo_glmm <- function(formula,data,family,phylo,phylonm,phyloZ,sp) {
     glmod <- glFormula(formula=formula,data = data, family = family)
     glmod$reTrms <- modify_phylo_retrms(glmod$reTrms,phylo,
-                                        phylonm,phyloZ)
+                                        phylonm,phyloZ,sp)
     devfun <- do.call(mkGlmerDevfun, glmod)
     opt <- optimizeGlmer(devfun)
     devfun <- updateGlmerDevfun(devfun, glmod$reTrms)
@@ -110,10 +111,10 @@ phylo_glmm <- function(formula,data,family,phylo,phylonm,phyloZ) {
     mkMerMod(environment(devfun), opt, glmod$reTrms, fr = glmod$fr)
 }
 
-phylo_lmm <- function(formula,data,phylo,phylonm,phyloZ,control,sp,site) {
+phylo_lmm <- function(formula,data,phylo,phylonm,phyloZ,control,sp) {
   lmod <- lFormula(formula=formula,data = data,control=control)
   lmod$reTrms <- modify_phylo_retrms(lmod$reTrms,phylo,
-                                     phylonm,phyloZ,sp,site)
+                                     phylonm,phyloZ,sp)
   devfun <- do.call(mkLmerDevfun, lmod)
   opt <- optimizeLmer(devfun)
   # devfun <- updateLmerDevfun(devfun, lmod$reTrms)
@@ -138,11 +139,11 @@ dat_gaus <- read.table("data/data_simple.txt",header=TRUE)
 dat_gaus$obs <- factor(seq(nrow(dat_gaus)))
 ```
 
-```{r calc_phyloZ,cache=TRUE}
+```{r calc_phyloZ}
 system.time(phyloZ <- phylo.to.Z(phylo))
 ```
 
-#### Poisson Example
+## Poisson Example
 ### lme4 fit
 
 ```{r phylofit_pois}
@@ -152,7 +153,7 @@ basic_pois_fit <- glmer(phen_pois~cofactor+(1|phylo),
 basic_pois_res <- rbind(coef(summary(basic_pois_fit))[,1:2],
       cbind(matrix(unlist(VarCorr(basic_pois_fit))),NA))
 
-phylo_pois_fit <- phylo_glmm(phen_pois~cofactor+(1|phylo)+(1|obs),
+phylo_pois_fit <- phylo_glmm(phen_pois~cofactor+(1|phylo)+(1|obs),sp=dat_pois$phylo,phylonm="phylo",
                              data=dat_pois,phylo=phylo,family=poisson,
                              phyloZ=phyloZ)
 
@@ -200,7 +201,8 @@ print(fixef(glmmPQL_poisnocor_fit))
 print(fixef(glmmPQL_poiscor_fit))
 ```
 
-#### Gaussian Example
+## Gaussian Example
+
 ### lme4 fit
 
 ```{r phylofit_gaus}
@@ -211,8 +213,8 @@ control=lmerControl(check.nobs.vs.nlev="ignore",check.nobs.vs.nRE="ignore"))
 basic_gaus_res <- rbind(coef(summary(basic_gaus_fit))[,1:2],
       cbind(matrix(unlist(VarCorr(basic_gaus_fit))),NA))
 
-phylo_gaus_fit <- phylo_lmm(phen~cofactor+(1|phylo)+(1|obs),
-                             data=dat_gaus,phylo=phylo,
+phylo_gaus_fit <- phylo_lmm(phen~cofactor+(1|phylo)+(1|obs),sp=dat_gaus$phylo,
+                             data=dat_gaus,phylo=phylo,phylonm="phylo",
 control=lmerControl(check.nobs.vs.nlev="ignore",check.nobs.vs.nRE="ignore"),
                            phyloZ=phyloZ)
 
@@ -278,7 +280,8 @@ print(summary(gls_gauscor_fit))
 
 ```
 
-## poisson results
+## Results
+### poisson results
 
 ```{r poisson_res}
 tt_glmer_nocor_pois <- tidy(basic_pois_fit)
@@ -296,7 +299,7 @@ tt_comb <- bind_rows(glmer_nocor=tt_glmer_nocor_pois,
 
 print(dwplot(tt_comb)+ theme_bw())
 ```
-## Gaussian results
+### Gaussian results
 
 ```{r gaus_res}
 tt_lmer_nocor_gaus <- tidy(basic_gaus_fit)
@@ -315,6 +318,7 @@ tt_comb <- bind_rows(lmer_nocor=tt_lmer_nocor_gaus,
 print(dwplot(tt_comb)+ theme_bw())
 ```
 
+
 ## Pez example
 
 ```{r pez,echo=FALSE,warning=FALSE,message=FALSE,results="hide",include=FALSE}
@@ -323,7 +327,7 @@ example("communityPGLMM",echo = FALSE)
 
 ```
 
-```{r pez test}
+```{r pez test,echo=FALSE,warning=FALSE,message=FALSE}
 
 pez_gausREsp <- communityPGLMM(Y ~ X, data = dat, family = "gaussian", sp = dat$sp,
                        site = dat$site, random.effects = list(re.1, re.3), REML = FALSE,
@@ -342,26 +346,25 @@ print(summary(lmer_gausREspint))
 ```
 
 
-```{r }
+```{r rep sp matrix,echo=FALSE, warning=FALSE,message=FALSE}
 ## REsp (1|sp) + (0+X|sp)
 ## dim Zt = 30x150
 ## Ztlist,1 = 1|sp 15x150
 ## Ztlist,2 = 0 + X | sp 15x150
 
-phyy <- phylo.to.Z(phy)
+phyZ <- phylo.to.Z(phy)
 
 dat$obs <- dat$sp
 pez_gausREspintcor <- communityPGLMM(Y ~ X, data = dat, family = "gaussian", sp = dat$sp,
-                       site = dat$site, random.effects = list(re.1,re.2), REML = FALSE,
+                       site = dat$site, random.effects = list(re.1,re.2), REML = TRUE,
                        verbose = FALSE)
 print(summary(pez_gausREspintcor))
 lmer_gausREspintcor <- phylo_lmm(Y ~ X + (1 | sp) + (1|obs)
                                  , data=dat
                                  , phylonm = "sp"
                                  , sp = dat$sp
-                                 , site = dat$site
                                  , phylo = phy
-                                 , phyloZ=phyy
+                                 , phyloZ=phyZ
                                  , control=lmerControl(check.nobs.vs.nlev="ignore",check.nobs.vs.nRE="ignore"))
 print(summary(lmer_gausREspintcor))
 
