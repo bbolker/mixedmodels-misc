@@ -65,8 +65,8 @@ split_blkMat <- function(M,ind) {
 #' @param phylo a phylo object (phylogenetic tree)
 #' @param phylonm name of phylogenetic term in model
 #' @param phyloZ Z matrix built on branch length
-modify_phylo_retrms <- function(rt,phylo,phylonm="phylo",
-                                phyloZ=phylo.to.Z(phylo)) {
+modify_phylo_retrms <- function(rt,phylo,phylonm,
+                                phyloZ=phylo.to.Z(phylo),sp,site) {
     ## FIXME: better way to specify phylonm
     ## need to replace Zt, Lind, Gp, flist, Ztlist
     ## we have the same number of parameters (theta, lower),
@@ -75,7 +75,7 @@ modify_phylo_retrms <- function(rt,phylo,phylonm="phylo",
     phylo.pos <- which(names(rt$cnms)==phylonm)
     inds <- c(0,cumsum(sapply(rt$Ztlist,nrow)))
     ## Zt: substitute phylo Z for previous dummy (scalar-intercept) Z
-    rt[["Ztlist"]][[phylo.pos]] <- t(phyloZ)
+    rt[["Ztlist"]][[phylo.pos]] <- do.call(cbind,replicate(length(unique(site)),t(phyloZ),simplify = FALSE))
     ## reconstitute Zt from new Ztlist
     rt[["Zt"]] <- do.call(rbind,rt[["Ztlist"]])
     ## Gp: substitute new # random effects (n.edge) for old # (n.phylo)
@@ -99,10 +99,10 @@ modify_phylo_retrms <- function(rt,phylo,phylonm="phylo",
 }
 
 #' 
-phylo_glmm <- function(formula,data,family,phylo,phyloZ) {
+phylo_glmm <- function(formula,data,family,phylo,phylonm,phyloZ) {
     glmod <- glFormula(formula=formula,data = data, family = family)
     glmod$reTrms <- modify_phylo_retrms(glmod$reTrms,phylo,
-                                        phylonm="phylo",phyloZ)
+                                        phylonm,phyloZ)
     devfun <- do.call(mkGlmerDevfun, glmod)
     opt <- optimizeGlmer(devfun)
     devfun <- updateGlmerDevfun(devfun, glmod$reTrms)
@@ -110,10 +110,10 @@ phylo_glmm <- function(formula,data,family,phylo,phyloZ) {
     mkMerMod(environment(devfun), opt, glmod$reTrms, fr = glmod$fr)
 }
 
-phylo_lmm <- function(formula,data,phylo,phyloZ,control) {
+phylo_lmm <- function(formula,data,phylo,phylonm,phyloZ,control,sp,site) {
   lmod <- lFormula(formula=formula,data = data,control=control)
   lmod$reTrms <- modify_phylo_retrms(lmod$reTrms,phylo,
-                                     phylonm="phylo",phyloZ)
+                                     phylonm,phyloZ,sp,site)
   devfun <- do.call(mkLmerDevfun, lmod)
   opt <- optimizeLmer(devfun)
   # devfun <- updateLmerDevfun(devfun, lmod$reTrms)
@@ -355,7 +355,14 @@ pez_gausREspintcor <- communityPGLMM(Y ~ X, data = dat, family = "gaussian", sp 
                        site = dat$site, random.effects = list(re.1,re.2), REML = FALSE,
                        verbose = FALSE)
 print(summary(pez_gausREspintcor))
-lmer_gausREspintcor <- lmer(Y ~ X + (1 | sp) , data=dat, REML = FALSE)
+lmer_gausREspintcor <- phylo_lmm(Y ~ X + (1 | sp) + (1|obs)
+                                 , data=dat
+                                 , phylonm = "sp"
+                                 , sp = dat$sp
+                                 , site = dat$site
+                                 , phylo = phy
+                                 , phyloZ=phyy
+                                 , control=lmerControl(check.nobs.vs.nlev="ignore",check.nobs.vs.nRE="ignore"))
 print(summary(lmer_gausREspintcor))
 
 ```
