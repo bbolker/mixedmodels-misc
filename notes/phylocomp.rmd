@@ -377,7 +377,6 @@ lmer_gausREspintcor <- phylo_lmm(Y ~ X + (1 | sp) + (1|obs) + (0+X|sp) + (0+X|ob
 print(summary(lmer_gausREspintcor))
 
 ```
-Phylo-structure is not in (re.2, re.4).
 
 ## Todo
 - show the estimates with/without phylo-correlation structure
