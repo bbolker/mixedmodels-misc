@@ -76,22 +76,30 @@ modify_phylo_retrms <- function(rt,phylo,phylonm,
     phylo.pos <- which(names(rt$cnms)==phylonm)
     inds <- c(0,cumsum(sapply(rt$Ztlist,nrow)))
     ## Zt: substitute phylo Z for previous dummy (scalar-intercept) Z
-    rt[["Ztlist"]][[phylo.pos]] <- do.call(cbind,replicate(rep_phylo,t(phyloZ),simplify = FALSE))
+    for(i in phylo.pos){
+    rt[["Ztlist"]][[i]] <- do.call(cbind,replicate(rep_phylo,t(phyloZ),simplify = FALSE))
+    }
     ## reconstitute Zt from new Ztlist
     rt[["Zt"]] <- do.call(rbind,rt[["Ztlist"]])
     ## Gp: substitute new # random effects (n.edge) for old # (n.phylo)
     Gpdiff <- diff(rt$Gp)  ## old numbers
     Gpdiff_new <- Gpdiff
-    Gpdiff_new[phylo.pos] <- n.edge  ## replace
+    for(i in phylo.pos){
+    Gpdiff_new[i] <- n.edge  ## replace
+    }
     rt[["Gp"]] <- as.integer(c(0,cumsum(Gpdiff_new)))          ## reconstitute
     ## Lind: replace phylo block with the same element, just more values
     Lind_list <- split(rt[["Lind"]],rep(seq_along(Gpdiff),Gpdiff))
-    Lind_list[[phylo.pos]] <- rep(Lind_list[[phylo.pos]][1],n.edge)
+    for(i in phylo.pos){
+    Lind_list[[i]] <- rep(Lind_list[[i]][1],n.edge)
+    }
     rt[["Lind"]] <- unlist(Lind_list)
     ## Lambdat: replace block-diagonal element in Lambdat with a
     ##   larger diagonal matrix
     Lambdat_list <- split_blkMat(rt[["Lambdat"]],inds)
-    Lambdat_list[[phylo.pos]] <- Diagonal(n.edge,1.0)
+    for(i in phylo.pos){
+    Lambdat_list[[i]] <- Diagonal(n.edge,1.0)
+    }
     rt[["Lambdat"]] <- Matrix::.bdiag(Lambdat_list)
     ## flist: 
     rt[["flist"]] <- as.list(rt[["flist"]])
@@ -356,10 +364,10 @@ phyZ <- phylo.to.Z(phy)
 
 dat$obs <- dat$sp
 pez_gausREspintcor <- communityPGLMM(Y ~ X, data = dat, family = "gaussian", sp = dat$sp,
-                       site = dat$site, random.effects = list(re.1,re.2), REML = TRUE,
+                       site = dat$site, random.effects = list(re.1,re.2,re.3,re.4), REML = FALSE,
                        verbose = FALSE)
 print(summary(pez_gausREspintcor))
-lmer_gausREspintcor <- phylo_lmm(Y ~ X + (1 | sp) + (1|obs)
+lmer_gausREspintcor <- phylo_lmm(Y ~ X + (1 | sp) + (1|obs) + (0+X|sp) + (0+X|obs)
                                  , data=dat
                                  , phylonm = "sp"
                                  , sp = dat$sp
@@ -375,6 +383,6 @@ Phylo-structure is not in (re.2, re.4).
 - show the estimates with/without phylo-correlation structure
 - need to add TMB (ATM TMB and lme4 results are the same)
 - no tidy method for glmmPQL and gls 
-- cannot do random slopes 
-- cannot do more than one random effect, for example: 1|speices + 1|site 
+- cannot do random slopes (done)
+- cannot do more than one random effect, for example: 1|speices + 1|site (done)
 - binomial (glmer/ phylo_glmm) get different fits compare to pez (communityPGLMM)
