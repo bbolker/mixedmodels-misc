@@ -76,37 +76,53 @@ modify_phylo_retrms <- function(rt,phylo,phylonm,
     phylo.pos <- which(names(rt$cnms)==phylonm)
     inds <- c(0,cumsum(sapply(rt$Ztlist,nrow)))
     ## Zt: substitute phylo Z for previous dummy (scalar-intercept) Z
-#    for(i in phylo.pos){
-#    rt[["Ztlist"]][[i]] <- do.call(cbind,replicate(rep_phylo,t(phyloZ),simplify = FALSE))
-#    ## reconstitute Zt from new Ztlist
-#    }
-#    rt[["Zt"]] <- do.call(rbind,rt[["Ztlist"]])
+    # for(i in phylo.pos){
+    # repterms <- nrow(rt[["Ztlist"]][[i]])/length(unique(sp))
+    # rt[["Ztlist"]][[i]] <- KhatriRao(do.call(cbind,replicate(rep_phylo,t(phyloZ),simplify = FALSE)),
+    #             matrix(1
+    #                    , ncol=ncol(rt[["Ztlist"]][[i]])
+    #                    , nrow=repterms)
+    # )
+    ## reconstitute Zt from new Ztlist
+    # }
+    # rt[["Zt"]] <- do.call(rbind,rt[["Ztlist"]])
     ## Gp: substitute new # random effects (n.edge) for old # (n.phylo)
     Gpdiff <- diff(rt$Gp)  ## old numbers
     Gpdiff_new <- Gpdiff
-#    for(i in phylo.pos){
-#    Gpdiff_new[i] <- n.edge  ## replace
-#    }
+    # for(i in phylo.pos){
+    # Gpdiff_new[i] <- n.edge  ## replace
+    # }
     rt[["Gp"]] <- as.integer(c(0,cumsum(Gpdiff_new)))          ## reconstitute
     ## Lind: replace phylo block with the same element, just more values
     Lind_list <- split(rt[["Lind"]],rep(seq_along(Gpdiff),Gpdiff))
-#    for(i in phylo.pos){
-#    Lind_list[[i]] <- rep(Lind_list[[i]][1],n.edge)
-#    }
-#    rt[["Lind"]] <- unlist(Lind_list)
+    # for(i in phylo.pos){
+    # Lind_list[[i]] <- rep(Lind_list[[i]][1],n.edge)
+    # }
+    # rt[["Lind"]] <- unlist(Lind_list)
     ## Lambdat: replace block-diagonal element in Lambdat with a
     ##   larger diagonal matrix
     Lambdat_list <- split_blkMat(rt[["Lambdat"]],inds)
-#    for(i in phylo.pos){
-#    Lambdat_list[[i]] <- Diagonal(n.edge,1.0)
-#    }
+    # for(i in phylo.pos){
+    # Lambdat_list[[i]] <- KhatriRao(Diagonal(n.edge,1.0),
+    #             matrix(1
+    #                    , ncol=n.edge
+    #                    , nrow=repterms))
+    # }
     
     for(i in phylo.pos){
-    rt[["Ztlist"]][[i]] <- do.call(cbind,replicate(rep_phylo,t(phyloZ),simplify = FALSE))
+    repterms <- nrow(rt[["Ztlist"]][[i]])/length(unique(sp))
+    rt[["Ztlist"]][[i]] <- KhatriRao(do.call(cbind,replicate(rep_phylo,t(phyloZ),simplify = FALSE)),
+                matrix(1
+                       , ncol=ncol(rt[["Ztlist"]][[i]])
+                       , nrow=repterms)
+    )
     ## reconstitute Zt from new Ztlist
     Gpdiff_new[i] <- n.edge  ## replace
     Lind_list[[i]] <- rep(Lind_list[[i]][1],n.edge)
-    Lambdat_list[[i]] <- Diagonal(n.edge,1.0)
+    Lambdat_list[[i]] <- KhatriRao(diag(n.edge),
+                Matrix(1
+                       , ncol=n.edge
+                       , nrow=repterms))
     }
     rt[["Zt"]] <- do.call(rbind,rt[["Ztlist"]])
     rt[["Lind"]] <- unlist(Lind_list)
@@ -377,7 +393,7 @@ pez_gausREspintcor <- communityPGLMM(Y ~ X, data = dat, family = "gaussian", sp 
                        site = dat$site, random.effects = list(re.1,re.2,re.3,re.4), REML = FALSE,
                        verbose = FALSE)
 print(summary(pez_gausREspintcor))
-lmer_gausREspintcor <- phylo_lmm(Y ~ X + (1 + X| sp) + (1+X|obs)
+lmer_gausREspintcor <- phylo_lmm(Y ~ X + (1+X|sp) + (1+X|obs)
                                  , data=dat
                                  , phylonm = "sp"
                                  , sp = dat$sp
