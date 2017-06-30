@@ -111,12 +111,13 @@ modify_phylo_retrms <- function(rt,phylo,phylonm,
     
     for(i in phylo.pos){
     repterms <- nrow(rt[["Ztlist"]][[i]])/length(unique(sp))
-    rt[["Ztlist"]][[i]] <- KhatriRao(do.call(cbind,replicate(rep_phylo,t(phyloZ),simplify = FALSE)),
-                matrix(1
-                       , ncol=ncol(rt[["Ztlist"]][[i]])
-                       , nrow=repterms)
-    )
+#     rt[["Ztlist"]][[i]] <- KhatriRao(do.call(cbind,replicate(rep_phylo,t(phyloZ),simplify = FALSE)),
+#                 matrix(1
+#                        , ncol=ncol(rt[["Ztlist"]][[i]])
+#                        , nrow=repterms)
+#     )
     ## reconstitute Zt from new Ztlist
+    rt[["Ztlist"]][[i]] <- t(KhatriRao(phyloZ,matrix(1,ncol=ncol(phyloZ),nrow=repterms))) %*% rt[["Ztlist"]][[i]]
     Gpdiff_new[i] <- n.edge  ## replace
     Lind_list[[i]] <- rep(Lind_list[[i]][1],n.edge)
     Lambdat_list[[i]] <- KhatriRao(diag(n.edge),
