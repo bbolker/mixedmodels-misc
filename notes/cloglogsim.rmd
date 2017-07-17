@@ -1,0 +1,253 @@
+---
+title: "diagnosing a cloglog model"
+author: "Ben Bolker"
+date: "`r format(Sys.time(), '%H:%M %d %B %Y')`"
+---
+
+Responding to a query from Rolf Turner on `r-sig-mixed-models@r-project.org`:
+
+```{r echo=FALSE}
+artSim <- function(){
+    ##
+    ## Function to simulate "artificial" data which is at least superficially
+    ## similar to some real data.
+    ##
+    require(MASS)
+    link    <- "cloglog"
+    B       <- binomial(link=link)
+    linkfun <- B$linkfun
+    linkinv <- B$linkinv
+
+    ## Construct (artificial) treatment factor, covariate, and
+    ## (random) replicate factor.
+    x    <- seq(0,28,by=2)
+    Trt  <- LETTERS[1:24]
+    Rep  <- 1:3 ## Three reps per treatment.
+    Xdat <- expand.grid(x=x,Trt=Trt,Rep=Rep)
+    uRep <- with(Xdat,factor(paste0(Rep,Trt)))
+    Xdat$Rep <- with(Xdat,factor(as.numeric(uRep)))
+
+    beta0 <- seq(-3,0.45,by=0.15)
+    beta1 <- rep(seq(0.05,0.3,by=0.05),4)
+    names(beta0) <- Trt
+    names(beta1) <- Trt
+    Sigma <- matrix(c(0.06,-0.001,-0.001,0.0001),nrow=2)
+
+    lb0   <- beta0[match(Xdat$Trt,names(beta0))]
+    lb1   <- beta1[match(Xdat$Trt,names(beta1))]
+    nrep  <- 72
+    imat  <- match(Xdat$Rep,1:nrep)
+    Z     <- mvrnorm(nrep,c(0,0),Sigma)[imat,]
+    linpr <- lb0 + Z[,1] + (lb1 + Z[,2])*Xdat$x
+    p     <- linkinv(linpr)
+    nsize <- 25
+    Dead  <- rbinom(nrow(Xdat),nsize,p)
+    Alive <- nsize - Dead
+    x0    <- (linkfun(0.99) - beta0)/beta1
+    Xdat$Dead  <- Dead
+    Xdat$Alive <- Alive
+    attr(Xdat,"trueLD99") <- x0
+    return(Xdat)
+}
+```
+
+```{r pkgs,message=FALSE}
+## fitting packages
+library(lme4)
+library(glmmTMB)
+## post-analysis pkgs
+library(broom)  ## need BMB version for glmmTMB
+library(ggplot2); theme_set(theme_bw())
+library(dplyr)
+library(tidyr)
+library(ggstance)
+```
+```{r setup,echo=FALSE}
+## https://rpubs.com/yihui/julia-knitr
+library(knitr)
+library(runr)
+## devtools::install_github('yihui/runr')
+j <- proc_julia()
+j$start()
+knit_engines$set(julia = function(options) {
+    knitr:::wrap(j$exec(options$code), options)
+})
+```
+
+```{r simdata}
+set.seed(42)
+X <- artSim()
+XX <- data.frame(X,fRep=as.character(X$Rep))
+write.csv(XX,file="artSim.csv",row.names=FALSE)
+```
+
+```{r fit1,cache=TRUE}
+t1 <- system.time(fit1 <- glmer(cbind(Dead,Alive) ~ (Trt + 0)/x + (x | Rep),
+                        family=binomial(link="cloglog"),
+                        data=X))
+```
+
+We should deal with the "failure to converge in 10000 evaluations" warning first: this comes directly from the optimizer (`minqa::bobyqa`), and hence means we don't think we've even gotten to the optimum yet. We need to use the `optCtrl` component of the `glmerControl()` function to adjust the maximum number of iterations.
+
+```{r fit2,cache=TRUE}
+t2 <- system.time(fit2 <- update(fit1,control=glmerControl(optCtrl=list(maxfun=3e4))))
+```
+
+Now we have just the post-fitting convergence warnings. The first thing we should do is to
+check for singularity: if the fit is singular, i.e. some of the $\theta$ (variance-covariance)
+parameters are at their constrained values, then the warning about negative eigenvalues
+of the Hessian is largely irrelevant (it is a long-term wish-list item to evaluate the
+[Karush-Kuhn-Tucker conditions](https://en.wikipedia.org/wiki/Karush%E2%80%93Kuhn%E2%80%93Tucker_conditions) properly in this case, i.e. allowing for the constraints.
+
+```{r singfit}
+is.singular <- function(x,tol=1e-6) any(abs(getME(x,"theta"))<tol)
+is.singular(fit2)
+```
+
+Furthermore, in this case we can more simply look a the variance-covariance matrix and see
+that it has a zero variance (and an undefined correlation), which more directly indicates
+singularity.
+
+```{r vc2}
+VarCorr(fit2)
+```
+
+I wanted to see if we could speed things up (without losing accuracy) by using the
+BOBYQA implementation from the `nloptr` package. It turns out that in order to do this,
+we have to skip the `nAGQ=0` init step (this is sometimes needed for cloglog models,
+especially those with offsets):
+
+```{r fit3,cache=TRUE}
+t3 <- system.time(fit3 <- update(fit1,control=glmerControl(optimizer="nloptwrap",
+                                                   nAGQ0initStep=FALSE)))
+```
+
+Unfortunately, skipping the init step gives a negative log-likelihood that is
+`r round(c(logLik(fit3)-logLik(fit2)))` log-likelihood units worse (!) (this is
+true of `nAGQ0initStep=FALSE` with the default optimizer or the BOBYQA optimizer
+as well: and things aren't faster either ...
+
+```{r fit4,cache=TRUE}
+t4 <- system.time(fit4 <- update(fit1,
+                                control=glmerControl(optimizer="bobyqa",
+                                                     optCtrl=list(maxfun=5e4),
+                                                     nAGQ0initStep=FALSE)))
+
+```
+
+What about the opposite (`nAGQ=0`), as suggested by Tony Ives?
+```{r fit5,cache=TRUE}
+t5 <- system.time(fit5 <- update(fit1,nAGQ=0,control=glmerControl(optimizer="bobyqa",
+                                                                  optCtrl=list(maxfun=3e4))))
+```
+Can't use `nAGQ > 1` ... too bad
+We can't really compare the likelihoods with `nAGQ=0` vs. `nAGQ>0`, so we'll just compare fixed-effect estimates
+(below).
+
+```{r fit6,cache=TRUE}
+t6 <- system.time(fit6 <- glmmTMB(Dead/(Alive+Dead) ~ (Trt + 0)/x + (x | Rep),
+                                  weights = Alive+Dead,
+                                  family=binomial(link="cloglog"),data=X))
+```
+
+```{r fit7,cache=TRUE}
+t7 <- system.time(fit7 <- update(fit1,control=glmerControl(optimizer="bobyqa",
+                                                           optCtrl=list(maxfun=3e4))))
+```
+
+```{r utils,echo=FALSE}
+lt <- function(x) x[lower.tri(x,diag=TRUE)]
+vv <- function(x) {
+    v <- VarCorr(x)
+    if (is(x,"glmmTMB")) v <- v[["cond"]]
+    return(lt(v[[1]]))
+}
+```
+
+```{r plotdata,echo=FALSE,warning=FALSE}
+modList <- list(glmer_std=fit2,
+                glmer_nlopt_no0init=fit3,
+                glmer_bobyqa_no0init=fit4,
+                glmer_nAGQ0=fit5,glmmTMB=fit6,
+                glmer_bobyqa=fit7)
+dd1 <- dplyr::bind_rows(lapply(modList,tidy,effects='fixed'),.id="model")
+trueVals <- data.frame(model="true",
+                       term=names(fixef(fit1)),
+                       std.error=0,
+                       estimate=c(seq(-3,0.45,by=0.15),rep(seq(0.05,0.3,by=0.05),4)))
+dd2 <- dplyr::bind_rows(dd1,trueVals)
+```
+
+```{r plot,echo=FALSE,width=8}
+nfits <- length(modList)
+cc <- c(RColorBrewer::brewer.pal(nfits,"Dark2"),"black")
+dd2$interac <- ifelse(grepl(":",dd2$term),"interaction","main effect")
+ggplot(dd2,aes(x=estimate,
+               y=term,
+               colour=model,shape=model))+
+    geom_pointrangeh(aes(xmin=estimate-2*std.error,xmax=estimate+2*std.error),
+                     position=position_dodgev(height=1))+
+    scale_colour_manual(values=cc)+
+    scale_shape_manual(values=c(rep(1,nfits),3))+
+    facet_wrap(~interac,scale="free")
+```
+
+Or perhaps more clearly:
+
+```{r true_vs_fitted,echo=FALSE,width=8}
+dd3 <- dd2 %>% dplyr::select(model,c(term,estimate,std.error,interac))
+dd4A <- dd3 %>% dplyr::select(-std.error) %>% spread(model,estimate) %>%
+    gather(model,estimate,-c(term,interac,true))
+dd4B <- dd3 %>% dplyr::select(-estimate) %>% spread(model,std.error) %>%
+    gather(model,std.error,-c(term,interac,true)) %>% dplyr::select(-c(true,interac))
+dd4 <- full_join(dd4A,dd4B,by = c("term", "model"))
+ggplot(dd4,aes(true,estimate,colour=model,shape=model))+geom_point(size=3,alpha=0.7)+
+    scale_colour_manual(values=cc)+
+    geom_abline(intercept=0,slope=1)+
+    facet_wrap(~interac,scale="free")
+```    
+
+Check timings:
+
+```{r timeplot,echo=FALSE}
+timedat <- data.frame(model=names(modList),
+                      elapsed=sapply(list(t2,t3,t4,t5,t6,t7),
+                                     function(x) x["elapsed"])) %>%
+    mutate(model=reorder(model,elapsed))
+ggplot(timedat,aes(x=elapsed,y=model))+ scale_x_log10() + geom_point()
+```
+
+## julia-lang
+
+This is actually almost working, with two caveats:
+
+- I'm having trouble getting Julia to evaluate properly in an Rmarkdown chunk (can probably do this but will have to fight with it a bit). The `runr`-based strategy implemented [here](https://rpubs.com/yihui/julia-knitr) *sort of* works, but is flaky
+- I can get things to work with the logit link, but the cloglog link underflows somewhere
+- Will need to work on pulling the results from julia back into the rest of the document for comparison ...
+
+```{r juliafit,eval=FALSE}
+## {r juliafit,engine="julia",eval=FALSE,warning=FALSE}
+using DataFrames
+using MixedModels
+using GLM  ## for testing
+df = readtable("artSim.csv");
+## compute proportions and totals
+df[:tot] = df[:Dead]+df[:Alive];
+df[:prop] = df[:Dead] ./ df[:tot];
+## convert Treatment to categorical
+## https://stackoverflow.com/questions/43708635/indicator-matrix-for-categorical-data-in-glm-jl-with-dataframes-jl
+pool!(df, [:Trt])
+## working up to it ....
+## g1 = glm(@formula(prop ~ Trt+0), df, Binomial(), CloglogLink(), wt= Array(df[:tot]));
+## g2 = glmm(@formula(prop ~ Trt+0 + (1 | Rep)), df, Binomial(), wt = float.(Array(df[:tot])));
+## g3 = glmm(@formula(prop ~ Trt+0 + (x | Rep)), df, Binomial(), wt = float.(Array(df[:tot])));
+## can't handle (a+b)/x syntax ... expand ???
+## g4 = glmm(@formula(prop ~ (Trt+0)/x + (x | Rep)), df, Binomial(), wt = float.(Array(df[:tot])));
+
+## glmm(@formula(prop ~ 0+Trt+Trt&x + (x | Rep)), df, Binomial(),
+##           CloglogLink(), wt = float.(Array(df[:tot])))
+## ERROR: AssertionError: isfinite(crit)
+@time g1 = glmm(@formula(prop ~ 0+Trt+Trt&x + (x | Rep)), df, Binomial(),
+          LogitLink(), wt = float.(Array(df[:tot])));
+```
+

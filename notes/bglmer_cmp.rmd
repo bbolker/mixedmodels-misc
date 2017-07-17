@@ -53,7 +53,8 @@ tt$brms <- tt$brms %>% filter(grepl("^(b|sd)_",term)) %>%
            term=gsub("__",".",term),
            term=gsub("([a-z\\.]+)\\.Intercept","Intercept.\\1",term),
            term=gsub("Intercept","(Intercept)",term))
-resFrame <- bind_rows(tt,.id="model")
+resFrame <- bind_rows(tt,.id="model") %>%
+    filter(model!="MCMCglmm")
 ```
 
 Plot:
