@@ -4,15 +4,42 @@ author: "Ben Bolker"
 date: "`r format(Sys.time(), '%H:%M %d %B %Y')`"
 ---
 
-Responding to a query from Rolf Turner on `r-sig-mixed-models@r-project.org`:
+Responding to a query from Rolf Turner on `r-sig-mixed-models@r-project.org`.
 
-```{r echo=FALSE}
+**tl;dr** the error messages are spurious/due to a singular fit. Considerable speed-ups can be achieved by (1) switching optimizers, (2) using `nAGQ=0`, (3) using `glmmTMB` or Julia ...
+
+**to do**
+
+- compare variance-covariance matrix estimates (they vary a lot, although it doesn't seem to have much effect on the fixed effects?
+- play with/fight with Julia more (native mode rather than `rjulia` package? better retrieval of results?)
+- worth comparing with `brms` results ... ??
+
+```{r pkgs,message=FALSE}
+## fitting packages
+library(lme4)
+library(glmmTMB)
+## my hacked version
+## devtools::install_github("bbolker/rjulia", ref="julia0.5")
+library(rjulia)
+julia_init()
+## sudo add-apt-repository ppa:staticfloat/juliareleases
+## sudo apt-get update
+## jl_is_float32 -> jl_typeis(v,jl_float32_type) etc.?
+## post-analysis pkgs
+library(broom)  ## need BMB version for glmmTMB
+library(ggplot2); theme_set(theme_bw())
+library(MASS) ## before dplyr; avoid masking dplyr::select()
+library(dplyr)
+library(tidyr)
+library(ggstance)
+```
+
+```{r artSim,echo=FALSE,message=FALSE,warning=FALSE}
 artSim <- function(){
     ##
     ## Function to simulate "artificial" data which is at least superficially
     ## similar to some real data.
     ##
-    require(MASS)
     link    <- "cloglog"
     B       <- binomial(link=link)
     linkfun <- B$linkfun
@@ -51,18 +78,9 @@ artSim <- function(){
 }
 ```
 
-```{r pkgs,message=FALSE}
-## fitting packages
-library(lme4)
-library(glmmTMB)
-## post-analysis pkgs
-library(broom)  ## need BMB version for glmmTMB
-library(ggplot2); theme_set(theme_bw())
-library(dplyr)
-library(tidyr)
-library(ggstance)
-```
-```{r setup,echo=FALSE}
+```{r setup,echo=FALSE,eval=FALSE}
+## flaky: gives ERROR: LoadError: listen: address already in use (EADDRINUSE)
+## followed by seg fault
 ## https://rpubs.com/yihui/julia-knitr
 library(knitr)
 library(runr)
@@ -77,8 +95,7 @@ knit_engines$set(julia = function(options) {
 ```{r simdata}
 set.seed(42)
 X <- artSim()
-XX <- data.frame(X,fRep=as.character(X$Rep))
-write.csv(XX,file="artSim.csv",row.names=FALSE)
+write.csv(X,file="artSim.csv",row.names=FALSE)
 ```
 
 ```{r fit1,cache=TRUE}
@@ -123,16 +140,17 @@ t3 <- system.time(fit3 <- update(fit1,control=glmerControl(optimizer="nloptwrap"
 ```
 
 Unfortunately, skipping the init step gives a negative log-likelihood that is
-`r round(c(logLik(fit3)-logLik(fit2)))` log-likelihood units worse (!) (this is
-true of `nAGQ0initStep=FALSE` with the default optimizer or the BOBYQA optimizer
-as well: and things aren't faster either ...
+`r round(c(logLik(fit3)-logLik(fit2)))` log-likelihood units worse (!).
 
-```{r fit4,cache=TRUE}
+I tried `nAGQ0initStep=FALSE` with the default optimizer or the BOBYQA optimizer
+as well; it was very very slow ($\approx 600$ seconds with `maxfun=5e4`, which wasn't
+even enough ...)
+
+```{r fit4,eval=FALSE}
 t4 <- system.time(fit4 <- update(fit1,
                                 control=glmerControl(optimizer="bobyqa",
-                                                     optCtrl=list(maxfun=5e4),
+                                                     optCtrl=list(maxfun=1e5),
                                                      nAGQ0initStep=FALSE)))
-
 ```
 
 What about the opposite (`nAGQ=0`), as suggested by Tony Ives?
@@ -140,7 +158,10 @@ What about the opposite (`nAGQ=0`), as suggested by Tony Ives?
 t5 <- system.time(fit5 <- update(fit1,nAGQ=0,control=glmerControl(optimizer="bobyqa",
                                                                   optCtrl=list(maxfun=3e4))))
 ```
-Can't use `nAGQ > 1` ... too bad
+Can't use `nAGQ > 1` in this case because we have a random-slopes model ... too bad. (We have
+a mean value of effective sample size = `min(alive,dead)` `r round(mean(pmin(X$Dead,X$Alive)))`,
+which implies that the Gauss-Hermite quadrature corrections *should* be important, but ...)
+
 We can't really compare the likelihoods with `nAGQ=0` vs. `nAGQ>0`, so we'll just compare fixed-effect estimates
 (below).
 
@@ -167,9 +188,11 @@ vv <- function(x) {
 ```{r plotdata,echo=FALSE,warning=FALSE}
 modList <- list(glmer_std=fit2,
                 glmer_nlopt_no0init=fit3,
-                glmer_bobyqa_no0init=fit4,
+                ## glmer_bobyqa_no0init=fit4,
                 glmer_nAGQ0=fit5,glmmTMB=fit6,
                 glmer_bobyqa=fit7)
+timeList <- list(t2,t3,## t4,
+                 t5,t6,t7)
 dd1 <- dplyr::bind_rows(lapply(modList,tidy,effects='fixed'),.id="model")
 trueVals <- data.frame(model="true",
                        term=names(fixef(fit1)),
@@ -209,11 +232,18 @@ ggplot(dd4,aes(true,estimate,colour=model,shape=model))+geom_point(size=3,alpha=
 
 Check timings:
 
-```{r timeplot,echo=FALSE}
+```{r timesum,echo=FALSE}
 timedat <- data.frame(model=names(modList),
-                      elapsed=sapply(list(t2,t3,t4,t5,t6,t7),
+                      elapsed=sapply(timeList,
                                      function(x) x["elapsed"])) %>%
     mutate(model=reorder(model,elapsed))
+```
+
+```{r timetab,echo=FALSE,results="as.is"}
+knitr::kable(arrange(timedat,elapsed))
+```
+
+```{r timeplot,echo=FALSE}
 ggplot(timedat,aes(x=elapsed,y=model))+ scale_x_log10() + geom_point()
 ```
 
@@ -221,22 +251,22 @@ ggplot(timedat,aes(x=elapsed,y=model))+ scale_x_log10() + geom_point()
 
 This is actually almost working, with two caveats:
 
-- I'm having trouble getting Julia to evaluate properly in an Rmarkdown chunk (can probably do this but will have to fight with it a bit). The `runr`-based strategy implemented [here](https://rpubs.com/yihui/julia-knitr) *sort of* works, but is flaky
+- I'm having trouble getting Julia to evaluate properly in an Rmarkdown chunk (can probably do this but will have to fight with it a bit). The `runr`-based strategy implemented [here](https://rpubs.com/yihui/julia-knitr) *sort of* works, but is flaky. Could hack together something based on evaluation, or ?
 - I can get things to work with the logit link, but the cloglog link underflows somewhere
-- Will need to work on pulling the results from julia back into the rest of the document for comparison ...
+- will need to work on pulling the results from julia back into the rest of the document for comparison ...
 
 ```{r juliafit,eval=FALSE}
 ## {r juliafit,engine="julia",eval=FALSE,warning=FALSE}
-using DataFrames
-using MixedModels
-using GLM  ## for testing
-df = readtable("artSim.csv");
+jDo("using DataFrames")
+jDo("using MixedModels")
+jDo("using GLM")  ## for testing
+jDo('df = readtable("artSim.csv");')
 ## compute proportions and totals
-df[:tot] = df[:Dead]+df[:Alive];
-df[:prop] = df[:Dead] ./ df[:tot];
+jDo('df[:tot] = df[:Dead]+df[:Alive];')
+jDo('df[:prop] = df[:Dead] ./ df[:tot];')
 ## convert Treatment to categorical
 ## https://stackoverflow.com/questions/43708635/indicator-matrix-for-categorical-data-in-glm-jl-with-dataframes-jl
-pool!(df, [:Trt])
+jDo('pool!(df, [:Trt])')
 ## working up to it ....
 ## g1 = glm(@formula(prop ~ Trt+0), df, Binomial(), CloglogLink(), wt= Array(df[:tot]));
 ## g2 = glmm(@formula(prop ~ Trt+0 + (1 | Rep)), df, Binomial(), wt = float.(Array(df[:tot])));
@@ -247,7 +277,12 @@ pool!(df, [:Trt])
 ## glmm(@formula(prop ~ 0+Trt+Trt&x + (x | Rep)), df, Binomial(),
 ##           CloglogLink(), wt = float.(Array(df[:tot])))
 ## ERROR: AssertionError: isfinite(crit)
-@time g1 = glmm(@formula(prop ~ 0+Trt+Trt&x + (x | Rep)), df, Binomial(),
-          LogitLink(), wt = float.(Array(df[:tot])));
+##
+jDo("@time g1 = glmm(@formula(prop ~ 0+Trt+Trt&x + (x | Rep)), df, Binomial(),
+          LogitLink(), wt = float.(Array(df[:tot])));")
+ff <- j2r("fixef(g1)")
+rr <- j2r("ranef(g1)") ## NULL ???
 ```
+
+Unfinished ...
 
