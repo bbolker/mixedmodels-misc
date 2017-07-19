@@ -18,12 +18,6 @@ Responding to a query from Rolf Turner on `r-sig-mixed-models@r-project.org`.
 ## fitting packages
 library(lme4)
 library(glmmTMB)
-## my hacked version
-## devtools::install_github("bbolker/rjulia", ref="julia0.5")
-library(rjulia)
-julia_init()
-## sudo add-apt-repository ppa:staticfloat/juliareleases
-## sudo apt-get update
 ## jl_is_float32 -> jl_typeis(v,jl_float32_type) etc.?
 ## post-analysis pkgs
 library(broom)  ## need BMB version for glmmTMB
@@ -33,6 +27,25 @@ library(dplyr)
 library(tidyr)
 library(ggstance)
 ```
+
+To run the code in the Julia section below you need to install:
+
+- Julia version 0.5.x (or greater??): on Ubuntu you can
+```
+sudo add-apt-repository ppa:staticfloat/juliareleases
+sudo apt-get update
+sudo apt-get install julia
+```
+- Doug Bates's [MixedModels.jl](https://github.com/dmbates/MixedModels.jl/) package (in Julia, `Pkg.add("MixedModels")`)
+- at present, an updated version of the `GLM` package for Julia that fixes an issue with the cloglog link (in Julia,
+`Pkg.checkout("GLM"); Pkg.checkout("GLM", "db/clampcloglog")`
+- the `rjulia` package for R. I needed to create a modified version (in R, `devtools::install_github("bbolker/rjulia", ref="julia0.5")`
+
+```{r load_julia}
+library(rjulia)
+julia_init()
+```
+
 
 ```{r artSim,echo=FALSE,message=FALSE,warning=FALSE}
 artSim <- function(){
@@ -185,6 +198,30 @@ vv <- function(x) {
 }
 ```
 
+## julia-lang
+
+This is actually almost working, with two caveats:
+
+- I'm having trouble getting Julia to evaluate properly in an Rmarkdown chunk (can probably do this but will have to fight with it a bit)
+    - the `runr`-based strategy implemented [here](https://rpubs.com/yihui/julia-knitr) is flaky
+	- I could hack together something simpler based on sending text to Julia for evaluation (`rjulia -e`? `-E`?) but not sure how well it would work
+	- `rjulia` works (if hacked as described above)
+	- I fell back on simply running the Julia code (below, and [here](./cloglog.jl)) as a separate process and printing the results to a file
+
+```{r juliafit,engine="sh",results="markup",echo=FALSE,comment=NA}
+cat cloglog.jl
+```
+
+```{r julia_results,echo=FALSE}
+julia_coef <- read.csv("julia_cloglog_coefs.csv")
+transVar <- function(v) gsub(" & ",":",gsub(": ","",v))
+julia_tab <- with(julia_coef,
+       data.frame(effect="fixed",term=transVar(variable),
+                estimate=Estimate,std.error=StdError))
+```
+
+## results summary
+
 ```{r plotdata,echo=FALSE,warning=FALSE}
 modList <- list(glmer_std=fit2,
                 glmer_nlopt_no0init=fit3,
@@ -193,7 +230,9 @@ modList <- list(glmer_std=fit2,
                 glmer_bobyqa=fit7)
 timeList <- list(t2,t3,## t4,
                  t5,t6,t7)
-dd1 <- dplyr::bind_rows(lapply(modList,tidy,effects='fixed'),.id="model")
+coefList <- c(lapply(modList,tidy,effects='fixed'),
+              list(julia=julia_tab))
+dd1 <- dplyr::bind_rows(coefList,.id="model")
 trueVals <- data.frame(model="true",
                        term=names(fixef(fit1)),
                        std.error=0,
@@ -202,7 +241,7 @@ dd2 <- dplyr::bind_rows(dd1,trueVals)
 ```
 
 ```{r plot,echo=FALSE,width=8}
-nfits <- length(modList)
+nfits <- length(modList)+1 ## +1 for Julia
 cc <- c(RColorBrewer::brewer.pal(nfits,"Dark2"),"black")
 dd2$interac <- ifelse(grepl(":",dd2$term),"interaction","main effect")
 ggplot(dd2,aes(x=estimate,
@@ -233,9 +272,12 @@ ggplot(dd4,aes(true,estimate,colour=model,shape=model))+geom_point(size=3,alpha=
 Check timings:
 
 ```{r timesum,echo=FALSE}
-timedat <- data.frame(model=names(modList),
-                      elapsed=sapply(timeList,
-                                     function(x) x["elapsed"])) %>%
+julia_times <- scan("julia_cloglog_timings.txt",quiet=TRUE)
+## Julia timings are for GLM, GLMM:logit, GLMM:cloglog
+timedat <- data.frame(model=c(names(modList),"julia"),
+                      elapsed=c(sapply(timeList,
+                                     function(x) x["elapsed"]),
+                                julia_times[3])) %>%
     mutate(model=reorder(model,elapsed))
 ```
 
@@ -246,43 +288,4 @@ knitr::kable(arrange(timedat,elapsed))
 ```{r timeplot,echo=FALSE}
 ggplot(timedat,aes(x=elapsed,y=model))+ scale_x_log10() + geom_point()
 ```
-
-## julia-lang
-
-This is actually almost working, with two caveats:
-
-- I'm having trouble getting Julia to evaluate properly in an Rmarkdown chunk (can probably do this but will have to fight with it a bit). The `runr`-based strategy implemented [here](https://rpubs.com/yihui/julia-knitr) *sort of* works, but is flaky. Could hack together something based on evaluation, or ?
-- I can get things to work with the logit link, but the cloglog link underflows somewhere
-- will need to work on pulling the results from julia back into the rest of the document for comparison ...
-
-```{r juliafit,eval=FALSE}
-## {r juliafit,engine="julia",eval=FALSE,warning=FALSE}
-jDo("using DataFrames")
-jDo("using MixedModels")
-jDo("using GLM")  ## for testing
-jDo('df = readtable("artSim.csv");')
-## compute proportions and totals
-jDo('df[:tot] = df[:Dead]+df[:Alive];')
-jDo('df[:prop] = df[:Dead] ./ df[:tot];')
-## convert Treatment to categorical
-## https://stackoverflow.com/questions/43708635/indicator-matrix-for-categorical-data-in-glm-jl-with-dataframes-jl
-jDo('pool!(df, [:Trt])')
-## working up to it ....
-## g1 = glm(@formula(prop ~ Trt+0), df, Binomial(), CloglogLink(), wt= Array(df[:tot]));
-## g2 = glmm(@formula(prop ~ Trt+0 + (1 | Rep)), df, Binomial(), wt = float.(Array(df[:tot])));
-## g3 = glmm(@formula(prop ~ Trt+0 + (x | Rep)), df, Binomial(), wt = float.(Array(df[:tot])));
-## can't handle (a+b)/x syntax ... expand ???
-## g4 = glmm(@formula(prop ~ (Trt+0)/x + (x | Rep)), df, Binomial(), wt = float.(Array(df[:tot])));
-
-## glmm(@formula(prop ~ 0+Trt+Trt&x + (x | Rep)), df, Binomial(),
-##           CloglogLink(), wt = float.(Array(df[:tot])))
-## ERROR: AssertionError: isfinite(crit)
-##
-jDo("@time g1 = glmm(@formula(prop ~ 0+Trt+Trt&x + (x | Rep)), df, Binomial(),
-          LogitLink(), wt = float.(Array(df[:tot])));")
-ff <- j2r("fixef(g1)")
-rr <- j2r("ranef(g1)") ## NULL ???
-```
-
-Unfinished ...
 
