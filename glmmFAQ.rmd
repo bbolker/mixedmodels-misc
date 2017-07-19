@@ -18,6 +18,7 @@ library(pander)
 This is an informal FAQ list for the `r-sig-mixed-models` mailing list.
 
 The most commonly used functions for mixed modeling in R are 
+
 - *linear mixed models*: `aov()`, `nlme::lme`[^1], `lme4::lmer`; 
 - *generalized linear mixed models* (GLMMs): `MASS::glmmPQL`, `lme4::glmer`, `MCMCglmm::MCMCglmm`;
 - *nonlinear mixed models*: `nlme::nlme`, `lme4::nlmer`.
@@ -30,8 +31,7 @@ The most commonly used functions for mixed modeling in R are
     - sign up [here](https://stat.ethz.ch/pipermail/r-sig-mixed-models/)
 	- archives [here](https://stat.ethz.ch/pipermail/r-sig-mixed-models/)
 	- or Google search with the tag `site:https://stat.ethz.ch/pipermail/r-sig-mixed-models/`
-- The source code of this document is available at https://github.com/bbolker/mixedmodels-misc/blob/master/glmmFAQ.rmd; a rendered (HTML) version lives at http://bbolker.github.io/mixedmodels-misc/glmmFAQ.html).
-- there is a previous version posted on [wikidot.com](http://glmm.wikidot.com/faq), but I am getting tired of maintaining it in that format.
+- The source code of this document is available [on GitHub](https://github.com/bbolker/mixedmodels-misc/blob/master/glmmFAQ.rmd); the rendered (HTML) version lives on [GitHub pages](http://bbolker.github.io/mixedmodels-misc/glmmFAQ.html).
 - Searching on StackOverflow with the [[r] [mixed-models] tags](http://stackoverflow.com/questions/tagged/r%20mixed-models?mode=all), or on CrossValidated with the [[mixed-model] tag](http://stats.stackexchange.com/questions/tagged/mixed-model) may be helpful (these sites also have an `[lme4]` tag).
 
 
@@ -183,15 +183,18 @@ While one (well, OK I) would naively think that GLMMs with Gamma distributions w
 
 ### Count data
 
-- `MCMCglmm` handles zero-truncated, zero-inflated, and zero-altered models, although specifying the models is a little bit tricky: see Sections 5.3 to 5.5 of the "CourseNotes" vignette
+- `MCMCglmm` handles zero-truncated, zero-inflated, and zero-altered models, although specifying the models is a little bit tricky: see Sections 5.3 to 5.5 of the [CourseNotes vignette](https://cran.r-project.org/web/packages/MCMCglmm/vignettes/CourseNotes.pdf)
 - `glmmADMB` handles 
-  - zero-inflated models (with a single zero-inflation parameter -- i.e., the level of zero-inflation is assumed constant across the whole data set)
-  - truncated Poisson and negative binomial distributions (which allows two-stage fitting of hurdle models)
-- `glmmTMB` ... ? 
-- `gamlssNP` in the `gamlss.mx` package should handle zero-inflation, and the gamlss.tr package should handle truncated (i.e. hurdle) models -- but I haven't tried them
-- roll-your-own: ADMB/R2admb, WinBUGS/R2WinBUGS ... 
+    - zero-inflated models (with a single zero-inflation parameter -- i.e., the level of zero-inflation is assumed constant across the whole data set)
+    - truncated Poisson and negative binomial distributions (which allows two-stage fitting of hurdle models)
+- `glmmTMB` handles a variety of Z-I and Z-T models (allows covariates, and random effects, in the zero-alteration model)
+- `brms` does too
+- Gavin Simpson has a [detailed writeup](http://www.fromthebottomoftheheap.net/2017/05/04/compare-mgcv-with-glmmTMB/) showing that `mgcv::gam()` can do simple mixed models with zero-inflation, and comparing `mgcv` with `glmmTMB` results
+- `gamlssNP` in the `gamlss.mx` package should handle zero-inflation, and the `gamlss.tr` package should handle truncated (i.e. hurdle) models -- but I haven't tried them
+- roll-your-own: ADMB/R2admb, WinBUGS/R2WinBUGS, TMB, Stan, ... 
 
 ### Continuous data
+
 Continuous data are a special case where the mixture model may make less sense.
 
 - The simplest solution is to fit a Bernoulli model to the zero/non-zero data, then a continuous model (lognormal?  Gamma?) for the non-zero values. If you want to fit a truncated continuous distribution to the non-zero values, that gets harder ...
