@@ -11,14 +11,14 @@ Responding to a query from Rolf Turner on `r-sig-mixed-models@r-project.org`.
 **to do**
 
 - compare variance-covariance matrix estimates (they vary a lot, although it doesn't seem to have much effect on the fixed effects?
-- play with/fight with Julia more (native mode rather than `rjulia` package? better retrieval of results?)
-- worth comparing with `brms` results ... ??
+- play with/fight with Julia more: speed? try `fast!` (corresponding to `nAGQ=0`)?
+- try estimation with treatment and treatment-by-x effects either as real random effects (i.e., with shrinkage) *or* with large fixed variance (for computational efficiency)
 
 ```{r pkgs,message=FALSE}
 ## fitting packages
 library(lme4)
 library(glmmTMB)
-## jl_is_float32 -> jl_typeis(v,jl_float32_type) etc.?
+library(brms)
 ## post-analysis pkgs
 library(broom)  ## need BMB version for glmmTMB
 library(ggplot2); theme_set(theme_bw())
@@ -200,13 +200,15 @@ vv <- function(x) {
 
 ## julia-lang
 
-This is actually almost working, with two caveats:
+This is actually almost working, with a few caveats:
 
 - I'm having trouble getting Julia to evaluate properly in an Rmarkdown chunk (can probably do this but will have to fight with it a bit)
     - the `runr`-based strategy implemented [here](https://rpubs.com/yihui/julia-knitr) is flaky
 	- I could hack together something simpler based on sending text to Julia for evaluation (`rjulia -e`? `-E`?) but not sure how well it would work
 	- `rjulia` works (if hacked as described above)
 	- I fell back on simply running the Julia code (below, and [here](./cloglog.jl)) as a separate process and printing the results to a file
+- requires fix to Julia GLM internals so cloglog doesn't underflow
+- the timings below are on the order of 10x greater than Doug Bates reports (e.g. the glmm fit takes about 50 seconds for him rather than 800 as reported below)
 
 ```{r juliafit,engine="sh",results="markup",echo=FALSE,comment=NA}
 cat cloglog.jl
@@ -219,6 +221,27 @@ julia_tab <- with(julia_coef,
        data.frame(effect="fixed",term=transVar(variable),
                 estimate=Estimate,std.error=StdError))
 ```
+
+## brms
+
+This `brms` fit works (sort of); it runs, but we get the following warnings:
+```
+1: The model has not converged (some Rhats are > 1.1). Do not analyse the results! 
+We recommend running more iterations and/or setting stronger priors. 
+2: There were 4000 divergent transitions after warmup. Increasing adapt_delta above 0.8 may help.
+See http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup 
+```
+
+```{r brms,eval=FALSE,cache=TRUE,results="hide"}
+t8 <- system.time(
+    fit8 <- brm(Dead | trials(Dead+Alive) ~ (Trt + 0)/x + (x | Rep),
+                family=binomial(link="cloglog"),
+                inits="0",
+                data=X))
+```
+
+Might work if we added some kind of priors (or group priors, i.e.
+shrinkage) on the fixed effects?
 
 ## results summary
 
