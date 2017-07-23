@@ -14,6 +14,10 @@ Responding to a query from Rolf Turner on `r-sig-mixed-models@r-project.org`.
 - play with/fight with Julia more: speed? try `fast!` (corresponding to `nAGQ=0`)?
 - try estimation with treatment and treatment-by-x effects either as real random effects (i.e., with shrinkage) *or* with large fixed variance (for computational efficiency)
 
+**caveats**
+
+- Julia timing is still questionable; I have previously gotten results as fast as 7 seconds for the full model fit (vs. the 36 seconds reported below)
+
 ```{r pkgs,message=FALSE}
 ## fitting packages
 library(lme4)
@@ -30,7 +34,7 @@ library(ggstance)
 
 To run the code in the Julia section below you need to install:
 
-- Julia version 0.5.x (or greater??): on Ubuntu you can
+- Julia; tested on versions 0.5.2 and 0.6.0, I used 0.6.0 below. On Ubuntu you can
 ```
 sudo add-apt-repository ppa:staticfloat/juliareleases
 sudo apt-get update
@@ -39,12 +43,7 @@ sudo apt-get install julia
 - Doug Bates's [MixedModels.jl](https://github.com/dmbates/MixedModels.jl/) package (in Julia, `Pkg.add("MixedModels")`)
 - at present, an updated version of the `GLM` package for Julia that fixes an issue with the cloglog link (in Julia,
 `Pkg.checkout("GLM"); Pkg.checkout("GLM", "db/clampcloglog")`
-- the `rjulia` package for R. I needed to create a modified version (in R, `devtools::install_github("bbolker/rjulia", ref="julia0.5")`
-
-```{r load_julia}
-library(rjulia)
-julia_init()
-```
+- this example no longer uses the `rjulia` package for R. It did in previous versions; I needed to create a modified version (in R, `devtools::install_github("bbolker/rjulia", ref="julia0.5")`
 
 
 ```{r artSim,echo=FALSE,message=FALSE,warning=FALSE}
@@ -208,7 +207,6 @@ This is actually almost working, with a few caveats:
 	- `rjulia` works (if hacked as described above)
 	- I fell back on simply running the Julia code (below, and [here](./cloglog.jl)) as a separate process and printing the results to a file
 - requires fix to Julia GLM internals so cloglog doesn't underflow
-- the timings below are on the order of 10x greater than Doug Bates reports (e.g. the glmm fit takes about 50 seconds for him rather than 800 as reported below)
 
 ```{r juliafit,engine="sh",results="markup",echo=FALSE,comment=NA}
 cat cloglog.jl
@@ -296,16 +294,16 @@ Check timings:
 
 ```{r timesum,echo=FALSE}
 julia_times <- scan("julia_cloglog_timings.txt",quiet=TRUE)
-## Julia timings are for GLM, GLMM:logit, GLMM:cloglog
+## Julia timings are for GLMM:cloglog with nAGQ=0 and Laplace
 timedat <- data.frame(model=c(names(modList),"julia"),
                       elapsed=c(sapply(timeList,
                                      function(x) x["elapsed"]),
-                                julia_times[3])) %>%
+                                julia_times[2])) %>%
     mutate(model=reorder(model,elapsed))
 ```
 
 ```{r timetab,echo=FALSE,results="as.is"}
-knitr::kable(arrange(timedat,elapsed))
+knitr::kable(arrange(timedat,elapsed),digits=1)
 ```
 
 ```{r timeplot,echo=FALSE}
