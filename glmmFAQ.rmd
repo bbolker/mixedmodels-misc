@@ -170,14 +170,12 @@ Negative binomial models in `glmmADMB` or `glmmTMB` and lognormal-Poisson models
 
 ## Gamma GLMMs
 
-While one (well, OK I) would naively think that GLMMs with Gamma distributions would be just as easy (or hard) as any other sort of GLMMs, it seems that they are in fact harder to implement (or at least not yet thoroughly/stably working in lme4). Basic simulated examples of Gamma GLMMs can fail in lme4 despite analogous problems with Poisson, binomial, etc. distributions.  Solutions:
+While one (well, OK I) would naively think that GLMMs with Gamma distributions would be just as easy (or hard) as any other sort of GLMMs, it seems that they are in fact harder to implement. Basic simulated examples of Gamma GLMMs can fail in lme4 despite analogous problems with Poisson, binomial, etc. distributions.  Solutions:
 - the default inverse link seems particularly problematic; try other links (especially `family=Gamma(link="log")`) if that is possible/makes sense
-- consider whether a lognormal model (i.e. a regular LMM on logged data) would work/makes sense
+- consider whether a lognormal model (i.e. a regular LMM on logged data) would work/makes sense (@lo_transform_2015 argue that the Gamma family with an *identity* link is superior to lognormal models for reaction-time data)
 
-- `glmmPQL`
-- glmmADMB
-- other packages (WinBUGS) etc. ?
-- gamlssNP?
+Gamma models can be fitted by a wide variety of platforms (`lme4::glmer`, `MASS::glmmPQL`, `glmmADMB`, `glmmTMB`, `MixedModels.jl`, `MCMCglmm` ... not sure about others.
+
 
 ## Zero-inflation
 
