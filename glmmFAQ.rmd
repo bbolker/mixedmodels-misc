@@ -174,7 +174,7 @@ While one (well, OK I) would naively think that GLMMs with Gamma distributions w
 - the default inverse link seems particularly problematic; try other links (especially `family=Gamma(link="log")`) if that is possible/makes sense
 - consider whether a lognormal model (i.e. a regular LMM on logged data) would work/makes sense (@lo_transform_2015 argue that the Gamma family with an *identity* link is superior to lognormal models for reaction-time data)
 
-Gamma models can be fitted by a wide variety of platforms (`lme4::glmer`, `MASS::glmmPQL`, `glmmADMB`, `glmmTMB`, `MixedModels.jl`, `MCMCglmm` ... not sure about others.
+Gamma models can be fitted by a wide variety of platforms (`lme4::glmer`, `MASS::glmmPQL`, `glmmADMB`, `glmmTMB`, `MixedModels.jl`, `MCMCglmm`, `brms` ... not sure about others.
 
 
 ## Zero-inflation
@@ -310,11 +310,24 @@ At present there are a variety of strong opinions about how to resolve such prob
 	- The `rstanarm` and `brms` packages provide wrappers for the Stan Hamiltonian MCMC engine that fit GLMMs via `lme4` syntax, again allowing a variety of priors to be set.
 - If a variance component is zero, dropping it from the model will have no effect on any of the estimated quantities (although it will affect the AIC, as the variance parameter is counted even though it has no effect). @pasch_interspecific_2013 gives one example where random effects were dropped because the variance components were consistently estimated as zero. Conversely, if one chooses for philosophical grounds to retain these parameters, it won't change any of the answers.
 
-### Setting residual variances to zero
+### Setting residual variances to a fixed value (zero or other)
 
-For some problems it would be convenient to be able to set the residual variance term to zero. This is difficult in `lme4`, because the model is parameterized internally in such a way that the residual variance is profiled out (i.e., calculated directly from a residual deviance term) and the random-effects variances are scaled by the residual variance.
+For some problems it would be convenient to be able to set the residual variance term to zero, or a fixed value. This is difficult in `lme4`, because the model is parameterized internally in such a way that the residual variance is profiled out (i.e., calculated directly from a residual deviance term) and the random-effects variances are scaled by the residual variance.
 
-It is possible to use `blmer` to fix the residual variance to a very small (albeit not exactly zero) value.
+[Searching the r-sig-mixed-models list for "fix residual variance"](https://www.google.ca/search?q=site%3A%2F%2Fstat.ethz.ch%2Fpipermail%2Fr-sig-mixed-models%2F+fix+residual+variance)
+
+- This is done in the `metafor` package, for meta-analytic models
+- You can use the `blme` package to fix the residual variance: from Vincent Dorie,
+```
+library(blme)
+blmer(formula = y ~ 1 + (1 | group), weights = V,
+      resid.prior = point(1.0), cov.prior = NULL)
+```
+This sets the residual variance to 1.0.  You *cannot* use this to make it
+exactly zero, but you can make it very small (and experiment with setting
+it to different small values, e.g. 0.001 vs 0.0001, to see how sensitive
+the results are).
+- There is an [rrBlupMethod6 package](https://CRAN.R-project.org/package=rrBlupMethod6) on CRAN ("Re-parametrization of mixed model formulation to allow for a fixed residual variance when using RR-BLUP for genom[e]wide estimation of marker effects"), but it seems fairly special-purpose.
 
 ### Other problems
 
