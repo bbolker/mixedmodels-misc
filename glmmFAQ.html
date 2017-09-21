@@ -118,7 +118,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">GLMM FAQ</h1>
 <h4 class="author"><em>Ben Bolker and others</em></h4>
-<h4 class="date"><em>11:29 21 September 2017</em></h4>
+<h4 class="date"><em>11:31 21 September 2017</em></h4>
 
 </div>
 
@@ -586,8 +586,11 @@ blmer(formula = y ~ 1 + (1 | group), weights = V,
   resid.prior = point(1.0), cov.prior = NULL)</code></pre>
 This sets the residual variance to 1.0. You <em>cannot</em> use this to make it exactly zero, but you can make it very small (and experiment with setting it to different small values, e.g. 0.001 vs 0.0001, to see how sensitive the results are).</li>
 <li>There is an <a href="https://CRAN.R-project.org/package=rrBlupMethod6">rrBlupMethod6 package</a> on CRAN (“Re-parametrization of mixed model formulation to allow for a fixed residual variance when using RR-BLUP for genom[e]wide estimation of marker effects”), but it seems fairly special-purpose.</li>
-<li><p>it might be possible <em>in principle</em> to adapt <code>lme4</code>’s internal <code>devfun2()</code> function (used in the likelihood profiling computation for LMMs), which uses a specified value of the residual standard deviation in computing likelihood, but as <span class="citation">D. Bates, Mächler, et al. (2015)</span> say: &gt; The resulting function is not useful for general nonlinear optimization — one can easily wander into parameter regimes corresponding to infeasible (non-positive semidefinite) variance-covariance matrices — but it serves for likelihood profiling, where one focal parameter is varied at a time and the optimization over the other parameters is likely to start close to an optimum.</p></li>
+<li><p>it might be possible <em>in principle</em> to adapt <code>lme4</code>’s internal <code>devfun2()</code> function (used in the likelihood profiling computation for LMMs), which uses a specified value of the residual standard deviation in computing likelihood, but as <span class="citation">D. Bates, Mächler, et al. (2015)</span> say:</p></li>
 </ul>
+<blockquote>
+<p>The resulting function is not useful for general nonlinear optimization — one can easily wander into parameter regimes corresponding to infeasible (non-positive semidefinite) variance-covariance matrices — but it serves for likelihood profiling, where one focal parameter is varied at a time and the optimization over the other parameters is likely to start close to an optimum.</p>
+</blockquote>
 </div>
 <div id="other-problems" class="section level3">
 <h3>Other problems</h3>
@@ -1211,23 +1214,20 @@ withCallingHandlers(tryCatch(fun(n=nvec[j],tau=tauvec[i],...),
 ## [1] methods   stats     graphics  grDevices utils     datasets  base     
 ## 
 ## other attached packages:
-##  [1] packdep_0.3.1      igraph_1.1.2       ggplot2_2.2.1.9000
-##  [4] nlme_3.1-131       glmmADMB_0.8.4     MASS_7.3-47       
-##  [7] rmarkdown_1.6      RLRsim_3.1-3       lme4_1.1-14       
-## [10] Matrix_1.2-11      pander_0.6.1       knitr_1.17        
+## [1] ggplot2_2.2.1.9000 RLRsim_3.1-3       lme4_1.1-14       
+## [4] Matrix_1.2-11      pander_0.6.1       knitr_1.17        
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] Rcpp_0.12.12      compiler_3.5.0    nloptr_1.0.4     
-##  [4] R2admb_0.7.15     plyr_1.8.4        tools_3.5.0      
-##  [7] digest_0.6.12     evaluate_0.10.1   tibble_1.3.4     
-## [10] gtable_0.2.0      lattice_0.20-35   mgcv_1.8-21      
-## [13] pkgconfig_2.0.1   rlang_0.1.2       yaml_2.1.14      
-## [16] coda_0.19-1       stringr_1.2.0     rprojroot_1.2    
-## [19] grid_3.5.0        minqa_1.2.4       magrittr_1.5     
-## [22] backports_1.1.0   scales_0.5.0.9000 codetools_0.2-15 
-## [25] htmltools_0.3.6   splines_3.5.0     colorspace_1.3-2 
-## [28] labeling_0.3      stringi_1.1.5     lazyeval_0.2.0   
-## [31] munsell_0.4.3</code></pre>
+##  [1] Rcpp_0.12.12      magrittr_1.5      splines_3.5.0    
+##  [4] MASS_7.3-47       munsell_0.4.3     colorspace_1.3-2 
+##  [7] lattice_0.20-35   rlang_0.1.2       minqa_1.2.4      
+## [10] plyr_1.8.4        stringr_1.2.0     tools_3.5.0      
+## [13] grid_3.5.0        nlme_3.1-131      gtable_0.2.0     
+## [16] mgcv_1.8-21       htmltools_0.3.6   lazyeval_0.2.0   
+## [19] yaml_2.1.14       rprojroot_1.2     digest_0.6.12    
+## [22] tibble_1.3.4      nloptr_1.0.4      evaluate_0.10.1  
+## [25] rmarkdown_1.6     labeling_0.3      stringi_1.1.5    
+## [28] compiler_3.5.0    scales_0.5.0.9000 backports_1.1.0</code></pre>
 </div>
 </div>
 <div id="bibliography" class="section level1 unnumbered">
