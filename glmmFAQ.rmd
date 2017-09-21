@@ -329,6 +329,7 @@ it to different small values, e.g. 0.001 vs 0.0001, to see how sensitive
 the results are).
 - There is an [rrBlupMethod6 package](https://CRAN.R-project.org/package=rrBlupMethod6) on CRAN ("Re-parametrization of mixed model formulation to allow for a fixed residual variance when using RR-BLUP for genom[e]wide estimation of marker effects"), but it seems fairly special-purpose.
 - it might be possible *in principle* to adapt `lme4`'s internal `devfun2()` function (used in the likelihood profiling computation for LMMs), which uses a specified value of the residual standard deviation in computing likelihood, but as @bates_fitting_2015 say:
+
 > The resulting function is not useful for general nonlinear optimization — one can easily wander into parameter regimes corresponding to infeasible (non-positive semidefinite) variance-covariance matrices — but it serves for likelihood profiling, where one focal parameter is varied at a time and the optimization over the other parameters is likely to start close to an optimum.
 
 ### Other problems
