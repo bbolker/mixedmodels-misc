@@ -5,3 +5,12 @@ figure/
 *~
 .#*
 gh-pages
+*.nav
+*.toc
+*.bbl
+*.blg
+*.snm
+*tikz-Dictionary
+*.aux
+*.log
+*.vrb
