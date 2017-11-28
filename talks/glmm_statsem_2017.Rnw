@@ -91,6 +91,8 @@ library(grid)
 zmargin <- theme(panel.spacing=unit(0,"lines"))
 library(scales) ## for 'scientific', 'trans_format'
 theme_set(theme_bw())
+library(plyr)
+library(directlabels)
 @ 
 
 \newcommand{\lmefour}{\code{lme4}}
@@ -877,77 +879,76 @@ trellis.par.set(theme=orig) ## restore settings
 \end{frame}
 
 \begin{frame}
-\frametitle{Challenges 1: speed}
+\frametitle{Challenges 1: speed/size}
 
-How 
-\begin{itemize}
-\item Small clusters: need AGQ/MCMC
-\item Small numbers of clusters: need finite-size corrections (KR/PB/MCMC)
-\item Small data sets: issues with \emph{singular} fits \\
-\cite{barr_random_2013} vs. \cite{bates_parsimonious_2015}
-\item Big data: speed!
-\item Model diagnosis
-\item Confidence intervals accounting for uncertainty in variances
-\end{itemize}
-See also: \url{https://rawgit.com/bbolker/mixedmodels-misc/master/ecostats_chap.html}
-\url{https://groups.nceas.ucsb.edu/non-linear-modeling/projects}
+<<loadbig, echo=FALSE, message=FALSE,out.width="0.8\\textwidth">>=
+load("data/bigfit.RData")
+tab1=ddply(bigtimes, ~package, "summarize", exponent=coef(lm(log(time)~log(nobs)))[2])
+colnames(tab1)[2]="exponent"
+tab1=join(tab1, subset(bigtimes, nobs==3864))
+bigtimes2 <- transform(bigtimes,
+      package=factor(package,levels=levels(package),
+                     labels=paste(levels(package),
+                                  round(tab1$exponent,2),sep=": ")))
+ggtime <-ggplot(bigtimes2, aes(x=nobs, y=time, colour=package))+
+    geom_point()+
+    geom_smooth(method="lm", se=FALSE)+
+    scale_y_log10(breaks=c(1,5,10,50,100,500,1000))+
+    xlab("number of observations")+
+    ylab("estimation time (seconds)")+
+    scale_x_log10()+
+    expand_limits(x=25000)  ## a bit more space on x-axis for labels
+direct.label(ggtime,list(dl.trans(x=x+0.1), ## shift labels right by 0.1 cm
+                         "last.bumpup"))
+@
 \end{frame}
 
 \begin{frame}
-\frametitle{Spatial and temporal correlations}
+<<bigfitRE,echo=FALSE,out.width="0.8\\textwidth">>=
+load("data/bigfitRE.RData")
+bigtimes2 <- transform(subset(bigtimes, nRE<=5888) ,
+      package=factor(package,levels=levels(package),
+                     labels=paste(levels(package),
+                                  round(tab1$exponent,2),sep=": ")))
+ggtime2 <-ggplot(bigtimes2, aes(x=nRE, y=time, colour=package))+
+    geom_point()+
+  geom_smooth(method="lm", se=FALSE)+
+    scale_y_log10(breaks=c(1,5,10,50,100,500,1000,5000,10000))+
+    xlab("random effect levels (sites)")+
+  ylab("estimation time (seconds)")+
+  scale_x_log10()+
+    expand_limits(x=45000)  ## a bit more space on x-axis for labels 
 
-\begin{itemize}
-\item Sometimes blocking takes care of non-independence ...
-\item but sometimes there is temporal or spatial correlation
-\emph{within} blocks
-\item \ldots also phylogenetic \ldots \citep{ives_statistics_2006}
-\item ``G-side'' vs. ``R-side'' effects
-\item tricky to implement for GLMMs, \\
-but new possibilities on the horizon \citep{Rue+2009,rousset_testing_2014};
-\href{lme4ord package}{https://github.com/stevencarlislewalker/lme4ord}
-\end{itemize}
+direct.label(ggtime2,list(dl.trans(x=x+0.1), ## shift labels right by 0.1 cm
+"last.bumpup"))
+@ 
 
-%% \item Sometimes blocks are spatial partitions (sites, zip codes, states) \\
-%% \item Off-the-shelf methods for ``true'' spatial GLMMs?\\
-%%   \citep{dormann_methods_2007}
-%% \item Correlation of residuals or conditional modes?
-%% \item INLA; GeoBUGS; ADMB
-%% \item lme4: hacking $\Z$: pedigrees, moving average, CAR models?
-%% \item lme4: \code{flexLambda} branch
-%% \item methods also apply to temporal, phylogenetic correlations \\
-%%   \citep{ives_generalized_2011}
 \end{frame}
 
 \begin{frame}
-\frametitle{Next steps}
-\itemsep15pt
+\frametitle{approaches to speed/big data}
 \begin{itemize}
-\item Complex random effects: \\
-  regularization, model selection, penalized methods (lasso/fence)
-\item Flexible correlation and variance structures
-\item Flexible/nonparametric random effects distributions
-\item hybrid \& improved MCMC methods
-\item \emph{Reliable} assessment of out-of-sample performance
+\item faster/tuned linear algebra: \citep{bates_mixedmodels_2017}
+\item L2 regularization with known variance-covariance: \cite{sweetser_diamond_2017}
+\item distributed methods: ???
 \end{itemize}
 \end{frame}
 
 \begin{frame}
-  \begin{columns}
-    \begin{column}{6cm}
-      \begin{itemize}
-        \item \url{http://ms.mcmaster.ca/~bolker/misc/private/14-Fox-Chap13.pdf}
-        \item \url{https://rawgit.com/bbolker/mixedmodels-misc/master/ecostats_chap.html}
-        \item \cite{bolker_glmm_2014}
-      \end{itemize}
-    \end{column}
-    \begin{column}{6cm}
-      \includegraphics[width=4cm]{pix/foxbook.png} \\
-      (code ASPROMP8)
-    \end{column}
-\end{columns}
-  \end{frame}
+\frametitle{Identifying and implementing appropriate model complexity}
+\begin{itemize}
+\item very easy to build big mixed models: $(n^2+n)/2$ parameters
+per $n$-random-slopes random effects term
+\item much discussion of appropriate model-building strategy:
+\cite{barr_random_2013} vs. \cite{bates_parsimonious_2015},
+\cite{matuschek_balancing_2017}
+\item penalization for variance components?
+\item (penalized?) factor-analytic models \citep{bhattacharya_sparse_2011}
+\end{itemize}
+\end{frame}
 
-\begin{frame}
+%https://tex.stackexchange.com/questions/20660/how-can-i-split-a-beamer-bibliography-across-two-slides
+\begin{frame}[allowframebreaks]
 \frametitle{References}
 \let\emph\oldemph
 \tiny
