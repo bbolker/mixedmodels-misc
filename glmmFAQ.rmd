@@ -402,22 +402,21 @@ From worst to best:
 
 There is an [R FAQ entry](http://cran.r-project.org/doc/FAQ/R-FAQ.html#Why-are-p_002dvalues-not-displayed-when-using-lmer_0028_0029_003f) on this topic, which links to a [mailing list post](https://stat.ethz.ch/pipermail/r-help/2006-May/094765.html) by Doug Bates (there is also a voluminous [mailing list thread](http://rwiki.sciviews.org/doku.php?id=guides:lmer-tests) reproduced on the R wiki). The bottom line is 
 
-- In general it is not clear that the null distribution of the computed ratio of sums of squares is really an F distribution, for *any* choice of denominator degrees of freedom. While this is true for special cases that correspond to classical experimental designs (nested, split-plot, randomized block, etc.), it is apparently not true for more complex designs (unbalanced, GLMMs, temporal or spatial correlation, etc.).
-- For each simple degrees-of-freedom recipe that has been suggested (trace of the hat matrix, etc.) there seems to be at least one fairly simple counterexample where the recipe fails badly.
-- Other df approximation schemes that have been suggested (Satterthwaite, Kenward-Roger, etc.) would apparently be fairly hard to implement in lme4/nlme, both because of a difference in notational framework and because naive approaches would be computationally difficult in the case of large data sets. (The Kenward-Roger approach has now been implemented in the pbkrtest package (as KRmodcomp): although it was derived for LMMs, @stroup_rethinking_2014 states on the basis of (unpresented) simulation results that it actually works reasonably well for GLMMs.  However, at present the code in `KRmodcomp` only handles LMMs.)
-- Note that there are several different issues at play in finite-size (small-sample) adjustments, which apply slightly differently to LMMs and GLMMs.  
-- When the responses are normally distributed and the design is balanced, nested etc. (i.e. the classical LMM situation), the scaled deviances and differences in deviances are exactly F-distributed and looking at the experimental design (i.e., which treatments vary/are replicated at which levels) tells us what the relevant degrees of freedom are.
-- When the data are not classical (crossed, unbalanced, R-side effects), we might still guess that the deviances etc. are approximately F-distributed but that we don't know the real degrees of freedom -- this is what the Satterthwaite, Kenward-Roger, Fai-Cornelius, etc. approximations are supposed to do.  
-- When the responses are not normally distributed (as in GLMs and GLMMs), and when the scale parameter is not estimated (as in standard Poisson- and binomial-response models), then the deviance differences are only asymptotically F- or chi-square-distributed (i.e. not for our real, finite-size samples).  In standard GLM practice, we usually ignore this problem; there is some literature on finite-size corrections for GLMs under the rubrics of "Bartlett corrections" and "higher order asymptotics" (see @McCullaghNelder1989, @cordeiro_improved_1994, @cordeiro_note_1998 and the `cond` package ([on CRAN](https://cran.r-project.org/web/packages/cond/index.html)) [which works with GLMs, not GLMMs]), but it's rarely used.  (The bias correction/Firth approach implemented in the `brglm` package attempts to address the problem of finite-size bias, not finite-size non-chi-squaredness of the deviance differences.)
+- For special cases that correspond to classical experimental designs (i.e. balanced designs that are nested, split-plot, randomized block, etc.) ... we can show that the null distributions of particular ratios of sums of squares follow an $F$ distribution with known numerator and denominator degrees of freedom (and hence the sampling distributions of particular contrasts are t-distributed with known df). In more complicated situations (unbalanced, GLMMs, crossed random effects, models with temporal or spatial correlation, etc.) it is not in general clear that the null distribution of the computed ratio of sums of squares is really an F distribution, for *any* choice of denominator degrees of freedom.
+- For each simple degrees-of-freedom recipe that has been suggested (trace of the hat matrix, etc.) there seems to be at least one fairly simple counterexample where the recipe fails badly (e.g. see [this r-help thread from September 2006](https://stat.ethz.ch/pipermail/r-help/2006-September/112495.html)).
+- When the responses are normally distributed and the design is balanced, nested etc. (i.e. the classical LMM situation), the scaled deviances and differences in deviances are exactly $F$-distributed and looking at the experimental design (i.e., which treatments vary/are replicated at which levels) tells us what the relevant degrees of freedom are (see "df alternatives" below)
+- Two approaches to approximating df (Satterthwaite and Kenward-Roger) have been implemented in R, Satterthwaite in `lmerTest` and Kenward-Roger in `pbkrtest` (as `KRmodcomp`): although it was derived for LMMs, @stroup_rethinking_2014 states on the basis of (unpresented) simulation results that it actually works reasonably well for GLMMs.  However, at present the code in `KRmodcomp` only handles LMMs. (Kenward-Roger is probably the most reliable option [@schaalje_adequacy_2002], although it may be prohibitively computationally expensive for large data sets.)
+- Note that there are several different issues at play in finite-size (small-sample) adjustments, which apply slightly differently to LMMs and GLMMs.
+     -  When the data are not classical (crossed, unbalanced, R-side effects), we might still guess that the deviances etc. are approximately F-distributed but that we don't know the real degrees of freedom -- this is what the Satterthwaite, Kenward-Roger, Fai-Cornelius, etc. approximations are supposed to do.  
+     - When the responses are not normally distributed (as in GLMs and GLMMs), and when the scale parameter is not estimated (as in standard Poisson- and binomial-response models), then the deviance differences are only asymptotically F- or chi-square-distributed (i.e. not for our real, finite-size samples).  In standard GLM practice, we usually ignore this problem; there is some literature on finite-size corrections for GLMs under the rubrics of "Bartlett corrections" and "higher order asymptotics" (see @McCullaghNelder1989, @cordeiro_improved_1994, @cordeiro_note_1998 and the `cond` package ([on CRAN](https://cran.r-project.org/web/packages/cond/index.html)) [which works with GLMs, not GLMMs]), but it's rarely used.  (The bias correction/Firth approach implemented in the `brglm` package attempts to address the problem of finite-size bias, not finite-size non-chi-squaredness of the deviance differences.)
     - When the scale parameter in a GLM is estimated rather than fixed (as in Gamma or quasi-likelihood models), it is sometimes recommended to use an $F$ test to account for the uncertainty of the scale parameter (e.g. @venables_modern_2002 recommend `anova(...,test="F")` for quasi-likelihood models)
     - Combining these issues, one has to look pretty hard for information on small-sample or finite-size corrections for GLMMs: @feng_small_2004 and @bell_small_2010 look like good starting points, but it's not at all trivial.
-- Because the primary authors of `lme4` are not convinced of the utility of the general approach of testing with reference to an approximate null distribution, and because of the overhead of anyone else digging into the code to enable the relevant functionality (as a patch or an add-on), this situation is unlikely to change in the future.
 
 #### Df alternatives:
 
-- use MASS::glmmPQL (uses old nlme rules approximately equivalent to SAS 'inner-outer' rules) for GLMMs, or (n)lme for LMMs
-* Guess the denominator df from standard rules (for standard designs) and apply them to t or F tests
-- Run the model in lme (if possible) and use the denominator df reported there (which follow a simple 'inner-outer' rule which should correspond to the canonical answer for simple/orthogonal designs), applied to t or F tests.  For the explicit specification of the rules that `lme` uses, see page 91 of Pinheiro and Bates (*this page was previously available on [Google Books](http://tinyurl.com/ntygq3), but the link is no longer useful, so here are the relevant paragraphs*):
+- use MASS::glmmPQL (uses old `nlme` rules approximately equivalent to SAS 'inner-outer'/'within-between' rules) for GLMMs, or `(n)lme` for LMMs
+- Guess the denominator df from standard rules (for standard designs, e.g. see @GotelliEllison2004) and apply them to $t$ or $F$ tests
+- Run the model in `lme` (if possible) and use the denominator df reported there (which follow a simple 'inner-outer' rule which should correspond to the canonical answer for simple/orthogonal designs), applied to $t$ or $F$ tests.  For the explicit specification of the rules that `lme` uses, see page 91 of Pinheiro and Bates (*this page was previously available on [Google Books](http://tinyurl.com/ntygq3), but the link is no longer useful, so here are the relevant paragraphs*):
 
 > These conditional tests for fixed-effects terms require denominator degrees of freedom. In the case of the conditional $F$-tests, the numerator degrees of freedom are also required, being determined by the term itself. The denominator degrees of freedom are determined by the grouping level at which the term is estimated. A term is called inner relative to a factor if its value can change within a given level of the grouping factor. A term is outer to a grouping factor if its value does not changes within levels of the grouping factor. A term is said to be estimated at level $i$, if it is inner to the $i-1$st grouping factor and outer to the $i$th grouping factor. For example, the term `Machine` in the `fm2Machine` model is outer to `Machine %in% Worker` and inner to `Worker`, so it is estimated at level 2 (`Machine %in% Worker`). If a term is inner to all $Q$ grouping factors in a model, it is estimated at the level of the within-group errors, which we denote as the $Q+1$st level.
 >
@@ -429,8 +428,28 @@ There is an [R FAQ entry](http://cran.r-project.org/doc/FAQ/R-FAQ.html#Why-are-p
 > 
 > This definition coincides with the classical decomposition of degrees of freedom in balanced, multilevel ANOVA designs and gives a reasonable approximation for more general mixed-effects models.
 
+Note that the implementation used in `lme` **gets the wrong answer for random-slopes models**:
+```{r lmeDF,message=FALSE}
+library(nlme)
+lmeDF <- function(formula=distance~age,random=~1|Subject) {
+     mod <- lme(formula,random,data=Orthodont)
+     aa <- anova(mod)
+    return(setNames(aa[,"denDF"],rownames(aa)))
+}
+lmeDF()
+lmeDF(random=~age|Subject) ## wrong!
+```
+I (BB) have re-implemented this algorithm in a way that does slightly better for random-slopes models (but may still get confused!), see [here](R/calcDenDF.R).
+
+```{r calcDenDF}
+source("R/calcDenDF.R")
+calcDenDF(~age,"Subject",nlme::Orthodont)
+calcDenDF(~age,data=nlme::Orthodont,random=~1|Subject)
+calcDenDF(~age,data=nlme::Orthodont,random=~age|Subject) ## off by 1
+```
+
 - use SAS, Genstat (AS-REML), Stata?
-- Assume infinite denominator df (i.e. $Z$/$\chi^2$ test rather than $t$/$F$) if number of groups is large (>45? Various rules of thumb for how large is "approximately infinite" have been posed, including [in Angrist and Pischke's ''Mostly Harmless Econometrics''], 42 (in homage to Douglas Adams)
+- Assume infinite denominator df (i.e. $Z$/$\chi^2$ test rather than $t$/$F$) if number of groups is large (>45? Various rules of thumb for how large is "approximately infinite" have been posed, including [in @angrist_mostly_2009], 42 (in homage to Douglas Adams)
 
 ### Testing significance of random effects
 
@@ -445,7 +464,7 @@ anova(m2,m1,m0) ## two sequential tests
 With recent versions of `lme4`, goodness-of-fit (deviance) can be compared between `(g)lmer` and `(g)lm` models, although `anova()` must be called with the mixed (`(g)lmer`) model listed first.
 Keep in mind that LRT-based null hypothesis tests are conservative when the null value (such as $\sigma^2=0$) is on the boundary of the feasible space; in the simplest case (single random effect variance), the p-value is approximately twice as large as it should be [@pinheiro_mixed-effects_2000].
 
-- Consider *not* testing the significance of random effects. If the random effect is part of the experimental design, this procedure may be considered 'sacrificial pseudoreplication' (Hurlburt 1984). Using stepwise approaches to eliminate non-significant terms in order to squeeze more significance out of the remaining terms is dangerous in any case.
+- Consider *not* testing the significance of random effects. If the random effect is part of the experimental design, this procedure may be considered 'sacrificial pseudoreplication' [@Hurlbert1984]. Using stepwise approaches to eliminate non-significant terms in order to squeeze more significance out of the remaining terms is dangerous in any case.
 - consider using the `RLRsim` package, which has a fast implementation of simulation-based tests of null hypotheses about zero variances, for simple tests. (However, it only applies to `lmer` models, and is a bit tricky to use for more complex models.)
 ```{r RLRsim,message=FALSE}
 library(RLRsim)

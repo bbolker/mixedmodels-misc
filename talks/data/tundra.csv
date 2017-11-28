@@ -1,0 +1,193 @@
+Year,Site,Lat,Long,Method,GS NEE,GS GPP,GS ER,W NEE,MAT,TAP,Reference
+1966,"Meade River, AK",70.48333,-157.41667,CO2 + DM,-152.0,-,-,-,-15.5,205,Oechel et al 2000; Johnson and Kelly 1970
+1970,"Barrow, AK",71.22014,-156.68889,CHA,-26.0,-,-,-,-13.4,104,Oechel et al 2000; Coyne and Kelly 1975
+1971,"Barrow, AK",71.22014,-156.68889,CHA,-30.0,-,-,-,-13.4,104,Oechel et al 2000; Coyne and Kelly 1975
+1972,"Barrow, AK",71.22014,-156.68889,CHA,-28.0,-,-,-,-13.4,104,Oechel et al 2000; Coyne and Kelly 1975
+1979,"North Slope, AK",67.96667,-148.08333,SL,-,-,62.2,21.2,-16.4,130,Fahnestock et al 1999; Poole and Miller 1982
+1979,"North Slope, AK",67.96667,-148.08333,SL,-,-,37.8,0.5,-16.4,130,Fahnestock et al 1999; Poole and Miller 1982
+1979,"North Slope, AK",67.96667,-148.08333,SL,-,-,46.7,9.6,-16.4,130,Fahnestock et al 1999; Poole and Miller 1982
+1983,"Toolik, AK",68.63333,-149.58333,CHA,390.0,-,-,-,-14.8,231,Oechel et al 2000; Oechel et al 1993
+1984,"Toolik, AK",68.63333,-149.58333,CHA,380.0,-,-,-,-13.4,225,Oechel et al 2000; Oechel et al 1993
+1985,"Toolik, AK",68.63333,-149.58333,CHA,100.0,-,-,-,-15.5,137,Oechel et al 2000; Oechel et al 1993
+1986,"Sagavanjtik River Valley, AK",68.77778,-148.85222,SL,-,-,85.3,21.2,-13.2,150,Fahenstock et al 1999; Giblin et al 1991
+1986,"Sagavanjtik River Valley, AK",68.77778,-148.85222,SL,-,-,126.7,9.6,-13.2,150,Fahenstock et al 1999; Giblin et al 1991
+1986,"Sagavanjtik River Valley, AK",68.77778,-148.85222,SL,-,-,125.3,-,-13.2,150,Fahenstock et al 1999; Giblin et al 1991
+1986,"Sagavanjtik River Valley, AK",68.77778,-148.85222,SL,-,-,85.3,-,-13.2,150,Fahenstock et al 1999; Giblin et al 1991
+1986,"Sagavanjtik River Valley, AK",68.77778,-148.85222,SL,-,-,38.7,12.3,-13.2,150,Fahenstock et al 1999; Giblin et al 1991
+1987,"Toolik, AK",68.63333,-149.58333,CHA,72.0,-,-,-,-12.8,245,Oechel et al 2000; Oechel et al 1993; Grulke et al 1990
+1990,"APL-133, AK",69.93611,-148.81722,CHA,90.0,-,-,-,-12.9,268,Oechel et al 2000; Oechel et al 1993
+1990,"APL-133, AK",69.93611,-148.81722,CHA,22.0,-,-,-,-12.9,268,Oechel et al 2000; Oechel et al 1993
+1990,"APL-133, AK",69.93611,-148.81722,CHA,39.0,-,-,-,-12.9,268,Oechel et al 2000; Oechel et al 1993
+1990,"Happy Valley, AK",69.16389,-148.84639,CHA,115.0,-,-,-,-13.2,256,Oechel et al 2000; Oechel et al 1993
+1990,"Imnavait Creek, AK",68.63333,-149.41667,CHA,-,-,89.9,-,-12,273,Oberbauer et al 1996
+1990,"Prudhoe Bay, AK",70.36667,-148.56667,CHA,66.0,-,-,-,-12.4,293,Oechel et al 2000; Oechel et al 1993
+1990,"Prudhoe Bay, AK",70.36667,-148.56667,CHA,3.0,-,-,-,-12.4,293,Oechel et al 2000; Oechel et al 1993
+1990,"Toolik, AK",68.63333,-149.58333,CHA,134.0,-,-,-,-12.3,172,Oechel et al 2000; Oechel et al 1993
+1991,"APL-133, AK",69.93611,-148.81722,CHA,-39.0,-,-,-,-12.4,192,Oechel et al 2000; Vourlitis et al 1993
+1991,"APL-133, AK",69.93611,-148.81722,CHA,-13.0,-,-,-,-12.4,192,Oechel et al 2000; Vourlitis et al 1993
+1991,"APL-133, AK",69.93611,-148.81722,CHA,27.0,-,-,-,-15.2,170,Oechel et al 2000; Vourlitis et al 1993
+1991,"Happy Valley, AK",69.16389,-148.84639,CHA,67.0,-,-,-,-12.6,183,Oechel et al 2000; Vourlitis et al 1993
+1991,"Imnavait Creek, AK",68.63333,-149.41667,CHA,-,-,120.6,-,-11.2,182,Oberbauer et al 1996
+1991,"Prudhoe Bay, AK",70.36667,-148.56667,CHA,11.0,-,-,-,-12.1,207,Oechel et al 2000; Vourlitis et al 1993
+1991,"Prudhoe Bay, AK",70.36667,-148.56667,CHA,-25.0,-,-,-,-12.1,207,Oechel et al 2000; Vourlitis et al 1993
+1991,"Sagwon, AK",69.37306,-148.70056,CHA,32.0,-,-,-,-12.1,188,Oechel et al 2000; Vourlitis et al 1993
+1991,"Toolik, AK",68.63333,-149.58333,CHA,88.0,-,-,-,-15,160,Oechel et al 2000; Vourlitis et al 1993
+1992,"Barrow, AK",71.22014,-156.68889,CHA,7.0,-,-,-,-13.4,104,Oechel et al 2000; Oechel et al 1995
+1992,"Barrow, AK",71.22014,-156.68889,CHA,14.9,-46.3,61.2,-,-13.4,104,Oechel et al 1995
+1992,"Barrow, AK",71.22014,-156.68889,CHA,-4.3,-74.5,70.2,-,-13.4,104,Oechel et al 1995
+1992,"Barrow, AK",71.22014,-156.68889,CHA,3.9,-80.6,84.4,-,-13.4,104,Oechel et al 1995
+1992,"Barrow, AK",71.22014,-156.68889,CHA,1.4,-98.9,99.5,-,-11.8,122,Oechel et al 1995
+1992,"Barrow, AK",71.22014,-156.68889,CHA,6.5,-112.9,119.6,-,-14,195,Oechel et al 1995
+1992,"Barrow, AK",71.22014,-156.68889,CHA,-,-,90.3,12.3,-14,195,Fahbestock et al 1999; Oechel et al 1995
+1992,"Imnavait Creek, AK",68.63333,-149.41667,CHA,-,-,122.1,-,-13.7,177,Oberbauer et al 1996
+1992,"Toolik, AK",68.63333,-149.58333,CHA,27.0,-,-,-,-14.7,158,Oechel et al 2000
+1993,"Prudhoe Bay, AK",70.36667,-148.56667,CHA,-12.0,-,-,-,-14.6,169,Oechel et al 2000; Oechel et al 1998
+1993,"Prudhoe Bay, AK",70.36667,-148.56667,CHA,-8.0,-71.2,63.2,-,-14.6,169,Oechel et al 1998
+1993,"Toolik & Happy Valley, AK",68.63333,-149.58333,CUV,32.4,-,-,73.3,-14,138,Oechel et al 1997
+1993,"Toolik, AK",68.63333,-149.58333,CHA,-88.1,-399.2,311.1,-,-13.3,195,Hobbie and Chapin 1998
+1993,"West Dock & U-PAD, AK",70.26667,-148.88333,CUV,3.2,-,-,20.3,-15.6,168,Oechel et al 1997
+1994,"Happy Valley, AK",69.16389,-148.84639,CHA,-38.0,-,-,-,-13.5,205,Oechel et al 2000
+1994,"Happy Valley, AK",69.16389,-148.84639,EC,-51.0,-,-,-,-13.5,205,Oechel et al 2000; Vourlitis and Oechel 1999
+1994,"Happy Valley, AK",69.16389,-148.84639,EC,-48.9,-278.7,229.8,-,-13.5,205,Vourlitis and Oechel 1999
+1994,"Prudhoe Bay, AK",70.36667,-148.56667,CHA,-25.0,-,-,-,-13.2,206,Oechel et al 2000; Oechel et al 1998
+1994,"Prudhoe Bay, AK",70.36667,-148.56667,CHA,-9.0,-,-,-,-13.2,206,Oechel et al 2000; Vourlitis et al 1993
+1994,"Prudhoe Bay, AK",70.36667,-148.56667,EC,-14.0,-,-,-,-13.2,206,Oechel et al 2000; Vourlitis and Oechel 1997
+1994,"Prudhoe Bay, AK",70.36667,-148.56667,CHA,-12.8,-72.0,59.2,-,-13.2,206,Oechel et al 1998
+1994,"Toolik, AK",68.63333,-149.58333,CHA,34.0,-,-,-,-11.6,179,Oechel et al 2000
+1994,"U-PAD, AK ",70.29111,-148.88972,EC,-20.0,-,-,-,-14.1,203,Vourlitis and Oechel 1997
+1994,"U-PAD, AK ",70.29111,-148.88972,CHA,-15.5,-141.3,125.8,-,-14.1,203,Vourlitis et al 2000b
+1994,"U-PAD, AK ",70.29111,-148.88972,CHA,-32.9,-125.8,83.2,-,-14.1,203,Vourlitis et al 2000b
+1994,"U-PAD, AK ",70.29111,-148.88972,EC,-29.0,-,-,-,-14.1,203,Vourlitis et al 2000b
+1994,"U-PAD, AK ",70.29111,-148.88972,MOD,-23.2,-133.5,110.3,-,-14.1,203,Vourlitis et al 2000b
+1995,"APL-133, AK",69.93611,-148.81722,EC,-34.0,-,-,-,-11.9,181,Oechel et al 2000; Vourlitis and Oechel 1997
+1995,"APL-133, AK",69.93611,-148.81722,EC,-35.8,-,-,-,-11.9,181,Vourlitis and Oechel 1997
+1995,"Halmer-Yu, RU",67.95000,64.66667,CHA,-11.5,-182.7,171.2,-,-5.5,432,Zamolodchikov et al 2000
+1995,"Happy Valley, AK",69.16389,-148.84639,EC,-58.0,-,-,-,-12,187,Oechel et al 2000; Vourlitis and Oechel 1999
+1995,"Happy Valley, AK",69.16389,-148.84639,EC,-105.4,-285.6,180.2,-,-12,187,Vourlitis and Oechel 1999
+1995,"Happy Valley, AK",69.16389,-148.84639,EC,-60.0,-254.3,194.3,-,-12,187,Vourlitis et al 2000
+1995,"Happy Valley, AK",69.16389,-148.84639,EC,-83.5,-153.9,70.4,-,-12,187,Vourlitis et al 2000
+1995,"Prudhoe Bay, AK",70.36667,-148.56667,EC,-13.0,-,-,-,-11.6,149,Oechel et al 2000; Vourlitis and Oechel 1997
+1995,"Toolik, AK",68.63333,-149.58333,CHA,108.9,-,-,0.2,-11.6,179,Welker et al 2000
+1995,"Toolik, AK",68.63333,-149.58333,CHA,193.5,-,-,0.3,-14.1,278,Welker et al 2000
+1995,"U-PAD, AK ",70.29111,-148.88972,EC,-14.7,-,-,-,-12.5,180,Vourlitis and Oechel 1997
+1996,"Fairbanks, AK",64.75000,-148.25000,SL,-,-,163.5,140.7,-12,312,Grogen and Chapin 1999
+1996,"Happy Valley, AK",69.16389,-148.84639,EC,-60.0,-,-,-,-15.7,202,Oechel 2000
+1996,"North Slope, AK",69.05000,-148.15000,CO2 + DM,-,-,-,3.5,-14.5,280,Fahnestock et al. 1998
+1996,"North Slope, AK",69.05000,-148.15000,CO2 + DM,-,-,-,10.4,-14.5,280,Fahnestock et al. 1998
+1996,"North Slope, AK",69.05000,-148.15000,CO2 + DM,-,-,-,2.1,-14.5,280,Fahnestock et al. 1998
+1996,"North Slope, AK",69.05000,-148.15000,CO2 + DM,-,-,-,1.4,-14.5,280,Fahnestock et al. 1998
+1996,"North Slope, AK",69.05000,-148.15000,CO2 + DM,-,-,-,21.1,-14.5,280,Fahnestock et al 1999
+1996,"North Slope, AK",69.05000,-148.15000,CO2 + DM,-,-,-,12.4,-14.5,280,Fahnestock et al 1999
+1996,"North Slope, AK",69.05000,-148.15000,CO2 + DM,-,-,-,26.6,-14.5,280,Fahnestock et al 1999
+1996,"North Slope, AK",69.05000,-148.15000,CO2 + DM,-,-,-,9.6,-14.5,280,Fahnestock et al 1999
+1996,"North Slope, AK",69.05000,-148.15000,CO2 + DM,-,-,-,21.8,-14.5,280,Fahnestock et al 1999
+1996,"North Slope, AK",69.05000,-148.15000,CO2 + DM,-,-,-,2.1,-14.5,280,Fahnestock et al 1999
+1996,"North Slope, AK",69.05000,-148.15000,CO2 + DM,-,-,-,0.6,-14.5,280,Fahnestock et al 1999
+1996,"North Slope, AK",69.05000,-148.15000,CO2 + DM,-,-,-,4.6,-14.5,280,Fahnestock et al 1999
+1996,"North Slope, AK",69.05000,-148.15000,CO2 + DM,-,-,52.0,11.3,-14.5,280,Fahnestock et al 1999
+1996,"North Slope, AK",69.05000,-148.15000,CO2 + DM,-,-,-,24.1,-14.5,280,Jones et al 1999
+1996,"North Slope, AK",69.05000,-148.15000,CO2 + DM,-,-,-,14.6,-14.5,280,Jones et al 1999
+1996,"North Slope, AK",69.05000,-148.15000,CO2 + DM,-,-,-,13.5,-14.5,280,Jones et al 1999
+1996,"Prudhoe Bay, AK",70.36667,-148.56667,EC,-24.0,-,-,-,-14.2,149,Oechel 2000
+1996,"Sagwon, AK",69.42000,148.71000,SL,-,-,171.9,113.7,-14,282,Grogen and Chapin 1999
+1996,"Talnik, RU",67.18700,-63.88400,CHA,26.9,-226.9,253.8,-,-4,484,Zamolodchikov et al 2000
+1996,"Talnik, RU",67.18700,-63.88400,CHA,-57.7,-419.2,361.5,-,-4,484,Zamolodchikov et al 2000
+1996,"Toolik, AK",68.63333,-149.58333,CHA,42.1,-,-,1.1,-14.1,278,Welker et al 2000
+1996,"Toolik, AK",68.63333,-149.58333,CHA,51.6,-,-,8.7,-14.1,278,Welker et al 2000
+1996,"Toolik, AK",68.63333,-149.58333,SL,-,-,142.9,189.2,-14.1,278,Grogen and Chapin 1999
+1996,"Toolik, AK",68.63333,-149.58333,CHA,10.0,-,-,-,-13.9,182,Oberbauer et al 1998
+1997,"Prudhoe Bay, AK",70.36667,-148.56667,EC,-4.0,-,-,-,-13.9,149,Oechel 2000
+1997,"Toolik, AK",68.63333,-149.58333,CHA,3.3,-,-,-,-13.4,235,Welker et al 1999
+1997,"Zachenberg, GL",74.47400,-20.56700,EC,-1.8,-,-,-,-11,234,Groendahl et al 2007
+1997,"Zachenberg, GL",74.47400,-20.56700,EC,-11.5,-,-,-,-11,234,Soegaard et al 2000
+1998,"Barrow, AK",71.22014,-156.68889,EC,-87.0,-,-,-,-14,195,Oechel 2000
+1999,"Anbisko, SE",68.34500,18.83833,CHA,-,-,-,132.6,-3.9,365,Grogan and Jonasson 2006
+1999,"Anbisko, SE",68.34500,18.83833,CHA,-,-,-,76.1,-3.9,365,Grogan and Jonasson 2005
+1999,"Barrow, AK",71.22014,-156.68889,EC,-76.1,-,-,-,-14.1,116,Kwon et al 2006
+1999,"Barrow, AK",71.22014,-156.68889,EC,33.6,-,-,-,-14.1,116,Kwon et al 2006
+1999,"Barrow, AK",71.22014,-156.68889,EC,-77.7,-108.9,31.2,-,-14.1,116,Harazono et al 2003
+1999,"Lek Vorkuta, RU",67.38333,63.36667,CHA + DM,-2.0,-189.0,187.0,3.7,-6.5,522,Heikkinen et al 2002
+1999,"Paktajaure, SE",68.43111,18.55389,CHA,-,-,-,151.0,-3.4,724,Grogan and Jonasson 2006
+1999,"Vassijuare, SE",68.43417,18.26778,CHA,-,-,-,168.2,-3.4,724,Grogan and Jonasson 2006
+1999,"Vuoskojaiveh, SE",68.32472,19.16917,CHA,-,-,-,147.2,-4.5,423,Grogan and Jonasson 2006
+2000,"Barrow, AK",71.22014,-156.68889,EC,-50.4,-,-,-,-14.1,116,Kwon et al 2006
+2000,"Barrow, AK",71.22014,-156.68889,EC,66.1,-,-,-,-15.7,153,Kwon et al 2006
+2000,"Barrow, AK",71.22014,-156.68889,EC,-44.6,-92.9,48.3,-,-15.7,153,Ueyama et al (in review); Kwon et al 2006 
+2000,"Barrow, AK",71.22014,-156.68889,EC,-41.7,-70.5,28.8,-,-15.7,153,Harazono et al 2003
+2000,"Zachenberg, GL",74.47400,-20.56700,EC,-23.6,-,-,-,-11,234,Groendahl et al 2007
+2001,"Barrow, AK",71.22014,-156.68889,CHA,-42.3,-185.2,140.2,-,-15.5,152,Huemmrich et al 2010
+2001,"Barrow, AK",71.22014,-156.68889,EC,-56.2,-,-,-,-15.5,152,Kwon et al 2006
+2001,"Barrow, AK",71.22014,-156.68889,EC,-2.2,-,-,-,-15.5,152,Kwon et al 2006
+2001,"Lek Vorkuta, RU",67.38333,63.36667,CHA,-109.0,-194.0,85.0,-,-5.3,539,Heikkinen et al 2004
+2001,"Lek Vorkuta, RU",67.38333,63.36667,CHA,-124.0,-217.0,93.0,-,-5.3,539,Heikkinen et al 2004
+2001,"Lek Vorkuta, RU",67.38333,63.36667,CHA,123.0,-194.0,317.0,-,-5.3,539,Heikkinen et al 2004
+2001,"Lek Vorkuta, RU",67.38333,63.36667,CHA,72.0,-78.0,149.0,-,-5.3,539,Heikkinen et al 2004
+2001,"Lek Vorkuta, RU",67.38333,63.36667,CHA,91.0,-217.0,308.0,-,-5.3,539,Heikkinen et al 2004
+2001,"Zachenberg, GL",74.47400,-20.56700,EC,-10.4,-,-,-,-11,234,Groendahl et al 2007
+2002,"Barrow, AK",71.22014,-156.68889,EC,-66.1,-,-,-,-13.3,176,Kwon et al 2006
+2002,"Barrow, AK",71.22014,-156.68889,EC,2.9,-,-,-,-13.3,176,Kwon et al 2006
+2002,"Barrow, AK",71.22014,-156.68889,EC,-70.4,-130.4,60.3,-,-13.2,104,Ueyama et al (in review); Harazono et al 2003
+2002,"Zachenberg, GL",74.47400,-20.56700,EC,-12.4,-,-,-,-11,234,Groendahl et al 2007
+2002.5,"Atqasuk, AK",70.46961,-157.40894,EC,19.4,-44.0,63.4,-,-12.4,135,Ueyama et al (in review); Kwon et al 2006
+2003,"Barrow, AK",71.22014,-156.68889,EC,-53.0,-,-,-,-12.5,73,Kwon et al 2006
+2003,"Barrow, AK",71.20722,-156.56389,EC,-1.2,-,-,-,-11.4,124,Kwon et al 2006
+2003,"Zachenberg, GL",74.47400,-20.56700,EC,-28.8,-,-,-,-11,234,Groendahl et al 2007
+2003.5,"Samoylov Island, RU",72.36667,126.50000,EC,-103.4,-,-,-,-13.3,217,Kutzbach et al 2007
+2004,"Adventdalen, NO",78.16667,16.10000,SL,-,-,-,30.5,-7.1,222,Sjogersten et al 2008
+2004,"Adventdalen, NO",78.16667,16.10000,SL,-,-,-,55.9,-7.1,222,Sjogersten et al 2008
+2004,"Daring Lake, CA",64.86885,-111.57497,EC,-29.6,-,-,-,-11.3,276,Humphreys and Lafleur 2011
+2004,"Daring Lake, CA",64.86885,-111.57497,EC,-29.4,-121.1,91.7,-,-11.3,276,Lafleur and Humphreys 2007
+2004,"Daring Lake, CA",64.86885,-111.57497,CHA,0.3,-49.6,49.9,-,-11.3,276,Nobrega and Grogen 2008
+2004,"Daring Lake, CA",64.86885,-111.57497,CHA,-11.5,-97.6,86.2,-,-11.3,276,Nobrega and Grogen 2008
+2004,"Daring Lake, CA",64.86885,-111.57497,CHA,-27.3,-46.5,19.2,-,-11.3,276,Nobrega and Grogen 2008
+2004,"Daring Lake, CA",64.86885,-111.57497,SL + CHA,-42.0,-,-,23.3,-11.3,276,Nobrega and Grogan 2007
+2004,"Healy, AK",63.88306,-149.22556,CHA,-51.3,-322.7,276.8,87.4,-4,316,Vogel et al 2009; Trucco et al (in review)
+2004,"Ivotuk, AK",68.49000,-155.75000,EC,-16.1,-90.0,73.9,-,-12.2,207,Ueyama et al (in review); Epstein et al 2004
+2004.5,"Kytalyk Reserve, RU",70.82674,147.49895,EC,-153.0,-,-,-,-12.8,143,van der Molen et al 2007
+2005,"Barrow, AK",71.20722,-156.56389,CHA,-5.4,-88.0,82.1,-,-11.4,124,Olivas et al 2011
+2005,"Daring Lake, CA",64.86885,-111.57497,EC,-46.3,-,-,-,-7.7,274,Humphreys and Lafleur 2011
+2005,"Daring Lake, CA",64.86885,-111.57497,EC,-46.8,-151.4,104.6,-,-7.7,274,Lafleur and Humphreys 2007
+2005,"Healy, AK",63.88306,-149.22556,CHA,-14.7,-281.5,271.1,53.9,-1.1,290,Vogel et al 2009; Trucco et al (in review)
+2005,"Pituffik Peninsula, GL",76.53333,-68.70000,CHA,36.3,-82.9,119.2,-,-8.4,271,Arens et al 2008
+2006,"Barrow, AK",71.20722,-156.56389,CHA,-21.9,-65.6,43.4,-,-11.4,124,Olivas et al 2011
+2006,"Daring Lake, CA",64.86885,-111.57497,EC,-57.4,-,-,-,-9.7,270,Humphreys and Lafleur 2011
+2006,"Daring Lake, CA",64.86885,-111.57497,EC,-56.0,-191.7,135.8,-,-9.7,270,Lafleur and Humphreys 2007
+2006,"Healy, AK",63.88306,-149.22556,CHA,-80.6,-328.3,252.3,67.1,-3.5,382,Vogel et al 2009; Trucco et al (in review)
+2006,"Ivotuk, AK",68.49000,-155.75000,EC,-16.1,-90.0,73.9,-,-11.4,300,Ueyama et al (in review); Epstein et al 2004
+2006,"Pituffik Peninsula, GL",76.53333,-68.70000,SL + CHA,-93.3,-,-,11.9,-9.1,324,Rogers et al 2011
+2006,"Pituffik Peninsula, GL",76.53333,-68.70000,CHA,30.8,-31.1,61.9,-,-9.1,324,Arens et al 2008
+2006,"Toolik, AK",69.15000,-149.55000,CO2 + DM,-,-,-,29.7,-16,159,Sullivan et al 2010
+2007,Barrow Peninsula,71.22014,-156.68889,EC,-72.4,-170.4,93.3,-,-14.9,208,Ueyama et al (in review); Zona et al 2010
+2007,Barrow Peninsula,71.22014,-156.68889,EC,-53.6,-128.9,70.9,-,-13.8,199,Ueyama et al (in review); Zona et al 2010
+2007,Barrow Peninsula,71.22014,-156.68889,EC,-50.4,-110.1,55.6,-,-13.8,109,Ueyama et al (in review); Zona et al 2010
+2007,"Daring Lake, CA",64.86885,-111.57497,EC,-61.1,-,-,-,-7.8,346,Humphreys and Lafleur 2011
+2007,"Healy, AK",63.88306,-149.22556,CHA,-72.9,-360.2,287.3,55.2,-2,290,Trucco et al (in review)
+2007,"Imnavait Creek, AK",68.63333,-149.41667,EC,-,-,-,114.5,-9.9,232,Euskirchen et al 2012
+2007,"Imnavait Creek, AK",68.63333,-149.41667,EC,-,-,-,99.3,-9.9,232,Euskirchen et al 2012
+2007,"Zachenberg, GL",74.47400,-20.56700,CHA,-14.6,-140.0,122.0,-,-11,234,Tagesson et al 2010
+2007,"Zachenberg, GL",74.47400,-20.56700,CHA,-25.0,-123.0,91.0,-,-11,234,Tagesson et al 2010
+2007,"Zachenberg, GL",74.47400,-20.56700,CHA,-19.9,-142.0,122.0,-,-11,234,Tagesson et al 2010
+2008,"Anajtyvuk River, AK",68.93444,-150.27278,EC,-49.4,-,133.7,-,-11.8,170,Rocha and Shaver 2011
+2008,"Daring Lake, CA",64.86885,-111.57497,EC,-68.5,-,-,-,-8.4,424,Humphreys and Lafleur 2011
+2008,"Healy, AK",63.88306,-149.22556,CHA,-87.1,-373.9,286.9,64.4,-4.2,301,Trucco et al (in review)
+2008,"Healy, AK",63.88306,-149.22556,EC,-104.2,-332.6,228.6,171.4,-4.2,301,Belshe et al 2012
+2008,"Imnavait Creek, AK",68.63333,-149.41667,EC,-55.4,-218.5,163.0,68.1,-11.4,199,Euskirchen et al 2012
+2008,"Imnavait Creek, AK",68.63333,-149.41667,EC,-67.4,-117.4,50.0,NA,-11.4,199,Euskirchen et al 2012
+2008,"Imnavait Creek, AK",68.63333,-149.41667,EC,-64.1,-219.6,155.4,57.7,-11.4,199,Euskirchen et al 2012
+2008.5,"Imnavait Creek, AK",68.63333,-149.41667,EC,-23.4,-103.9,80.6,-,-11.4,199,Ueyama et al (in review); Euskirchen et al 2012
+2008.5,"Imnavait Creek, AK",68.63333,-149.41667,EC,-39.9,-90.8,51.0,-,-11.4,199,Ueyama et al (in review); Euskirchen et al 2012
+2008.5,"Imnavait Creek, AK",68.63333,-149.41667,EC,-23.0,-149.6,126.6,-,-11.4,199,Ueyama et al (in review); Euskirchen et al 2012
+2009,"Daring Lake, CA",64.86885,-111.57497,EC,-64.8,-,-,-,-11,260,Humphreys and Lafleur 2011
+2009,"Healy, AK",63.88306,-149.22556,CHA,-162.9,-453.2,290.3,53.5,0.3,400,Trucco et al (in review)
+2009,"Healy, AK",63.88306,-149.22556,EC,-105.5,-402.2,296.3,182.1,0.3,400,Belshe et al 2012
+2009,"Healy, AK",63.88306,-149.22556,CHA,-3.8,-111.8,107.3,-,0.3,400,Natali et al 2010
+2009,"Imnavait Creek, AK",68.63333,-149.41667,EC,-58.7,-142.4,83.7,99.3,-12,225,Euskirchen et al 2012
+2009,"Imnavait Creek, AK",68.63333,-149.41667,EC,-91.3,-142.4,51.1,-,-12,225,Euskirchen et al 2012
+2009,"Imnavait Creek, AK",68.63333,-149.41667,EC,-68.5,-206.5,138.0,137.2,-12,225,Euskirchen et al 2012
+2010,"Daring Lake, CA",64.86885,-111.57497,EC,-75.9,-,-,-,-11,260,Humphreys and Lafleur 2011
+2010,"Healy, AK",63.88306,-149.22556,CHA,-102.2,-372.1,269.9,-,-4,400,Trucco et al (in review)
+2010,"Healy, AK",63.88306,-149.22556,EC,-82.1,-321.4,241.1,180.7,-4,400,Belshe et al. (unpublished data)
+2010,"Healy, AK",63.88306,-149.22556,SL,-,-,-,161.1,-4,400,Natali et al (personal communication
+2010,"Imnavait Creek, AK",68.63333,-149.41667,EC,-63.0,-232.6,169.6,112.6,-12,225,Euskirchen et al 2012
+2010,"Imnavait Creek, AK",68.63333,-149.41667,EC,-85.9,-207.6,121.7,-,-12,225,Euskirchen et al 2012
+2010,"Imnavait Creek, AK",68.63333,-149.41667,EC,-103.3,-170.7,67.4,131.5,-12,225,Euskirchen et al 2012

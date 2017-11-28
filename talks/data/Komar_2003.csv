@@ -1,0 +1,29 @@
+## Komar 2003
+## Table 2. Mean West Nile virus viremia levels,shown as log10 PFU/mL serum, with ranges, for each of 7 days postinoculation by mosquito bite,and mean duration of detectable viremia,days, with ranges,a,b
+Species,n,day1_est,day1_lwr,day1_upr,day2_est,day2_lwr,day2_upr,day3_est,day3_lwr,day3_upr,day4_est,day4_lwr,day4_upr,day5_est,day5_lwr,day5_upr,day6_est,day6_lwr,day6_upr,day7_est,day7_lwr,day7_upr,duration_est,duration_lwr,duration_upr
+"Canada Goose",3,2.8,<1.7,3.0,5.3,3.2,5.8,4.5,3.5,4.8,3.4,<1.7,3.8,1.9,<1.7,2.0,<1.7,NA,NA,<1.7,NA,NA,4,3,5
+"Mallard",2,6.1,<1.7,6.4, 5.7,5.5,5.9,6.7,3.4,7.0,5.1,1.7,5.4,4.7,<1.7,5.0,<1.7,NA,NA,<1.7,NA,NA,4,4,4
+"American Kestrel",2,6.2,5.5,6.4,8.4,5.8,8.7, 6.6,6.1,6.8,3.8,3.6,4.0,2,<1.7,2.3,<1.7,NA,NA,<1.7,NA,NA,4.5,4,5
+"Northern Bobwhite",3,2.8,1.7,3.1,2.9,2.3,3.3,2.0,1.7,2.2,1.9,<1.7,2.4,1.2,<1.7,1.7,<1.7,NA,NA,<1.7,NA,NA,4,3,5
+"Japanese Quail",3,<1.7,NA,NA,<1.7,NA,NA,2.8,<1.7,3.3,3.4,<1.7,3.9,3.1,<1.7,3.6,2.2,<1.7,2.7,<1.7,NA,NA,1.3,0,4
+"Ring necked Pheasant",3,2.1,<1.7,2.3,2.8,<1.7,3.2,2.6,1.7,3.0,1.8,1.7,2.0,1.2,<1.7,1.7,<1.7,NA,NA,<1.7,NA,NA,3.7,3,4
+"American Coot",1,<1.7,NA,NA,3.4,NA,NA,4.5,NA,NA,4.6,NA,NA,2.8,NA,NA,<1.7,NA,NA,<1.7,NA,NA,4.0,NA,NA
+"Killdeer",2,6.2,5.9,6.4,7.5,6.5,7.8,8.1,4.3,8.4,4.9,2.1,5.2,2.6,<1.7,2.9,<1.7,NA,NA,<1.7,NA,NA,4.5,4,5
+"Ring billed Gull",2,5.4,5.4,5.4,7.8,6.5,8.1,8.0,5.4,8.3,7.4,2.9,7.7,7.2,NA,NA,5.3,NA,NA,4.1,NA,NA,5.5,4,7
+"Mourning Dove",3,4.8,3.0,5.3,5.9,3.9,6.3,5.6,3.4,5.9,3.3,<1.7,3.6,<1.7,NA,NA,<1.7,NA,NA,<1.7,NA,NA,3.7,3,4
+"Rock Dove",6,3.5,<1.7,4.0,4.3,3.5,4.8,4.2,3.5,4.5,2.9,<1.7,3.7,NA,NA,NA,NA,NA,NA,NA,NA,NA,3.2,3,4
+"Monk Parakeet",3,2.8,<1.7,3.0,3.6,<1.7,4.0,3.5,<1.7,3.9,1.7,<1.7,2.0,<1.7,NA,NA,<1.7,NA,NA,<1.7,NA,NA,2.7,0,4
+"Budgerigar",3,2.3,<1.7,2.8,1.9,<1.7,2.4,2.8,<1.7,3.3,2.9,<1.7,3.4,2.1,<1.7,2.6,<1.7,NA,NA,<1.7,NA,NA,1.7,0,4
+"Great Horned Owl",1,3.9,NA,NA,6.2,NA,NA,7.6,NA,NA,6.0,NA,NA,5.6,NA,NA,3.5,NA,NA,<1.7,NA,NA,6,NA,NA
+"Northern Flicker",1,3.9,NA,NA,4.9,NA,NA,5.4,NA,NA,3.9,NA,NA,<1.7,NA,NA,<1.7,NA,NA,<1.7,NA,NA,4,NA,NA
+"Blue Jay",4,8.5,5.6,8.8,11.1,7.8,11.6,12.1,7.5,12.6,10.5,5.0,11.0,2.2,NA,NA,<1.7,NA,NA,<1.7,NA,NA,4,3,5
+"Black billed Magpie",3,5.3,3.7,5.7,8.3,7.7,8.6,8.8,8.4,9.1,4.9,4.8,5.0,4.0,3.9,4.0,NA,NA,NA,NA,NA,NA,5,5,5
+"American Crow",8,5.8,<1.7,6.6,8.7,<1.7,9.6,9.9,6.7,10.6,10.2,9.2,10.8,10.0,8.2,10.4,NA,NA,NA,NA,NA,NA,3.8,3,5
+"Fish Crow",9,5.4,3.0,6.2,6.8,5.6,7.4,7.8,5.5,8.7,8.9,<1.7,9.9,8.5,<1.7,9.5,4.0,0,4.9,1.3,<1.7,2.0,5.0,4,7
+"American Robin",2,5.8,5.6,5.9, 8.9,7.8,9.2,7.3,6.8,7.5,4.6,3.7,4.9,2.0,<1.7,2.3,<1.7,NA,NA,<1.7,NA,NA,4.5,4,5
+"European Starling",6,5.3,3.5,6.0, 6.1,3.3,6.8,4.9,2.0,5.4,2.3,<1.7,3.1,<1.7,NA,NA,<1.7,NA,NA,<1.7,NA,NA,3.2,3,4
+"Red winged Blackbird",3,5.9,5.5,6.1,8.6,7.5,9.0,6.0,5.5,6.3,<1.7,NA,NA,<1.7,NA,NA,<1.7,NA,NA,<1.7,NA,NA,3,3,3
+"Common Grackle",6,6.1,5.3,6.5,10.2,5.4,11.0,11.8,4.7,12.5,11.8,<1.7,12.5,<1.7,NA,NA,<1.7,NA,NA,<1.7,NA,NA,3.3,3,4
+"House Finch",2,5.4,2.3,5.7,5.8,5.6,6.0,8.8,8.6,8.9,6.6,6.0,6.8,6.0,5.9,6.1,6.2,NA,NA,6.3,NA,NA,6.0,5,7
+"House Sparrow",6,7.8,3.9,8.6,9.8,7.6,10.5,10.3,4.8,11.0,10.3,2.4,11.0,8.4,<1.7,9.0,1.8,<1.7,2.1,1.7,NA,NA,4.5,2,6
+

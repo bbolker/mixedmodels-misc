@@ -1,0 +1,18 @@
+## Tiawsirisup et al 2005 VBZD
+source,titer,n,inf,diss,transmission
+Tiawsirisup_2005_VBZD,2.5,25, 0, 0, 0
+Tiawsirisup_2005_VBZD,4.5, 25 , 4, 0, 0
+Tiawsirisup_2005_VBZD,5.0, 25,  4, 0, 0
+Tiawsirisup_2005_VBZD,5.5, 25, 16, 8, 4
+Tiawsirisup_2005_VBZD,6.5, 13, 77, 31, 8
+Tiawsirisup_2005_VBZD,7.0, 21, 95, 67, 43
+Tiawsirisup_2005_VBZD,7.5, 25, 96, 76, 32
+Tiawsirisup_2005_VBZD,8.0, 24, 100, 71, 54
+Tiawsirisup_2005_VBZD,8.5, 26, 96, 81, 58
+Tiawsirisup_2005_VBZD,9.5, 19, 100, 79, 47
+Turell_altjmh,5.2,NA,NA,NA,2
+Turell_altjmh,7.2,NA,NA,NA,14
+Dohm,6.95,NA,NA,NA,38
+Turell_JME,5.2,NA,NA,NA,2
+Turell_JME,7.2,NA,NA,NA,20
+

@@ -1,0 +1,24 @@
+## from Paul et al 2004
+day,pct.inf,treat
+2,22.4,8+8
+4,45.7,Thai
+4,56.0,Thai
+5,87.3,Thai
+5,69.9,8+8
+5,67.1,SL
+5,59.6,4+4
+8,83.9,8+8
+live,38.1,4+4
+live,41.0,8+8
+live,47.6,Thai
+live,49.1,SL
+live,49.7,4+4
+live,52.0,4+4
+live,52.9,SL
+live,54.0,SL
+live,56.3,8+8
+live,57.5,Thai
+live,59.3,8+8
+live,64.2,4+4
+live,67.3,Thai
+live,68.2,4+4

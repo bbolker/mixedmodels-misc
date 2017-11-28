@@ -1,0 +1,961 @@
+\documentclass[english]{beamer}
+\definecolor{links}{HTML}{2A1B81}
+\hypersetup{colorlinks,linkcolor=gray,urlcolor=links}
+\usepackage[sort&compress]{natbib}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{pdfpages}
+\usepackage{amsmath}
+\usepackage{bm}
+%\usepackage{multicolumn}
+\usepackage{color}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage{graphicx}
+\let\oldemph=\emph
+\renewcommand{\emph}[1]{{\color{red} {\textbf{#1}}}}
+\newcommand{\pkglink}[1]{\href{http://cran.r-project.org/web/packages/#1}{\nolinkurl{#1}}}
+\newcommand{\rflink}[1]{\href{https://r-forge.r-project.org/projects/#1/}{\nolinkurl{#1}}}
+\newcommand{\fnlink}[2]{\href{http://stat.ethz.ch/R-manual/R-patched/library/#1/html/#2.html}{\nolinkurl{#1:#2}}}
+\newcommand{\code}[1]{{\tt #1}}
+\newcommand{\ssqobs}{\sigma^2_{\mbox{\small obs}}}
+\newcommand{\ssqproc}{\sigma^2_{\mbox{\small proc}}}
+\newcommand{\obs}[1]{#1_{\text{\small obs}}}
+\newcommand{\obst}[1]{#1_{\text{\small obs}}(t)}
+\newcommand{\obstm}[1]{#1_{\text{\small obs}}(t-1)}
+
+%https://tex.stackexchange.com/questions/12703/how-to-create-fixed-width-table-columns-with-text-raggedright-centered-raggedlef
+\usepackage{array}
+\newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+
+%\newcommand{\newblock}{}
+
+\usetheme{Frankfurt}
+\usecolortheme{dove}
+\setbeamercovered{transparent}
+\setbeamercolor{description item}{fg=blue}
+\useoutertheme[subsection=false]{miniframes}
+
+\usepackage{babel}
+
+%% http://tex.stackexchange.com/questions/142672/uncovering-lines-in-an-equation-in-split-environment
+\newcommand{\disponslide}[2]{%
+  \alt<#1>{#2}{\phantom{#2}}}
+
+\begin{document}
+
+\makeatletter
+\def\newblock{\beamer@newblock}
+\beamer@compressfalse
+\makeatother 
+
+
+% http://tex.stackexchange.com/questions/38015/beamer-best-way-to-span-long-enumerations-on-different-frames
+\makeatletter
+\newenvironment{cenumerate}{%
+  \enumerate
+  \setcounter{\@enumctr}{\csname saved@\@enumctr\endcsname}%
+}{%
+  \expandafter\xdef\csname saved@\@enumctr\endcsname{\the\value{\@enumctr}}%
+  \endenumerate
+}
+\newenvironment{cenumerate*}{%
+  \enumerate
+}{%
+  \expandafter\xdef\csname saved@\@enumctr\endcsname{\the\value{\@enumctr}}%
+  \endenumerate
+}
+\makeatother
+
+<<opts,echo=FALSE>>=
+require("knitr")
+knit_hooks$set(crop=hook_pdfcrop)
+opts_chunk$set(fig.width=5,fig.height=4,
+               out.width="0.6\\textwidth",
+               fig.align="center",
+               tidy=FALSE,echo=FALSE,warning=FALSE,message=FALSE)
+@
+
+<<libs>>=
+library(lattice)
+library(plotrix) ## for axis.break
+library(reshape2)
+library(ggplot2)
+library(RColorBrewer)
+library(mvbutils) ## for foodweb()
+library(lme4)
+library(coefplot2)
+library(grid)
+zmargin <- theme(panel.spacing=unit(0,"lines"))
+library(scales) ## for 'scientific', 'trans_format'
+theme_set(theme_bw())
+@ 
+
+\newcommand{\lmefour}{\code{lme4}}
+\newcommand{\nlme}{\code{nlme}}
+\title[GLMMs]{Generalized linear mixed models}
+\author{Ben Bolker}
+\institute[]{McMaster University, Mathematics \& Statistics and Biology }
+
+\date{27 November 2017}
+% \pgfdeclareimage[height=0.5cm]{uflogo}{letterhdwm}
+% \logo{\pgfuseimage{uflogo}}
+ \AtBeginSection[]{
+   \frame<beamer>{ 
+      \frametitle{Outline}   
+      \tableofcontents[currentsection] 
+    }
+ }
+
+\begin{frame}
+\titlepage
+\end{frame}
+% \beamerdefaultoverlayspecification{<+->}
+
+\begin{frame}
+  \frametitle{Acknowledgments}
+  \begin{columns}
+    \begin{column}{6cm}
+      \begin{itemize}
+      \item \code{lme4}: Doug Bates, Martin M\"achler, Steve Walker
+      \item Data: Josh Banta, Adrian Stier, Sea McKeon, David Julian, Jada-Simone White
+      \end{itemize}
+    \end{column}
+    \begin{column}{6cm}
+      \begin{itemize}
+      \item NSERC (Discovery)
+      \item SHARCnet
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}
+\frametitle{Outline}
+\tableofcontents{}
+\end{frame}
+
+\newcommand{\X}{\bm X}
+\newcommand{\Z}{\bm Z}
+\newcommand{\bbeta}{\bm \beta}
+\newcommand{\bb}{\bm b}
+\newcommand{\bu}{\bm u}
+\newcommand{\bLambda}{\bm Lambda}
+\newcommand{\bEta}{\bm \eta}
+\newcommand{\btheta}{\bm \theta}
+\newcommand{\bzero}{\bm 0}
+
+\section[Definitions]{Examples and definitions}
+\subsection{ }
+\begin{frame}
+  \frametitle{(Generalized) linear mixed models}
+
+  (G)LMMs: a statistical modeling framework incorporating:
+  \begin{itemize}
+  \item combinations of categorical and continuous predictors, \\
+    and interactions
+\pause
+% Try out: http://tex.stackexchange.com/questions/12391/large-braces-over-several-items-in-an-itemize-with-text-by-the-brace
+  \item (some) non-Normal responses \\
+    (e.g. binomial, Poisson, and extensions)
+    \pause
+  \item (some) nonlinearity \\
+(e.g. logistic, exponential, hyperbolic)
+  \item non-independent (grouped) data
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+\includegraphics[width=\textwidth]{pix/models-glmm.pdf}
+\end{frame}
+
+\begin{frame}
+\frametitle{Coral protection from seastars ({\it Culcita}) \\ by symbionts
+\citep{mckeon_multiple_2012}}
+<<stierfit1,cache=TRUE,results="hide">>=
+stierdat <- read.csv("data/culcitalogreg.csv")
+stierdat$ttt <- as.factor(stierdat$ttt) ## treatment should be a factor
+cmat <- matrix(c(0,1,1,1,0,1,-1,0,0,1,1,-2),ncol=3)
+colnames(cmat) <- c("symb","crab.vs.shr","addsymb")
+contrasts(stierdat$ttt) <- cmat
+stierdat$block <- as.factor(stierdat$block) ## not really necessary but logical
+stierdat <- stierdat[,1:4]   ## don't really need the rest
+mod0 <- glm(predation~ttt+block,binomial,data=stierdat)
+mod1 <- glm(predation~ttt,binomial,data=stierdat)
+library(lme4)
+mod2 <- glmer(predation~ttt+(1|block),family=binomial,data=stierdat)
+## AGQ 
+mod2B <- glmer(predation~ttt+(1|block),family=binomial,
+               nAGQ=20,data=stierdat)
+library(MASS)
+library(nlme)
+mod5=glmmPQL(predation~ttt,random=~1|block,family=binomial,data=stierdat)
+@ 
+
+<<calc1,echo=FALSE>>=
+levels(stierdat$ttt) <- c("none","shrimp","crabs","both")
+m <- melt(stierdat[,1:3],id.vars=1:2)
+m2 <- dcast(m,ttt~variable,fun.aggregate=mean)
+m3 <- dcast(m,ttt+block~variable,fun.aggregate=sum)
+p <- with(m3,table(predation,ttt))
+@ 
+
+<<bplot1,fig.width=8,fig.height=6,out.width="0.8\\textwidth">>=
+op <- par(las=1,cex=1.5,bty="l")
+bb <- barplot(p,ylab="Number of blocks",xlab="Symbionts",
+              main="Number of predation events")
+bloc <- apply(p,2,cumsum)
+midb <- rbind(bloc[1,]/2,
+              (bloc[1,]+bloc[2,])/2,
+              (bloc[2,]+bloc[3,])/2)
+text(bb[col(p)][p>0],midb[p>0],c(0,1,2)[row(p)][p>0])
+par(op)
+@ 
+\end{frame}
+
+%\begin{frame}
+%\frametitle{Environmental stress: {\it Glycera} cell survival \\
+%(D. Julian unpubl.)}
+
+<<glycera1,cache=TRUE,eval=FALSE>>=
+x <- read.csv("data/Live-Dead Tabulated Counts.csv")
+## utility function for factoring/renaming variables before
+##  lattice plot
+rnfac <- function(dat,vars) {
+  if (!all(vars %in% names(dat))) stop("unknown variable")
+  for (v in vars) {
+    dat[[v]] <- factor(dat[[v]])
+    levels(dat[[v]]) <- paste(v,"=",round(as.numeric(levels(dat[[v]])),2),sep="")
+  }
+  dat
+}
+sc <- function(x) { (x-min(x))/diff(range(x))}
+xsc <- x
+predvars <- c("Osm","Cu","H2S","Anoxia")
+for (i in predvars) {
+  xsc[[i]] <- sc(xsc[[i]])
+}
+xsc$Osm <- xsc$Osm-0.5
+## xsc$O2 <- 1-xsc$O2
+## names(xsc)[names(xsc)=="O2"] <- "anox"
+xr0 <- within(x,FractionAlive <- Alive/(Alive+Dead))
+xr <- melt(subset(xr0,select=-c(Alive,Dead)),id.vars=1:5)
+
+x4 <- dcast(xr,H2S+Anoxia+Cu+Osm~.,fun.aggregate=mean)
+names(x4)[5] <- "all"
+x5 <- rnfac(x4,c("Anoxia","Osm"))
+
+## FIXME: replace with ColorBrewer colours?
+cmgen.colors  <- function (n,h1=6/12,h2=10/12,maxs=0.5)  {
+    if ((n <- as.integer(n[1])) > 0) {
+        even.n <- n%%2 == 0
+        k <- n%/%2
+        l1 <- k + 1 - even.n
+        l2 <- n - k + even.n
+        c(if (l1 > 0) hsv(h = h1,
+                          s = seq(maxs, ifelse(even.n, 0.5/k, 0), length.out = l1),
+                          v = 1),
+          if (l2 > 1) hsv(h = h2,
+                          s = seq(0, maxs, length.out = l2)[-1],
+                          v = 1))
+    }
+    else character(0)
+}
+
+
+rb.colors <- function(n) {
+  cmgen.colors(n,h1=0,h2=0.7,maxs=1)
+}
+@ 
+
+
+<<culcfigs,echo=FALSE,eval=FALSE>>=
+load("data/culcita.RData")
+library(lme4)
+cmod1 <- glmer(predation~ttt+(1|block),data=culcita_dat,
+               family=binomial,nAGQ=10)
+cmod3 <- glm(predation~ttt,data=culcita_dat,family=binomial)
+## jump through hoops to get GLM to estimate without complete-separation blocks 7,8,9 messing everything up!
+cmod4 <- glm(predation~ttt+block,data=transform(culcita_dat,block=relevel(block,2)),
+             family=binomial,
+             start=c(2,-4,-4,-6,-2,0,0,4,5,30,30,30,5))
+             ## contrasts=list(block=contr.sum),
+             ## start=rep(0,)
+             ## start=c(10,-4,-5,-6,-20,-8,-8,-8,-5,-3,20,20,20))
+r <- ranef(cmod1,condVar=TRUE)
+## set up plots
+library(coefplot2)
+f1 <- coeftab(cmod1)
+f3 <- coeftab(cmod3)
+f4 <- coeftab(cmod4)[1:4,]
+r1 <- coeftab(cmod1,ptype="ranef")
+r2 <- f3[1,]  ## intercept
+r4 <- coeftab(cmod4)[-(1:4),]
+v <- data.frame(predict(cmod4,
+             newdata=data.frame(block=factor(1:10),ttt="none"),
+             se.fit=TRUE))
+v$fit <- v$fit-mean(v$fit)
+v <- setNames(v[,1:2],c("Estimate","Std..Error"))
+w <- data.frame(Estimate=rep(0,10),
+                Std..Error=NA,row.names=1:10)
+## less clunky way to do this?
+dd <- function(X,method,type,
+               strip="^ttt") {
+  data.frame(method,type,
+             p=gsub(strip,"",rownames(X)),X[,1:2],
+             stringsAsFactors=FALSE)
+}
+allEsts <- rbind(dd(f1,"mixed","ttt"),
+      dd(f3,"pooled","ttt"),
+      dd(f4,"fixed","ttt"),
+      dd(r1,"mixed","blocks",
+         strip="block\\.\\(Intercept\\)"),
+      dd(v,"fixed","blocks"),
+      dd(w,"pooled","blocks"))
+allEsts <- transform(allEsts,
+   p=factor(p,levels=gtools::mixedsort(unique(p))))
+@
+
+<<culcshrink,fig.keep="none",eval=FALSE>>=
+blockEsts <- subset(allEsts,type=="blocks")
+blockEsts <- transform(blockEsts,
+      method=factor(method,levels=c("pooled","mixed","fixed"),
+                    labels=c("pooled","random","fixed")))
+g2 <- ggplot(blockEsts,
+             aes(x=p,y=Estimate,shape=method))+
+  geom_pointrange(aes(ymin=Estimate-2*Std..Error,
+                      ymax=Estimate+2*Std..Error,
+                  fill=method),
+                  position=position_dodge(width=0.6),
+                  size=1)+
+  scale_shape_manual(values=21:23)+
+  scale_fill_manual(values=c("white","gray","black"))+
+  coord_cartesian(ylim=c(-15,10))+zmargin+
+  geom_hline(yintercept=0,alpha=0.3)+
+  labs(x="block",y="Difference from population mean")
+g2
+@
+
+<<glycplot1,out.width="\\textwidth",fig.width=8,fig.height=5,eval=FALSE>>=
+orig <- trellis.par.get()
+pad <- 0 ## 15 for regular layout
+trellis.par.set(layout.widths=list(right.padding=pad,left.padding=pad),
+                regions=list(col=rb.colors(100)),
+##                regions=list(col=brewer.pal(11,"RdBu")),
+## leave text alone for regular layout
+                add.text=list(cex=0.8),axis.text=list(cex=0.5))
+levels(x5$Anoxia) <- c("Normoxia","Anoxia")
+## print(levelplot(`(all)`~factor(H2S)*factor(Cu)|Anoxia*Osm,
+##          col.region=rb.colors(100),
+##          data=x5,
+##          xlab=expression(H[2]*S),
+##          ylab="Copper"))
+levelplot(all~factor(H2S)*factor(Cu)|Osm*Anoxia,
+                col.region=rb.colors(100), ## brewer.pal(11,"RdBu"), ## rb.colors(100),
+                data=x5,
+                xlab=expression(H[2]*S),
+                ylab="Copper")
+trellis.par.set(theme=orig) ## restore settings
+## FIXME: redo in ggplot2?  LOW PRIORITY
+@ 
+%\end{frame}
+
+\begin{frame}
+\frametitle{{\it Arabidopsis} response to fertilization \& herbivory \\
+\citep{banta_comprehensive_2010}}
+<<arabplot1,fig.width=7,fig.height=6,out.width="0.7\\textwidth">>=
+panel.stripplot2 <-
+function (x, y, jitter.data = FALSE, factor = 0.5, amount = NULL, 
+    horizontal = TRUE, groups = NULL, ...) 
+{
+    if (!any(is.finite(x) & is.finite(y))) 
+        return()
+    panel.sizeplot(x = x, y = y, jitter.x = jitter.data && !horizontal, 
+        jitter.y = jitter.data && horizontal, factor = factor, 
+        amount = amount, groups = groups, horizontal = horizontal, 
+        ...)
+}
+load("data/Banta.RData")
+trellis.par.set(list(fontsize=list(text=20)))
+stripplot(jltf ~ amd|nutrient, 
+                data=within(dat.tf,jltf <-jitter(log(total.fruits+1),
+                  amount=0.05)),
+                strip=strip.custom(strip.names=c(TRUE,TRUE)),
+                groups=gen, type=c('p','a'),
+                ylab="Log(1+fruit set)")
+##                main="panel: nutrient, color: genotype")
+## trellis.par.set(theme=orig) ## restore settings
+@ 
+\end{frame}
+
+%\begin{frame}
+%\frametitle{Coral demography \\
+%(J.-S. White unpubl.)}
+<<coral_demog,fig.width=8,out.width="\\textwidth",eval=FALSE>>=
+L <- load("data/m.acr.jagsout.RData")
+L2 <- load("data/m.acr.lme4out.RData")
+L3 <- load("data/demog.mort.18apr.RData")
+source("R/demog_mort_funs.R")
+plotfun(j.red2,m.acr.nofr,drop.cols=c(4,8))
+@
+%\end{frame}
+
+\begin{frame}
+\frametitle{Technical definition}
+
+\begin{equation*}
+\begin{split}
+\underbrace{Y_i}_{\text{response}} & \sim \overbrace{\text{Distr}}^{\substack{\text{conditional} \\ \text{distribution}}}(\underbrace{g^{-1}(\eta_i)}_{\substack{\text{inverse} \\ \text{link} \\ \text{function}}},\underbrace{\phi}_{\substack{\text{scale} \\ \text{parameter}}}) \\
+\disponslide{2-3}{\underbrace{\bEta}_{\substack{\text{linear} \\ \text{predictor}}}} & 
+\disponslide{2-3}{ = 
+\underbrace{\X \bbeta}_{\substack{\text{fixed} \\ \text{effects}}} + 
+\underbrace{\Z \bb}_{\substack{\text{random} \\ \text{effects}}}}
+\\
+\disponslide{3}{\underbrace{\bb}_{\substack{\text{conditional} \\ \text{modes}}}}  & 
+\disponslide{3}{{\sim \text{MVN}(\bzero,\underbrace{\Sigma(\btheta)}_{\substack{\text{variance-} \\ \text{covariance} \\ \text{matrix}}})}}
+\end{split}
+\end{equation*}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{What are random effects?}
+
+\newcommand{\samong}{\sigma^2_{\small{\textrm{among}}}}
+
+A method for \ldots
+\begin{itemize}
+\item accounting for among-individual, within-block correlation
+\pause
+\item compromising between \\
+\emph{complete pooling} (no among-block variance)  \\
+\ and \emph{fixed effects} (large among-block variance)
+\pause
+\item handling levels selected at random from a larger population
+\pause
+\item sharing information among levels ({\it shrinkage estimation})
+\pause
+\item estimating variability among levels
+\pause
+\item allowing predictions for unmeasured levels
+\end{itemize}
+\end{frame}
+
+%% \begin{frame}
+%% \frametitle{Random-effect myths}
+
+%% \begin{itemize}
+%% \item levels of random effects must always be sampled at random
+%% \item a complete sample cannot be treated as a random effect
+%% \item random effects are always a \emph{nuisance variable}
+%% \item nothing can be said about the predictions of a random effect
+%% \item you should always use a random effect no matter how few levels you have
+%% \end{itemize}
+
+%% \end{frame}
+
+\section[Estimation]{Estimation}
+\subsection{Overview}
+
+\begin{frame}
+\frametitle{Maximum likelihood estimation}
+  
+\begin{equation*}
+     \underbrace{{\cal L}(Y_i|\btheta,\bbeta)}_{\text{likelihood}} = 
+ \idotsint \underbrace{{\cal L}(Y_i|\bbeta,\bb)}_{\text{data}|\text{random effects}} 
+ \times \underbrace{{\cal L}(\bb|\Sigma(\btheta))}_{\text{random effects}} \, d\bb
+\end{equation*}
+
+<<plotex,fig.width=4,fig.height=3>>=
+set.seed(101)
+dd <- data.frame(f=gl(5,5))
+dd$y <- simulate(~1+(1|f),newdata=dd,
+                 family=gaussian,seed=101,
+                 newparams=list(theta=1,beta=0,sigma=1))[[1]]
+ggplot(dd,aes(x=f,y=y))+geom_point()+
+    stat_summary(fun.y=mean,geom="point",size=3,colour="blue",
+                 pch=3)+
+     geom_point(data=subset(dd,y<(-2)),colour="red",size=2)+
+         theme_update(panel.grid.major=element_blank(),
+                      panel.grid.minor=element_blank())
+@
+
+\end{frame}
+
+%\begin{frame}
+%\frametitle{Integrated (marginal) likelihood}
+<<clikcurve,out.width="0.8\\textwidth",echo=FALSE,eval=FALSE>>=
+cc <- culcita_dat[which.max(residuals(cmod1)),]
+uncond_pred <- predict(cmod1,newdata=cc,re.form=NA)   ##logit-prob of pred, unconditional
+msc <- function(x) x/max(x)
+xvec <- seq(-10,10,length=101)
+pvec <- msc(plogis(xvec+uncond_pred))
+cmode <- ranef(cmod1)[[1]][5,]
+rsd <- sqrt(unlist(VarCorr(cmod1)))
+cvec <- msc(dnorm(xvec,sd=rsd))
+cpvec <- msc(cvec*pvec)
+par(las=1,bty="l")
+matplot(xvec,cbind(cvec,pvec,cpvec),type="l",lty=c(3,2,1),col=1,
+        xlab=
+          expression("conditional mode value "*(italic(u))),
+        ylab="Scaled probability")
+polygon(c(xvec,-xvec),c(cpvec,rep(0,length(cpvec))),col=adjustcolor("black",alpha=0.2))
+text(-4.25,0.5,~italic(L)(italic(b)*"|"*sigma^2),pos=2)
+cpmax0 <- xvec[which.max(cpvec)]
+abline(v=xvec[which.max(cpvec)])
+abline(v=0,lty=3)
+par(xpd=NA)
+text(8,1.05,~italic(L)(italic(x)*"|"*italic(b),beta))
+text(4.45,0.65,expression(italic(L)[prod]),pos=3)
+@
+%\end{frame}
+
+\begin{frame}
+  \frametitle{Shrinkage: {\it Arabidopsis} conditional modes}
+<<arabshrink,fig.width=7,fig.height=5.5,out.width="0.9\\textwidth">>=
+z<- subset(dat.tf,amd=="clipped" & nutrient=="1")
+m1 <- glm(total.fruits~gen-1,data=z,family="poisson")
+m2 <- glmer(total.fruits~1+(1|gen),data=z,family="poisson")
+tt <- table(z$gen)
+rr <- unlist(ranef(m2)$gen)[order(coef(m1))]+fixef(m2)
+m1s <- sort(coef(m1))
+m1s[1:2] <- rep(-5,2)
+gsd <- attr(VarCorr(m2)$gen,"stddev")
+gm <- fixef(m2)
+nseq <- seq(-3,6,length.out=50)
+sizefun <- function(x,smin=0.5,smax=3,pow=2) {
+    smin+(smax-smin)*((x-min(x))/diff(range(x)))^pow
+}
+nv <- dnorm(nseq,mean=gm,sd=gsd)
+##
+op <- par(las=1,cex=1.5,bty="l")
+plot(exp(m1s),xlab="Genotype",ylab="Mean fruit set",
+     axes=FALSE,xlim=c(-0.5,25),log="y",yaxs="i",xpd=NA,
+     pch=16,cex=0.5)
+axis(side=1)
+axis(side=2,at=c(exp(-5),0.1,1,10,20),
+     labels=c(0,0.1,1,10,20),cex=0.8)
+##     ylim=c(-3,5))
+polygon(c(rep(0,50),nv*10),exp(c(rev(nseq),nseq)),col="gray",xpd=NA)
+n <- tt[order(coef(m1))]
+points(exp(rr),pch=16,col=adjustcolor("red",alpha=0.5),
+       cex=sizefun(n),xpd=NA)
+## text(seq_along(rr),rr,n,pos=3,xpd=NA,cex=0.6)
+box()
+axis.break(axis=2,breakpos=exp(-4))
+legend("bottomright",
+       c("group mean","shrinkage est."),
+       pch=16,pt.cex=c(1,2),
+       col=c("black",adjustcolor("red",alpha=0.5)),
+       bty="n")
+par(op)
+@
+\end{frame}
+
+\subsection{Methods}
+
+\begin{frame}
+\frametitle{Estimation methods}
+
+\begin{tabular}{l|L{1.5in}L{1.5in}}
+ & \textbf{deterministic} & \textbf{stochastic} \\
+\hline
+\textbf{frequentist} & 
+\small penalized quasi-likelihood   \citep{breslow_whither_2004} , Laplace,
+Gauss-Hermite quadrature, \ldots 
+\citep{biswas2015} & 
+\small  MCEM etc. \citep{booth_maximizing_1999,sung_monte_2007,ponciano_hierarchical_2009} \\
+\hline
+\textbf{Bayesian} & 
+\small INLA \citep{Rue+2009} & 
+\small MCMC
+\citep{Hadfield:2009:JSSOBK:v33i02}
+\end{tabular}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Deterministic approaches}
+  
+  \begin{description}
+  \item[Penalized quasi-likelihood] fast but biased, especially for binary/low-count data:
+    (\fnlink{MASS}{glmmPQL}, \rflink{gamlss})
+  \item[Laplace approximation] intermediate \\
+  \item[hierarchical GLMMs] \citep{lee_generalized_2017} \rflink{spaMM}
+    (\fnlink{lme4}{glmer}, \pkglink{glmmML},
+    \rflink{glmmADMB}, \rflink{glmmTMB},
+    \href{http://www.r-inla.org/}{\nolinkurl{INLA}})
+  \item[Gauss-Hermite quadrature] slow but accurate \\
+    (\fnlink{lme4}{glmer}, \pkglink{glmmML},
+    \href{http://www.commanster.eu/rcode.html}{\nolinkurl{repeated}})
+  \end{description}
+  Trade-off between speed and accuracy
+\end{frame}
+
+\begin{frame}
+\frametitle{Laplace-approximation diagnostics}
+
+<<lapl,out.width="0.8\\textwidth",fig.width=6,fig.height=5>>=
+library(lattice)
+aspect <- 0.6
+xlab <- "z"; ylab <- "density"; type <- c("g","l"); scaled <- FALSE
+mm <- readRDS("data/toenail_lapldiag.rds")
+print(xyplot(y ~ zvals|id, data=mm,
+             type=type, aspect=aspect,
+             xlab=xlab,ylab=ylab,
+             as.table=TRUE,
+             panel=function(x,y,...){
+    if (!scaled) {
+        panel.lines(x, dnorm(x), lty=2)
+    } else {
+        panel.abline(h=1, lty=2)
+    }
+    panel.xyplot(x,y,...)
+}))
+@
+\end{frame}
+
+\begin{frame}
+  \frametitle{Stochastic approaches}
+  \begin{itemize}
+  \item Mostly Bayesian
+  \item generally slow but flexible; simplifies inference
+  \item Gibbs sampling (\rflink{glmmBUGS}, \rflink{MCMCglmm})
+  \item Hamiltonian/hybrid Monte Carlo (\rflink{rstanarm}, \rflink{brms}) 
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Estimation: {\it Culcita} \citep{mckeon_multiple_2012}}
+<<stierfig2,fig.keep="last",fig.height=3.5,fig.width=5,out.width="\\textwidth">>=
+library(coefplot2)
+cvec <- c("purple","magenta","blue","black","darkgreen")
+mnames <- c("GLM (fixed)","GLM (pooled)","PQL","Laplace","AGQ")
+coefplot2(list(mod2B,mod2,mod5,mod1,
+               coeftab(mod0)[1:4,]),
+          col.pts=cvec,
+          varnames=c("Symbiont",
+            "Crab vs. Shrimp",
+            "Added symbiont"),xlim=c(-7,3),
+          ylim=c(0.9,3.7),
+          spacing=0.14,
+          main="Log-odds of predation")
+par(xpd=NA)
+text(rep(1,5),seq(1.6,by=-0.18,length.out=5),
+     mnames,col=rev(cvec),cex=0.7,adj=0)
+     
+## legend("bottomright",col=rev(cvec),pch=16,lty=1,merge=TRUE,
+##       ,bty="n")
+@
+\end{frame}
+
+\section{Inference}
+\subsection{} 
+
+\begin{frame}
+  \frametitle{Wald tests}
+  \begin{columns}
+    \begin{column}{6cm}
+  \begin{itemize}
+  \item typical results of \code{summary()}
+  \item exact for ANOVA, regression: \\
+    approximation for GLM(M)s
+  \item fast
+  \item approximation is sometimes awful (Hauck-Donner effect)
+  \end{itemize}
+    \end{column}
+    \begin{column}{6cm}
+<<hd,out.width="\\textwidth",dev="tikz">>=
+## n <- 200b
+## d <- data.frame(x=rep(1:2,each=200),
+##                 y=c(rep(1,n-1),0,rep(0,n-1),1))
+## d <- data.frame(x=rep(1:2,each=200),
+##                 y=rep(1:0,each=200))
+
+## g0 <- glm(y~x,data=d,family=binomial)
+## summary(g0)
+tmpf <- function(x,n=4) exp(-abs(x)^n)
+tmpfD2 <- function(x,n) n*exp(-abs(x)^n)*abs(x)^(n-2)*(n*abs(x)^n-n+1)
+## curve(tmpf(x),from=-2,to=2,axes=FALSE,ann=FALSE)
+## box()
+## Taylor expansion around zero=
+## f(0)+f'(0)*x+f''(0)/2*x^2
+## f'(0)=n*abs(x)^(n-1)*exp(-abs(x))
+## f''(0)=
+tmpf <- function(x,n=2.5,sc=1) 1-abs(x/sc)^n/(1+abs(x/sc)^n)
+curve(tmpf,from=-15,to=15,axes=FALSE,xlab="parameter",
+      y="log-likelihood",mgp=c(1,0.5,0))
+box(bty="l")
+hh <- c(numDeriv::hessian(tmpf,0))
+curve(1+hh*x^2,add=TRUE,lty=2)
+text(c(5.8,2.25),c(0.88,0.4),
+     c("Wald\napprox","likelihood\nprofile"),adj=0)
+@
+\end{column}
+  \end{columns}
+\end{frame}
+
+%% \begin{frame}
+%% \frametitle{2D profiles for {\it Culcita} data}
+<<cprof,cache=TRUE,eval=FALSE>>=
+cprof <- profile(cmod1)
+@
+<<cprofplot,fig.width=10,fig.height=10,fig.keep="none",eval=FALSE>>=
+splom(cprof,draw.lower=FALSE)
+@
+%% \end{frame}
+
+\begin{frame}
+  \frametitle{Better frequentist inference}
+  \begin{itemize}
+  \item likelihood ratios: better than Wald, but still have to two problems:
+    \begin{itemize}
+      \item ``denominator degrees of freedom'' (when estimating scale)
+      \item for GLMMs, distributions are approximate
+        in any case (Bartlett corrections)
+      \item Kenward-Roger correction \citep{stroup_rethinking_2014}
+    \end{itemize}
+  \item Profile confidence intervals: expensive/fragile
+  \item Parametric bootstrapping: \emph{really} slow
+  \end{itemize}
+\end{frame}
+
+%% \begin{frame}[containsverbatim]
+%%   \frametitle{Parametric bootstrapping}
+%%   \begin{itemize}
+%%   \item fit null model to data
+%%   \item simulate ``data'' from null model
+%%   \item fit null and working model, compute likelihood difference
+%%   \item repeat to estimate null distribution
+%%   \item should be OK but ??? not well tested \\
+%%     (assumes estimated parameters are ``sufficiently'' good)
+%%   \end{itemize}
+%% {\small
+<<pboot,eval=FALSE,echo=FALSE,eval=FALSE>>=
+pboot <- function(m0,m1) {
+  s <- simulate(m0)
+  L0 <- logLik(refit(m0,s))
+  L1 <- logLik(refit(m1,s))
+  2*(L1-L0)
+}
+replicate(1000,pboot(fm2,fm1))
+@ 
+%}
+%\end{frame}
+
+%\begin{frame}
+%\frametitle{Parametric bootstrap results ({\it Glycera})}
+<<glycplot,out.width="\\textwidth",fig.height=5,fig.width=7,eval=FALSE>>=
+orig <- trellis.par.get()
+library(RColorBrewer)
+load("data/glycnull2.RData")
+v <- v[!sapply(v,is.null)]
+library(abind)
+v2 <- do.call("abind",c(v,list(along=3)))
+## identify bogus fits
+ww <- which(abs(v2[,"z value",])>20,arr.ind=TRUE)
+tt <- table(ww[,2])
+bad <- as.numeric(names(tt)[tt>5])
+v2 <- v2[,,-bad]
+tmpf <- function(x,breaks=40,cut=5,...) {
+  hist(x[abs(x)<cut],breaks=breaks,...)
+}
+dd <- as.data.frame.table(t(v2[,"z value",]))
+dd <- data.frame(dd,val=rep((1:946)/947,16))
+sp <- trellis.par.get("superpose.line")
+sp$col[1:3] <- c("blue","magenta","red")
+trellis.par.set(add.text=list(cex=0.8),
+                superpose.line=sp)
+xyplot(Freq~val|Var2,dd,subset=Var2 %in% levels(Var2)[2:5],
+       panel=function(x,y,...) {
+         sx <- sort(x)
+         sy <- sort(y)
+         panel.xyplot(sx,pnorm(sy),type="l",col="blue")
+         panel.lines(sx,pt(sy,7),col=2)
+         panel.lines(sx,pt(sy,14),col="magenta")
+         panel.abline(a=0,b=1,col="black")
+         panel.abline(v=0.05,col="gray",lty=2)
+         panel.abline(h=0.05,col="gray",lty=2)
+       },xlim=c(0,0.1),ylim=c(0,0.1),
+       xlab="True p value",ylab="Inferred p value",
+       auto.key=list(lines=TRUE,points=FALSE,col=c("blue","magenta","red"),
+                          text=c("normal","t(14)","t(7)"),
+       space="right"),layout=c(2,2))
+trellis.par.set(theme=orig) ## restore settings
+@
+%\end{frame}
+
+\begin{frame}
+\frametitle{Bayesian inference}
+\begin{itemize}
+\item If we have a good sample from the posterior
+  distribution (Markov chains have converged etc. etc.)
+  we get most of the inferences we want for free
+  by summarizing the marginal posteriors
+\item {\it post hoc} Bayesian methods:
+  use deterministic/frequentist methods to find the maximum,
+  then sample around it
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{{\it Culcita} confidence intervals}
+\includegraphics[width=\textwidth]{pix/cmod_plotResults.pdf}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{formula formats}
+\begin{itemize}
+\item \code{fixed}: fixed-effect formula
+\item{\code{random}: random-effect formula
+  (in \code{lme4}, combined with fixed)
+  \begin{itemize}
+  \item generally \code{x|g} (term|grouping variable)
+  \item simplest: \code{1|g}, single intercept term
+  \item nested: \code{1|g1/g2}
+  \item random-slopes: \code{r|g}
+  \item independent terms: \code{(1|g)+(x+0|g)}  or \code{(x||g)}
+  \end{itemize}
+}
+\item \code{lme}: \code{weights}, \code{correlation}
+  for heteroscedasticity and residual correlation
+\item \code{MCMCglmm}: options for variance structure
+\end{itemize}
+\end{frame}
+
+\section{Extensions}
+
+\begin{frame}
+\frametitle{Extended distributions}
+% https://stackoverflow.com/questions/2563498/making-latex-tables-smaller
+\small
+\tabcolsep=0.11cm
+\begin{tabular}{lcccccccc}
+    \hline
+    \bf{Feature} &\bf{glmmTMB} & \bf{MCMCglmm} &\bf{brms} &\bf{INLA} &\bf{mgcv} &\bf{gamlss} \\ \hline
+  hurdle &\checkmark & \checkmark &\checkmark & & &  \checkmark&\\
+    zero-truncated    &\checkmark &\checkmark &\checkmark &\checkmark & & \checkmark&\\
+    NBinom(2) &\checkmark & &\checkmark   &\checkmark &\checkmark & \checkmark\\
+    NBinom(1) &\checkmark & & & &\checkmark\\
+    COM-Poisson &\checkmark & & & & &\\
+  Delaporte & & & & & & \checkmark\\
+  Sichel  & & & & & & \checkmark\\
+  geometric  & & \checkmark & \checkmark& & & \checkmark \\
+  Poisson-invGauss  & & & & & \checkmark\\
+\end{tabular}
+\end{frame}
+
+\begin{frame}
+\frametitle{Spatial and temporal correlations}
+\begin{itemize}
+\item geostatistical (``R-side''): \fnlink{MASS}{glmmPQL}, \rflink{spaMM}
+\item geostatistical (``G-side''): \rflink{glmmTMB}
+\item penalized basis functions: \rflink{mgcv}, \rflink{brms}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{On beyond R}
+  \begin{columns}
+    \begin{column}{6cm}
+      \begin{itemize}
+      \item Julia: {\tt MixedModels} package
+      \item SAS: PROC MIXED, NLMIXED
+      \item AS-REML
+      \item Stata (GLLAMM, xtmelogit)
+      \item Template Model Builder
+      \item HLM, MLWiN
+      \item JAGS, Stan, \href{https://github.com/rmcelreath/rethinking}{rethinking package}
+      \end{itemize}
+    \end{column}
+    \begin{column}{6cm}
+\includegraphics[width=4cm]{pix/300px-On_Beyond_Zebra.jpg}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}
+\frametitle{Challenges 1: speed}
+
+How 
+\begin{itemize}
+\item Small clusters: need AGQ/MCMC
+\item Small numbers of clusters: need finite-size corrections (KR/PB/MCMC)
+\item Small data sets: issues with \emph{singular} fits \\
+\cite{barr_random_2013} vs. \cite{bates_parsimonious_2015}
+\item Big data: speed!
+\item Model diagnosis
+\item Confidence intervals accounting for uncertainty in variances
+\end{itemize}
+See also: \url{https://rawgit.com/bbolker/mixedmodels-misc/master/ecostats_chap.html}
+\url{https://groups.nceas.ucsb.edu/non-linear-modeling/projects}
+\end{frame}
+
+\begin{frame}
+\frametitle{Spatial and temporal correlations}
+
+\begin{itemize}
+\item Sometimes blocking takes care of non-independence ...
+\item but sometimes there is temporal or spatial correlation
+\emph{within} blocks
+\item \ldots also phylogenetic \ldots \citep{ives_statistics_2006}
+\item ``G-side'' vs. ``R-side'' effects
+\item tricky to implement for GLMMs, \\
+but new possibilities on the horizon \citep{Rue+2009,rousset_testing_2014};
+\href{lme4ord package}{https://github.com/stevencarlislewalker/lme4ord}
+\end{itemize}
+
+%% \item Sometimes blocks are spatial partitions (sites, zip codes, states) \\
+%% \item Off-the-shelf methods for ``true'' spatial GLMMs?\\
+%%   \citep{dormann_methods_2007}
+%% \item Correlation of residuals or conditional modes?
+%% \item INLA; GeoBUGS; ADMB
+%% \item lme4: hacking $\Z$: pedigrees, moving average, CAR models?
+%% \item lme4: \code{flexLambda} branch
+%% \item methods also apply to temporal, phylogenetic correlations \\
+%%   \citep{ives_generalized_2011}
+\end{frame}
+
+\begin{frame}
+\frametitle{Next steps}
+\itemsep15pt
+\begin{itemize}
+\item Complex random effects: \\
+  regularization, model selection, penalized methods (lasso/fence)
+\item Flexible correlation and variance structures
+\item Flexible/nonparametric random effects distributions
+\item hybrid \& improved MCMC methods
+\item \emph{Reliable} assessment of out-of-sample performance
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+  \begin{columns}
+    \begin{column}{6cm}
+      \begin{itemize}
+        \item \url{http://ms.mcmaster.ca/~bolker/misc/private/14-Fox-Chap13.pdf}
+        \item \url{https://rawgit.com/bbolker/mixedmodels-misc/master/ecostats_chap.html}
+        \item \cite{bolker_glmm_2014}
+      \end{itemize}
+    \end{column}
+    \begin{column}{6cm}
+      \includegraphics[width=4cm]{pix/foxbook.png} \\
+      (code ASPROMP8)
+    \end{column}
+\end{columns}
+  \end{frame}
+
+\begin{frame}
+\frametitle{References}
+\let\emph\oldemph
+\tiny
+
+\bibliographystyle{notitle}
+\bibliography{../glmm}
+\end{frame}
+
+\end{document}
+
+
