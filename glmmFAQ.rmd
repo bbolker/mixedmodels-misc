@@ -159,7 +159,7 @@ The `gof` function in the `aods3` package works for recent versions of the `lme4
    - Poisson-lognormal model (see above, "individual-level random effects")
    - negative binomial
        - `lme4::glmer.nb()` should fit a negative binomial, although it is somewhat slow and fragile compared to some of the other methods suggested here.
-       - [glmmADMB](http://r-forge.r-project.org/projects/glmmADMB/) (R-forge) and [glmmTMB](https://github.com/glmmtmb/glmmTMB/) (Github) will fit two parameterizations of the negative binomial: family="nbinom" gives the classic parameterization with var/mean=(1+mean/k) ("NB2" in Hardin and Hilbe's terminology) while family="nbinom1" gives a parameterization with `var/mean=phi*mean` ("NB1" to Hardin and Hilbe). The latter might also be called a "quasi-Poisson" parameterization because it matches the mean-variance relationship assumed by quasi-Poisson models.
+       - [glmmADMB](http://github.com/bbolker/glmmADMB/) and [glmmTMB](https://github.com/glmmtmb/glmmTMB/) (both on GitHub) will fit two parameterizations of the negative binomial: `family="nbinom"` gives the classic parameterization with $\sigma^2=\mu(1+mu/k)$ ("NB2" in Hardin and Hilbe's terminology) while `family="nbinom1"` gives a parameterization with $\sigma^2=\phi \mu$, $\phi>1$ ("NB1" to Hardin and Hilbe). The latter might also be called a "quasi-Poisson" parameterization because it matches the mean-variance relationship assumed by quasi-Poisson models, i.e. the variance is strictly proportional to the mean (although the proportionality constant must be >1, a limitation that does not apply to quasi-likelihood approaches)
   * gamlss.mx:gamlssNP
   * WinBUGS/JAGS (via R2WinBUGS/Rjags)
   * AD Model Builder (possibly via R2ADMB)
@@ -242,6 +242,25 @@ finds additional possibilities in the `ramps` (extended geostatistical) and `ape
 - [R-INLA](http://r-inla.org) (super-power tool)
 - it is possible to use AD Model Builder to fit spatial GLMMs, as shown in these [AD Model Builder examples](http://admb-project.org/examples/spatial-models); this capability is not in the `glmmADMB` package (and may not be for a while!), but it would be possible to run AD Model Builder via the R2admb package (requires installing -- and learning! ADMB)
 - [geoBUGS](http://mathstat.helsinki.fi/openbugs/Manuals/GeoBUGS/Manual.html), the geostatistical/spatial correlation module for WinBUGS, is another alternative (but again requires going outside of R)
+
+## Penalization/handling complete separation
+
+*Complete separation* occurs in a binary-response model when there is
+some linear combination of the parameters that perfectly separates failures
+from successes - for example, when all of the observations are zero
+for some particular combination of categories. The symptoms of this
+problem are unrealistically large parameter estimates; ridiculously
+large Wald standard errors (the *Hauck-Donner effect*); and various
+warnings.
+
+The standard extension of logistic regression to handle this case
+is called *penalized regression*; it's available in the `brglm`,
+`brglm2`, `logistf`, and `rms` packages. However, these packages
+don't handle mixed models, so the best available approach is to
+use a Bayesian method that allows you to set a prior on the fixed effects,
+e.g. a Gaussian with standard deviation of 3; this can be done
+in any of the Bayesian GLMM packages (e.g. `blme`, `MCMCglmm`, `brms`, ...)
+
 
 # Estimation 
 
