@@ -72,7 +72,7 @@ is an active forum for discussion of mixed-model-related questions, course annou
     <h4>Phylogenetic/pedigree-based models</h4>
     (See also "Phylogenetics task view"; genetics task view?)
     <pkg>pedigreemm</pkg>; correlation structures from <pkg>ape</pkg>;
-    <pkg>MCMCglmm</pkg>
+    <pkg>MCMCglmm</pkg>; <pkg>pez</pkg>; lmekin from <pkg>coxme</pkg>
     <h4>Generalized additive models, splines, and quantile regression</h4>
     <pkg>gamm</pkg>4, <pkg>mgcv</pkg><code>::gamm</code>, <pkg>lqmm</pkg>, <pkg>lmms</pkg>, <pkg>lmeSplines</pkg>;
     <pkg>assist</pkg>

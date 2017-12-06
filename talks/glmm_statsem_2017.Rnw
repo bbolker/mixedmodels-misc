@@ -16,6 +16,7 @@
 \renewcommand{\emph}[1]{{\color{red} {\textbf{#1}}}}
 \newcommand{\pkglink}[1]{\href{http://cran.r-project.org/web/packages/#1}{\nolinkurl{#1}}}
 \newcommand{\rflink}[1]{\href{https://r-forge.r-project.org/projects/#1/}{\nolinkurl{#1}}}
+\newcommand{\gitlink}[2]{\href{https://github.com/#1/#2}{\nolinkurl{#2}}}
 \newcommand{\fnlink}[2]{\href{http://stat.ethz.ch/R-manual/R-patched/library/#1/html/#2.html}{\nolinkurl{#1:#2}}}
 \newcommand{\code}[1]{{\tt #1}}
 \newcommand{\ssqobs}{\sigma^2_{\mbox{\small obs}}}
@@ -97,7 +98,7 @@ library(directlabels)
 
 \newcommand{\lmefour}{\code{lme4}}
 \newcommand{\nlme}{\code{nlme}}
-\title[GLMMs]{Generalized linear mixed models}
+\title[mixed model ecosystem]{Current status of R's mixed-modeling ecosystem}
 \author{Ben Bolker}
 \institute[]{McMaster University, Mathematics \& Statistics and Biology }
 
@@ -122,7 +123,8 @@ library(directlabels)
     \begin{column}{6cm}
       \begin{itemize}
       \item \code{lme4}: Doug Bates, Martin M\"achler, Steve Walker
-      \item Data: Josh Banta, Adrian Stier, Sea McKeon, David Julian, Jada-Simone White
+      \item \code{glmmTMB}: Mollie Brooks, Kasper Kristensen, Hans Skaug, Anders Nielsen, Koen van Bentham, Arni Magnusson, Casper Berg, Martin M\"achler
+      \item Data: Josh Banta, Adrian Stier, Sea McKeon, David Julian, Jada-Simone White, Max Moritz, Enric Batllori Presas
       \end{itemize}
     \end{column}
     \begin{column}{6cm}
@@ -149,8 +151,8 @@ library(directlabels)
 \newcommand{\btheta}{\bm \theta}
 \newcommand{\bzero}{\bm 0}
 
-\section[Definitions]{Examples and definitions}
-\subsection{ }
+\section[Definitions]{Definitions and examples}
+\subsection{}
 \begin{frame}
   \frametitle{(Generalized) linear mixed models}
 
@@ -431,17 +433,12 @@ A method for \ldots
 \begin{itemize}
 \item accounting for among-individual, within-block correlation
 \pause
-\item compromising between \\
-\emph{complete pooling} (no among-block variance)  \\
-\ and \emph{fixed effects} (large among-block variance)
-\pause
 \item handling levels selected at random from a larger population
 \pause
-\item sharing information among levels ({\it shrinkage estimation})
+\item sharing information among levels (\emph{shrinkage} estimation)
 \pause
-\item estimating variability among levels
+\item estimating variation among levels
 \pause
-\item allowing predictions for unmeasured levels
 \end{itemize}
 \end{frame}
 
@@ -561,72 +558,40 @@ par(op)
 \begin{frame}
 \frametitle{Estimation methods}
 
-\begin{tabular}{l|L{1.5in}L{1.5in}}
+\begin{tabular}{l|L{1.5in}|L{1.5in}}
  & \textbf{deterministic} & \textbf{stochastic} \\
 \hline
 \textbf{frequentist} & 
 \small penalized quasi-likelihood   \citep{breslow_whither_2004} , Laplace,
 Gauss-Hermite quadrature, \ldots 
 \citep{biswas2015} & 
-\small  MCEM etc. \citep{booth_maximizing_1999,sung_monte_2007,ponciano_hierarchical_2009} \\
+\small  MCEM \citep{booth_maximizing_1999,sung_monte_2007};
+data cloning \citep{ponciano_hierarchical_2009} \\
 \hline
 \textbf{Bayesian} & 
 \small INLA \citep{Rue+2009} & 
 \small MCMC
-\citep{Hadfield:2009:JSSOBK:v33i02}
+\citep{Hadfield:2009:JSSOBK:v33i02,carpenter_stan_2016,burkner_brms_2017}
 \end{tabular}
 
 \end{frame}
 
 \begin{frame}
   \frametitle{Deterministic approaches}
+
+  Trade-off between speed and accuracy of integration
   
   \begin{description}
   \item[Penalized quasi-likelihood] fast but biased, especially for binary/low-count data:
     (\fnlink{MASS}{glmmPQL}, \rflink{gamlss})
-  \item[Laplace approximation] intermediate \\
-  \item[hierarchical GLMMs] \citep{lee_generalized_2017} \rflink{spaMM}
+  \item[Laplace approximation] intermediate     
     (\fnlink{lme4}{glmer}, \pkglink{glmmML},
-    \rflink{glmmADMB}, \rflink{glmmTMB},
-    \href{http://www.r-inla.org/}{\nolinkurl{INLA}})
+    \rflink{glmmTMB},
+    \href{http://www.r-inla.org/}{\nolinkurl{INLA}}) \\
   \item[Gauss-Hermite quadrature] slow but accurate \\
     (\fnlink{lme4}{glmer}, \pkglink{glmmML},
     \href{http://www.commanster.eu/rcode.html}{\nolinkurl{repeated}})
   \end{description}
-  Trade-off between speed and accuracy
-\end{frame}
-
-\begin{frame}
-\frametitle{Laplace-approximation diagnostics}
-
-<<lapl,out.width="0.8\\textwidth",fig.width=6,fig.height=5>>=
-library(lattice)
-aspect <- 0.6
-xlab <- "z"; ylab <- "density"; type <- c("g","l"); scaled <- FALSE
-mm <- readRDS("data/toenail_lapldiag.rds")
-print(xyplot(y ~ zvals|id, data=mm,
-             type=type, aspect=aspect,
-             xlab=xlab,ylab=ylab,
-             as.table=TRUE,
-             panel=function(x,y,...){
-    if (!scaled) {
-        panel.lines(x, dnorm(x), lty=2)
-    } else {
-        panel.abline(h=1, lty=2)
-    }
-    panel.xyplot(x,y,...)
-}))
-@
-\end{frame}
-
-\begin{frame}
-  \frametitle{Stochastic approaches}
-  \begin{itemize}
-  \item Mostly Bayesian
-  \item generally slow but flexible; simplifies inference
-  \item Gibbs sampling (\rflink{glmmBUGS}, \rflink{MCMCglmm})
-  \item Hamiltonian/hybrid Monte Carlo (\rflink{rstanarm}, \rflink{brms}) 
-  \end{itemize}
 \end{frame}
 
 \begin{frame}
@@ -653,6 +618,41 @@ text(rep(1,5),seq(1.6,by=-0.18,length.out=5),
 @
 \end{frame}
 
+\begin{frame}
+\frametitle{Laplace-approximation diagnostics (toenail data)}
+
+<<lapl,out.width="0.8\\textwidth",fig.width=6,fig.height=5>>=
+library(lattice)
+aspect <- 0.6
+xlab <- "z"; ylab <- "density"; type <- c("g","l"); scaled <- FALSE
+mm <- readRDS("data/toenail_lapldiag.rds")
+print(xyplot(y ~ zvals|id, data=mm,
+             type=type, aspect=aspect,
+             xlab=xlab,ylab=ylab,
+             as.table=TRUE,
+             panel=function(x,y,...){
+    if (!scaled) {
+        panel.lines(x, dnorm(x), lty=2)
+    } else {
+        panel.abline(h=1, lty=2)
+    }
+    panel.xyplot(x,y,...)
+}))
+@
+\end{frame}
+
+\begin{frame}
+  \frametitle{Stochastic approaches}
+  \begin{itemize}
+  \item Mostly Bayesian
+  \item generally slow but flexible; powerful inference
+  \item Gibbs sampling (\rflink{glmmBUGS}, \rflink{MCMCglmm})
+  \item Hamiltonian/hybrid Monte Carlo (Stan: \rflink{rstanarm}, \rflink{brms},
+    \gitlink{rmcelreath}{rethinking}
+    ) 
+  \end{itemize}
+\end{frame}
+
 \section{Inference}
 \subsection{} 
 
@@ -662,10 +662,10 @@ text(rep(1,5),seq(1.6,by=-0.18,length.out=5),
     \begin{column}{6cm}
   \begin{itemize}
   \item typical results of \code{summary()}
-  \item exact for ANOVA, regression: \\
-    approximation for GLM(M)s
+  \item exact for simple linear models: \\
+    quadratic approximation for (G)LM(M)s
   \item fast
-  \item approximation is sometimes awful (Hauck-Donner effect)
+  \item sometimes awful
   \end{itemize}
     \end{column}
     \begin{column}{6cm}
@@ -712,15 +712,11 @@ splom(cprof,draw.lower=FALSE)
 \begin{frame}
   \frametitle{Better frequentist inference}
   \begin{itemize}
-  \item likelihood ratios: better than Wald, but still have to two problems:
-    \begin{itemize}
-      \item ``denominator degrees of freedom'' (when estimating scale)
-      \item for GLMMs, distributions are approximate
-        in any case (Bartlett corrections)
-      \item Kenward-Roger correction \citep{stroup_rethinking_2014}
-    \end{itemize}
+  \item likelihood ratios: better than Wald, but ... \\
+    finite-sample corrections, e.g. Kenward-Roger? \\
+    \rflink{pbkrtest} \citep{stroup_rethinking_2014}
   \item Profile confidence intervals: expensive/fragile
-  \item Parametric bootstrapping: \emph{really} slow
+  \item Parametric bootstrapping: extremely slow
   \end{itemize}
 \end{frame}
 
@@ -792,10 +788,10 @@ trellis.par.set(theme=orig) ## restore settings
 \begin{frame}
 \frametitle{Bayesian inference}
 \begin{itemize}
-\item If we have a good sample from the posterior
-  distribution (Markov chains have converged etc. etc.)
-  we get most of the inferences we want for free
-  by summarizing the marginal posteriors
+\item \emph{if} we have a good sample from the posterior
+  distribution (Markov chain convergence etc.)
+  we get most inference for free
+  from the marginal posterior distributions
 \item {\it post hoc} Bayesian methods:
   use deterministic/frequentist methods to find the maximum,
   then sample around it
@@ -807,27 +803,47 @@ trellis.par.set(theme=orig) ## restore settings
 \includegraphics[width=\textwidth]{pix/cmod_plotResults.pdf}
 \end{frame}
 
-\begin{frame}[fragile]
-\frametitle{formula formats}
+%% \begin{frame}[fragile]
+%% \frametitle{formula formats}
+%% \begin{itemize}
+%% \item \code{fixed}: fixed-effect formula
+%% \item{\code{random}: random-effect formula
+%%   (in \code{lme4}, combined with fixed)
+%%   \begin{itemize}
+%%   \item generally \code{x|g} (term|grouping variable)
+%%   \item simplest: \code{1|g}, single intercept term
+%%   \item nested: \code{1|g1/g2}
+%%   \item random-slopes: \code{r|g}
+%%   \item independent terms: \code{(1|g)+(x+0|g)}  or \code{(x||g)}
+%%   \end{itemize}
+%% }
+%% \item \code{lme}: \code{weights}, \code{correlation}
+%%   for heteroscedasticity and residual correlation
+%% \item \code{MCMCglmm}: options for variance structure
+%% \end{itemize}
+%% \end{frame}
+
+\section{Extensions and challenges}
+\subsection{}
+
+\begin{frame}
+\frametitle{keystone species}
 \begin{itemize}
-\item \code{fixed}: fixed-effect formula
-\item{\code{random}: random-effect formula
-  (in \code{lme4}, combined with fixed)
-  \begin{itemize}
-  \item generally \code{x|g} (term|grouping variable)
-  \item simplest: \code{1|g}, single intercept term
-  \item nested: \code{1|g1/g2}
-  \item random-slopes: \code{r|g}
-  \item independent terms: \code{(1|g)+(x+0|g)}  or \code{(x||g)}
-  \end{itemize}
-}
-\item \code{lme}: \code{weights}, \code{correlation}
-  for heteroscedasticity and residual correlation
-\item \code{MCMCglmm}: options for variance structure
+\item Deterministic
+\begin{itemize}
+\item \rflink{lme4}: basic but fast and widely used
+\item \rflink{gamlss}, \rflink{mgcv}: fast, flexible, but simple REs
+\item \rflink{glmmTMB}: automatic differentiation + Laplace approximations
+\citep{brooks_modeling_2017}
+\item \rflink{INLA}: deterministic Bayesian, good correlation models
+\end{itemize}
+\item Stochastic
+\begin{itemize}
+\item \rflink{MCMCglmm}: specialized Gibbs sampler
+\item \rflink{brms}, \rflink{rstanarm}, \gitlink{mcelreath}{rethinking}: Hamiltonian MC
+\end{itemize}
 \end{itemize}
 \end{frame}
-
-\section{Extensions}
 
 \begin{frame}
 \frametitle{Extended distributions}
@@ -850,11 +866,36 @@ trellis.par.set(theme=orig) ## restore settings
 \end{frame}
 
 \begin{frame}
-\frametitle{Spatial and temporal correlations}
+\frametitle{Spatial correlations: map}
+\includegraphics[width=0.9\textwidth]{pix/bird_residuals.png}
+\end{frame}
+
+\begin{frame}
+\frametitle{Spatial correlations: correlogram}
+\includegraphics[width=0.6\textwidth]{pix/birds_correlog.png}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Spatial/temporal/other correlations}
 \begin{itemize}
+\item temporal (ARMA etc.): \rflink{nlme}, \rflink{brms}, \rflink{MCMCglmm},
+  \rflink{glmmTMB}
 \item geostatistical (``R-side''): \fnlink{MASS}{glmmPQL}, \rflink{spaMM}
 \item geostatistical (``G-side''): \rflink{glmmTMB}
-\item penalized basis functions: \rflink{mgcv}, \rflink{brms}
+\item penalized basis functions \citep{wood_generalized_2017}: \rflink{mgcv}, \rflink{gamm4}, \rflink{brms}
+\item phylogenetic: \rflink{brms}, \rflink{MCMCglmm}, phyloglmm
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Variance structures}
+e.g. nested, crossed, compound-symmetric, \ldots
+\begin{itemize}
+\item \rflink{gamlss}, \rflink{mgcv}: simple only
+\item \rflink{nlme}: nested, hackable
+\item \rflink{lme4}: nested+crossed, hackable
+\item \rflink{glmmTMB}, \rflink{brms}, \rflink{MCMCglmm}: relatively flexible
 \end{itemize}
 \end{frame}
 
@@ -863,13 +904,13 @@ trellis.par.set(theme=orig) ## restore settings
   \begin{columns}
     \begin{column}{6cm}
       \begin{itemize}
-      \item Julia: {\tt MixedModels} package
+      \item Julia: \gitlink{dmbates}{MixedModels.jl} package
       \item SAS: PROC MIXED, NLMIXED
       \item AS-REML
       \item Stata (GLLAMM, xtmelogit)
-      \item Template Model Builder
+      \item Template Model Builder (\rflink{TMB})
       \item HLM, MLWiN
-      \item JAGS, Stan, \href{https://github.com/rmcelreath/rethinking}{rethinking package}
+      \item JAGS, Stan \citep{carpenter_stan_2016}
       \end{itemize}
     \end{column}
     \begin{column}{6cm}
@@ -879,7 +920,7 @@ trellis.par.set(theme=orig) ## restore settings
 \end{frame}
 
 \begin{frame}
-\frametitle{Challenges 1: speed/size}
+\frametitle{challenge 1: big data}
 
 <<loadbig, echo=FALSE, message=FALSE,out.width="0.8\\textwidth">>=
 load("data/bigfit.RData")
@@ -928,21 +969,22 @@ direct.label(ggtime2,list(dl.trans(x=x+0.1), ## shift labels right by 0.1 cm
 \begin{frame}
 \frametitle{approaches to speed/big data}
 \begin{itemize}
+\item optimize for special cases (e.g. scalar random effects)
 \item faster/tuned linear algebra: \citep{bates_mixedmodels_2017}
-\item L2 regularization with known variance-covariance: \cite{sweetser_diamond_2017}
+\item L2 regularization with known variance-covariance: \gitlink{stitchfix}{diamond} \citep{sweetser_diamond_2017} 
 \item distributed methods: ???
 \end{itemize}
 \end{frame}
 
 \begin{frame}
-\frametitle{Identifying and implementing appropriate model complexity}
+\frametitle{challenge 2: model complexity}
 \begin{itemize}
-\item very easy to build big mixed models: $(n^2+n)/2$ parameters
-per $n$-random-slopes random effects term
+\item too easy to build big mixed models: \\
+$(n^2+n)/2$ parameters per $n$-random-slopes random effects term
 \item much discussion of appropriate model-building strategy:
 \cite{barr_random_2013} vs. \cite{bates_parsimonious_2015},
 \cite{matuschek_balancing_2017}
-\item penalization for variance components?
+\item penalization/regularization for variance components?
 \item (penalized?) factor-analytic models \citep{bhattacharya_sparse_2011}
 \end{itemize}
 \end{frame}

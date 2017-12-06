@@ -2148,3 +2148,113 @@ title = {Extending {Linear} {Models} with {R}: {Generalized} {Linear}, {Mixed} {
 	keywords = {Distributions, Gamma, Lognormal, Microbial counts, Negative binomial, Poisson-gamma, Poisson-lognormal},
 	pages = {1279--1286}
 }
+
+
+@misc{sweetser_diamond_2017,
+        author={Sweetser,Timothy},
+	title = {diamond: {Python} solver for mixed-effects models},
+	shorttitle = {diamond},
+	url = {https://github.com/stitchfix/diamond},
+	urldate = {2017-11-28},
+	publisher = {Stitch Fix Technology},
+	month = nov,
+	year = {2017},
+	note = {original-date: 2017-08-07T19:06:10Z}
+}
+
+@misc{bates_mixedmodels_2017,
+	title = {{MixedModels}.jl: {A} {Julia} package for fitting (statistical) mixed-effects models},
+	shorttitle = {{MixedModels}.jl},
+	url = {https://github.com/dmbates/MixedModels.jl},
+	urldate = {2017-11-28},
+	author = {Bates, Douglas},
+	month = nov,
+	year = {2017},
+	note = {original-date: 2013-03-29T21:24:25Z},
+	keywords = {julia, mixed-effects, mixed-models, statistical-models}
+}
+
+
+@article{bhattacharya_sparse_2011,
+	title = {Sparse {Bayesian} infinite factor models},
+	volume = {98},
+	issn = {0006-3444},
+	url = {https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3419391/},
+	doi = {10.1093/biomet/asr013},
+	abstract = {We focus on sparse modelling of high-dimensional covariance matrices using Bayesian latent factor models. We propose a multiplicative gamma process shrinkage prior on the factor loadings which allows introduction of infinitely many factors, with the loadings increasingly shrunk towards zero as the column index increases. We use our prior on a parameter-expanded loading matrix to avoid the order dependence typical in factor analysis models and develop an efficient Gibbs sampler that scales well as data dimensionality increases. The gain in efficiency is achieved by the joint conjugacy property of the proposed prior, which allows block updating of the loadings matrix. We propose an adaptive Gibbs sampler for automatically truncating the infinite loading matrix through selection of the number of important factors. Theoretical results are provided on the support of the prior and truncation approximation bounds. A fast algorithm is proposed to produce approximate Bayes estimates. Latent factor regression methods are developed for prediction and variable selection in applications with high-dimensional correlated predictors. Operating characteristics are assessed through simulation studies, and the approach is applied to predict survival times from gene expression data.},
+	number = {2},
+	urldate = {2017-11-28},
+	journal = {Biometrika},
+	author = {Bhattacharya, A. and Dunson, D. B.},
+	month = jun,
+	year = {2011},
+	pmid = {23049129},
+	pmcid = {PMC3419391},
+	pages = {291--306}
+}
+
+
+@book{lee_generalized_2017,
+	address = {Boca Raton, Florida},
+	edition = {second},
+	title = {Generalized {Linear} {Models} with {Random} {Effects}: {Unified} {Analysis} via {H}-likelihood},
+	isbn = {978-1-4987-2061-8},
+	shorttitle = {Generalized {Linear} {Models} with {Random} {Effects}},
+	abstract = {This is the second edition of a monograph on generalized linear models with random effects that extends the classic work of McCullagh and Nelder. It has been thoroughly updated, with around 80 pages added, including new material on the extended likelihood approach that strengthens the theoretical basis of the methodology, new developments in variable selection and multiple testing, and new examples and applications. It includes an R package for all the methods and examples that supplement the book.},
+	language = {English},
+	publisher = {Chapman and Hall/CRC},
+	author = {Lee, Youngjo and Nelder, John A. and Pawitan, Yudi},
+	month = aug,
+	year = {2017}
+}
+
+
+@article{carpenter_stan_2016,
+	title = {Stan: {A} probabilistic programming language},
+	volume = {20},
+	shorttitle = {Stan},
+        url = {http://www.stat.columbia.edu/~gelman/research/unpublished/stan-resubmit-JSS1293.pdf},
+	urldate = {2017-06-20},
+	journal = {Journal of Statistical Software},
+	author = {Carpenter, Bob and Gelman, Andrew and Hoffman, Matt and Lee, Daniel and Goodrich, Ben and Betancourt, Michael and Brubaker, Michael A. and Guo, Jiqiang and Li, Peter and Riddell, Allen},
+	year = {2016}
+}
+
+
+@article{burkner_brms_2017,
+	title = {brms: {An} {R} {Package} for {Bayesian} {Multilevel} {Models} {Using} {Stan}},
+journal = {Journal of Statistical Software},
+  author= {Bürkner,Paul-Christian},
+volume= 80,
+issue = 1,
+	shorttitle = {brms},
+	url = {https://www.jstatsoft.org/article/view/v080i01},
+	doi = {10.18637/jss.v080.i01},
+	urldate = {2017-11-28},
+	keywords = {Bayesian inference, R, MCMC, multilevel model, ordinal data, Stan}
+}
+
+@Book{wood_generalized_2017,
+  author =	 {Simon Wood},
+  title = 	 {Generalized Additive Models: An Introduction with R},
+  publisher = 	 {Chapman \& Hall},
+  year = 	 {2017},
+  series =	 {CRC Texts in Statistical Science},
+  edition = {2d}
+}
+
+
+
+@article{brooks_modeling_2017,
+	title = {Modeling {Zero}-{Inflated} {Count} {Data} {With} {glmmTMB}},
+	url = {http://biorxiv.org/content/early/2017/05/01/132753},
+	doi = {10.1101/132753},
+	abstract = {Ecological phenomena are often measured in the form of count data. These data can be analyzed using generalized linear mixed models (GLMMs) when observations are correlated in ways that require random effects. However, count data are often zero-inflated, containing more zeros than would be expected from the standard error distributions used in GLMMs, e.g., parasite counts may be exactly zero for hosts with effective immune defenses but vary according to a negative binomial distribution for non-resistant hosts. We present a new R package, glmmTMB, that increases the range of models that can easily be fitted to count data using maximum likelihood estimation. The interface was developed to be familiar to users of the lme4 R package, a common tool for fitting GLMMs. To maximize speed and flexibility, estimation is done using Template Model Builder (TMB), utilizing automatic differentiation to estimate model gradients and the Laplace approximation for handling random effects. We demonstrate glmmTMB and compare it to other available methods using two ecological case studies. In general, glmmTMB is more flexible than other packages available for estimating zero-inflated models via maximum likelihood estimation and is faster than packages that use Markov chain Monte Carlo sampling for estimation; it is also more flexible for zero-inflated modelling than INLA, but speed comparisons vary with model and data structure. Our package can be used to fit GLMs and GLMMs with or without zero-inflation as well as hurdle models. By allowing ecologists to quickly estimate a wide variety of models using a single package, glmmTMB makes it easier to find appropriate models and test hypotheses to describe ecological processes.},
+	language = {en},
+	urldate = {2017-05-09},
+	journal = {bioRxiv},
+	author = {Brooks, Mollie E. and Kristensen, Kasper and Benthem, Koen J. van and Magnusson, Arni and Berg, Casper W. and Nielsen, Anders and Skaug, Hans J. and Maechler, Martin and Bolker, Benjamin M.},
+	month = may,
+	year = {2017},
+	pages = {132753}
+}
