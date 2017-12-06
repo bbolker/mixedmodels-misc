@@ -154,26 +154,16 @@ usage with examples.},
 }
 
 
-@unpublished{skaug_automatic_2004,
-	title = {Automatic Approximation of the Marginal Likelihood in Nonlinear Hierarchical Models}, 
-        note = {},
-	url = {http://bemata.imr.no/laplace.pdf},
-	abstract = {We show that the fitting of nonlinear hierarchical random effects models by max-
-imum likelihood can be made automatic to the same extent that Bayesian model
-fitting can be automated by the program {BUGS.} The word ‘automatic’ here means
-that the technical details of computation are made transparent to the user. We
-achieve this by combining a technique from computer science known as ‘automatic
-differentiation’ with the Laplace approximation for calculating the marginal like-
-lihood. Automatic differentiation, which should not be confused with symbolic
-differentiation, is mostly unknown to statisticians, and hence we review basic ideas
-and results. A software prototype that implements our approach has been devel-
-oped, and the computational performance is reported for a selection of models from
-the mixed-model literature. In general, our approach performs well in comparison
-with existing software.},
-year = {2004},
-	author = {Hans Skaug and David Fournier}
-}
 
+@article{skaug_automatic_2006,
+	title = {Automatic approximation of the marginal likelihood in non-gaussian hierarchical models},
+	volume = {51},
+	number = {2},
+	journal = {Computational Statistics \& Data Analysis},
+	author = {Skaug, Hans J. and Fournier, David A.},
+	year = {2006},
+	pages = {699--709}
+}
 
 @article{skaug_automatic_2002,
 	title = {Automatic Differentiation to Facilitate Maximum
@@ -510,7 +500,7 @@ pages = {103-113},
 
 @inproceedings{venables_exegeses_1998,
 	address = {Washington, {DC}},
-	series = {1998 International {S-PLUS} User Conference},
+	booktitle = {1998 International {S-PLUS} User Conference},
 	title = {Exegeses on Linear Models},
 	url = {http://www.stats.ox.ac.uk/pub/MASS3/Exegeses.pdf},
 	author = {Venables, W. N},
@@ -1750,7 +1740,7 @@ author={Andrew Gelman and John B. Carlin and  Hal S. Stern and David B. Dunson
 
 @Book{schabenberger_contemporary_2001,
   author =	 {Oliver Schabenberger and Francis J. Pierce},
-  booktitle = 	 {Contemporary Statistical Models for the Plant and Soil Sciences},
+  title = 	 {Contemporary Statistical Models for the Plant and Soil Sciences},
   publisher = 	 {CRC Press},
   year = 	 {2001},
   address =	 {Boca Raton, FL},
@@ -2222,6 +2212,7 @@ title = {Extending {Linear} {Models} with {R}: {Generalized} {Linear}, {Mixed} {
 
 
 @article{burkner_brms_2017,
+        year = 2017,
 	title = {brms: {An} {R} {Package} for {Bayesian} {Multilevel} {Models} {Using} {Stan}},
 journal = {Journal of Statistical Software},
   author= {Bürkner,Paul-Christian},

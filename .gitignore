@@ -10,7 +10,8 @@ gh-pages
 *.bbl
 *.blg
 *.snm
-*tikz-Dictionary
+*tikzDictionary
 *.aux
 *.log
 *.vrb
+*.out
