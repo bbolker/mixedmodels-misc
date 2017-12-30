@@ -1,0 +1,605 @@
+---
+title: "Contrasts"
+output: tufte_handout
+bibliography: glmm.bib
+header-includes:
+- \usepackage{bm}
+- \hypersetup{colorlinks=true,linkcolor=blue}
+- \usepackage{amsmath}
+- \usepackage[english]{babel}
+- \usepackage{bm}
+- \usepackage[utf8]{inputenc}
+- \usepackage{tikz}
+- \usepackage[footnotesize,bf]{caption}
+---
+
+```{r opts,echo=FALSE,message=FALSE}
+library("knitr")
+opts_chunk$set(tidy=FALSE,fig.width=6,fig.height=4,fig.position="center",
+               dev="tikz")
+knit_hooks$set(basefig=function(before, options, envir) {
+                   if (before) {
+                       par(bty="l",las=1)
+                   } else { }
+               })
+```
+
+\newcommand{\y}{{\bm y}}
+\newcommand{\V}{{\bm V}}
+\newcommand{\A}{{\bm A}}
+\newcommand{\bbeta}{{\bm \beta}}
+\newcommand{\X}{\bm X}
+\newcommand{\CC}{{\bm C}}
+\newcommand{\muvec}{\vec \mu}
+\newcommand{\betavec}{\vec \beta}
+
+```{r load_pkgs,echo=FALSE}
+library("reshape2")
+library("MASS")
+library("ggplot2"); theme_set(theme_bw());
+theme_update(panel.spacing=grid::unit(0,"lines"))
+library("effects")
+library("emmeans")
+```
+
+*Contrasts* are the way that R (and other statistical software)
+sets up tests of differences
+between different groups in an experimental or observational
+study. Equivalently,
+they are the way to define the parameters of a linear model that
+involves categorical predictors.
+
+There are lots of ways to use built-in R functions to define
+different contrasts,
+but sometimes we want to define our own custom contrasts.
+In any case, understanding how to set up your own contrast matrix helps
+you understand how the built-in functions work.
+
+R's default set of definitions is called *treatment contrasts*.
+For example, in a linear model with a single categorical predictor
+(equivalent to a one-way ANOVA), the parameters $\beta_i$  would be defined as:
+
+\begin{equation}
+\begin{array}{ccl}
+\beta_0 = & \mu_1 & = \text{intercept} = \text{predicted value of group 1} \\
+\beta_1  = & \mu_2-\mu_1 & = \text{pred. value of group 2} - \text{pred. value of group 1} \\
+\beta_2  = & \mu_3-\mu_1 & = \text{pred. value of group 3} - \text{pred. value of group 1}
+\end{array}
+\label{betadef}
+\end{equation}
+and so on.
+
+This is equivalent to
+
+\begin{equation}
+\begin{array}{ccl}
+\text{predicted value of group 1} = & \mu_1 = & \beta_0 \\
+\text{predicted value of group 2} = & \mu_2 = & \beta_0 + \beta_1 \\
+\text{predicted value of group 3} = & \mu_3 = & \beta_0 + \beta_2 \\
+\ldots & & 
+\end{array}
+\label{mudef}
+\end{equation}
+
+In the treatment contrast case it's reasonably straightforward
+to see how to get
+from the first set of equations (defining the parameters, or $\beta$ values,
+in terms of differences between predicted values ($\mu$), or group means)
+to the second set (defining the predicted values in terms of the parameters),
+but it's not always so straightforward.
+(If you don't see it immediately, try adding the first two equations in
+eq.\ \ref{betadef} to get the second equation in eq.\ \ref{mudef}.)
+
+The first set (parameters
+in terms of group differences)
+is the more natural way to think about which comparisons we want to test
+statistically; unfortunately, the second set (group differences in terms
+of parameters) is the way that R wants us to tell it which comparisons to make.
+
+However, we can
+write down the second set of equations as the product of
+a *contrast matrix* $\CC$ and the parameter vector
+$\betavec = (\beta_0, \beta_1, \beta_2, \ldots)$:
+\begin{equation}
+\CC \betavec = \left(\begin{array}{cccc}
+1 & 0 & 0 & \ldots \\
+1 & 1 & 0 & \ldots \\
+1 & 0 & 1 & \ldots \\
+\vdots & \vdots & \vdots & \ddots
+\end{array}
+\right)
+\left(\begin{array}{c}
+\beta_0 \\ \beta_1 \\ \beta_2 \\ \ldots
+\end{array}
+\right) =
+\left(\begin{array}{c}
+\mu_1 \\ \mu_2 \\ \mu_3 \\ \ldots
+\end{array}\right)  \quad .
+\label{cdef}
+\end{equation}
+Now we can do some linear algebra (or ask R to do it) in order to go
+from the human-friendly to the R-friendly specification of contrasts.
+Specifically, if we denote the vector of predicted values as $\muvec$,
+then R wants us to specify
+the contrast matrix $\CC$ such that
+\begin{equation}
+\muvec = \CC \betavec .
+\label{ceq1}
+\end{equation}
+\noindent
+We need to solve this equation for $\betavec$, so that we can specify
+$\betavec$ in terms of linear relationships among the $\muvec$ values.
+Mathematically, we solve equation \ref{ceq1} by multiplying both sides by
+the inverse of $\CC$:
+\begin{equation}
+\begin{split}
+\CC^{-1} \muvec & = \CC^{-1} \CC \betavec \\
+                 & = \betavec.
+\end{split}
+\end{equation}
+If we take the matrix $\CC$ from eq.\ \ref{cdef} above and invert it
+(`solve()` does matrix inversion in R):
+```{r cdef,echo=TRUE}
+Cmat = matrix(c(1,0,0,
+                1,1,0,
+                1,0,1), nrow=3, byrow=TRUE)
+solve(Cmat)
+```
+Comparing these values to the relations in eq.\ \ref{betadef}, we can see
+that we have successfully recovered $\CC^{-1}$ such that
+
+\begin{equation}
+\CC^{-1} \muvec = \left(\begin{array}{rrrr}
+1 & 0 & 0 & \ldots \\
+-1 & 1 & 0 & \ldots \\
+-1 & 0 & 1 & \ldots \\
+\vdots & \vdots & \vdots & \ddots
+\end{array}
+\right)
+\left(\begin{array}{c}
+\mu_1 \\ \mu_2 \\ \mu_3 \\ \ldots
+\end{array}
+\right) =
+\left(\begin{array}{c}
+\beta_0 \\ \beta_1 \\ \beta_2 \\ \ldots
+\end{array}\right)
+\label{cinvdef}
+\end{equation}
+
+
+**A more complex example**
+
+A common situation is that we want to test whether the combination of
+two treatments has more or less effect than either treatment alone.
+This is different from the typical setup for a two-way interaction,
+discussed below, where the null hypothesis is that the combination
+of the two treatments has an additive effect. This occurred in
+@mckeon_multiple_2012, where the authors compared the
+effects of crabs and shrimp and their combination in protecting
+coral against starfish predation.
+
+There are four treatments:
+we know the amount of predation in the
+control treatment ($\mu_1$), crabs-only treatment ($\mu_2$),
+shrimp-only treatment ($\mu_3$), and crabs-plus-shrimp treatment ($\mu_4$).
+Suppose we want to parameterize this model in terms of
+
+- the overall mean predation level: $(\mu_1+\mu_2+\mu_3+\mu_4)/4$
+- the average effect of symbionts, i.e. the difference between the control ($\mu_1$)
+and the average of the symbiont treatments $(\mu_2+\mu_3+\mu_4)/3$
+- the difference between crabs and shrimp, $\mu_2-\mu_3$
+- the difference between the combined-symbiont treatment, $\mu_4$,
+and the average of the single-symbiont treatments, $(\mu_2+\mu_3)/2$
+
+The signs are set up to allow for the fact that we want to quantify the
+*decrease* in predation under symbiont prediction.
+
+Define `cc_inv` as follows:
+
+```{r crabshrimp1,echo=FALSE}
+cc_inv <- matrix(c(1/4,1/4,1/4,1/4,
+               1,-1/3,-1/3,-1/3,
+               0,1,-1,0,
+               0,1/2,1/2,-1),
+             byrow=TRUE,
+             nrow=4,
+             dimnames=list(c("none","C","S","CS"),
+                 c("intercept","avg_symb","C.vs.S","twosymb")))
+
+print(MASS::fractions(cc_inv))
+```
+
+This is what we get for $\CC$ by inverting $\CC^{-1}$ (`solve(cc_inv)`)
+(with a little bit of cosmetic stuff):
+*Not sure why I have to transpose the result here??*
+```{r crabshrimp2,echo=FALSE}
+MASS::fractions(ss <- t(zapsmall(solve(cc_inv))))
+``` 
+
+@Crawley2002 gives another custom-contrast example, but he pretty
+much just shows $\CC$ without much discussion of how one would derive it.
+
+```{r echo=FALSE,eval=FALSE}
+cmat <- matrix(c(3,-1,-1,-1,
+                 0,1,-1,0,
+                 0,1,1,-2),
+               nrow=4)
+t(cmat) %*% cmat
+dimnames(cmat) <- list(c("none","C","S","CS"),
+                 c("symb","C.vs.S","twosymb"))
+cc <- cbind(mean=1,cmat)
+MASS::fractions(solve(cc))
+``` 
+
+
+
+# Categorical predictors: contrasts
+
+Independent contrasts.
+
+The *contrast matrix* determines what a given row of
+the design matrix (for level $i$ of a categorical variable) looks
+like.  
+
+If we have a vector of predicted values
+$\bar \y$, the contrast matrix is essentially defined as
+$$
+\bar \y = \CC \bbeta
+$$
+
+Set contrasts in general via `options()` or per-factor
+via `contrasts()`, or within the model statement, e.g.
+
+```{r contrset1}
+d <- data.frame(f=c("a","a","a","b","b","b"),y=c(1,1,1,3,3,3))
+coef(lm(y~f,data=d))
+coef(lm(y~f,data=d,contrasts=list(f="contr.sum")))
+```
+
+Or:
+```{r contrset2,eval=FALSE}
+contrasts(d$f) <- "contr.sum"
+## or (slightly dangerous because it sets the options
+## *globally*, sometimes leading to confusion)
+options(contrasts=c("contr.sum","contr.poly"))
+```
+
+Reordering factors: `levels`, `reorder`, `relevel`
+```{r relevel}
+levels(relevel(d$f,"b"))
+levels(with(d,reorder(f,y,mean)))
+```
+
+In general requesting a contrast for an $n$-level factor gets us
+only an $n \times (n-1)$ matrix: the first column is an implicit
+intercept (all-1) column.
+
+**Treatment contrasts (default: "dummy", "corner-point")**
+
+First level of factor (often alphabetical!) is the default
+intercept/baseline for
+`contr.treatment` (default): `contr.SAS` uses the
+*last* level of the factor (which is SAS's default).
+You can specify a baseline via `contr.treatment(n,base=b)`,
+but it may make more sense to relevel the factor to put the
+baseline (typically control) treatment first.  The full contrast
+matrix is not orthogonal (i.e. $\CC^T \CC$ is not diagonal:
+we want $C_i^T C_j=0$ whenever $i \neq j$).
+
+**TODO** explain more about what orthogonality means and why
+we would care
+
+```{r contr_orth}
+(cc <- contr.treatment(4))
+```
+
+The comparisons between treatments and the baseline
+are all orthogonal to each other,
+```{r cmpfun}
+is_orthog <- function(x) {
+    xsq <- t(x) %*% x
+    return(all(xsq-diag(diag(xsq))==0)  && ## off-diagonals are zero
+        all(diag(xsq)!=0))
+}
+```
+```{r comp1}
+is_orthog(cc)
+cc <- cbind(1,cc) ## add intercept column
+is_orthog(cc)
+``` 
+
+If we want to know the *meaning* of $\bbeta$,
+it's easiest to invert:
+$$
+\bbeta =  \CC^{-1} \bar \y
+$$
+```{r solve}
+solve(cc)
+``` 
+
+Example (from @GotelliEllison2004):
+```{r define_data1}
+ants <- data.frame(
+    place=rep(c("field","forest"),c(6,4)),
+    colonies=c(12, 9, 12, 10,
+               9, 6, 4, 6, 7, 10))
+```
+
+```{r antmeans}
+mean(ants$colonies[ants$place=="field"])
+mean(ants$colonies[ants$place=="forest"])
+pr <- function(m) printCoefmat(coef(summary(m)),digits=3,signif.stars=FALSE)
+pr(lm1 <- lm(colonies~place,data=ants))
+```
+
+The `(Intercept)` row refers to $\beta_1$, which is the mean density in the "field" sites ("field" comes before "forest").  The `placeforest` row tells us we are looking at the effect of the `place` variable on the `forest` level, i.e. the difference between the "forest" and "field" sites.  (The only ways we could know that "field" is the baseline site are (1) to remember, or look at `levels(ants$place)` or (2) to notice which level is *missing* from the list of parameter estimates.)
+
+**Helmert**
+
+In this case the full matrix (intercept and all comparisons)
+is orthogonal (which is why Helmert were the default contrasts
+in R's ancestor, S-PLUS), but the comparisons are less intuitive.
+
+```{r helmert1}
+(cc <- cbind(1,contr.helmert(4)))
+``` 
+```{r helmert_orth,results="hide"}
+is_orthog(cc)
+``` 
+```{r solve_fracs}
+MASS::fractions(solve(cc))
+``` 
+$\beta_1$=mean; $\beta_2$=contrast between levels 1 and 2;
+$\beta_3$=contrast between levels 1 & 2 and level 3; etc..
+
+```{r cfun}
+cfun <- function(contr) {
+    pr(update(lm1,contrasts=list(place=contr)))
+}
+cfun("contr.helmert")
+```
+
+**Sum-to-zero**
+
+What if I want to compare the values with the mean
+[@schielzeth_simple_2010]?
+
+Sum-to-zero contrasts *not* orthogonal (??)
+
+```{r sum4}
+cc <- contr.sum(4)
+is_orthog(cc)
+(cc <- cbind(1,contr.sum(4)))
+is_orthog(cc)
+``` 
+```{r sum_solve}
+MASS::fractions(solve(cc))
+``` 
+$\beta_1$=mean; $\beta_2$=level 1 vs average of levels 2-4;
+$\beta_3$=level 2 vs. average of levels 1,3, 4;
+$\beta_4$=level 3 vs. average of levels 1,2, 4
+
+Note that we don't have a contrast directly involving level 4.
+
+```{r}
+cfun("contr.sum")
+```
+
+Same as Helmert contrasts in this example, except for the sign of
+`place1`.
+
+**No-intercept**
+
+When we specify a formula with `-1` or `+0`
+(with default treatment contrasts) we get 
+an identity matrix for the contrasts:
+each level has its own parameter.
+
+```{r}
+pr(update(lm1,.~.-1))
+```
+
+Sometimes clearer (and we get confidence intervals etc.
+on the predictions for each level), but the hypotheses tested
+are rarely interesting (is the mean of each level equal to zero?)
+
+More generally, if you want to compute the group means, you can
+
+- Use the `predict` function:
+```{r predict,results="hide"}
+predict(lm1,newdata=data.frame(place=c("field","forest")),interval="confidence")
+```
+- Use `effects::allEffects`:
+```{r effects,message=FALSE,warning=FALSE,results="hide"}
+summary(allEffects(lm1))
+```
+- Use `emmeans::emmeans`:
+```{r emmeans,message=FALSE,results="hide"}
+emmeans(lm1,spec=~place)
+```
+
+Forward difference contrasts:
+```{r}
+(cc <- cbind(mean=1,MASS::contr.sdif(4)))
+MASS::fractions(solve(cc))
+## not orthogonal at all
+``` 
+
+**Exercise**  How would you modify this contrast so the
+intercept is the value of the first level, rather than the mean?
+
+## Interactions
+
+Interactions as *differences in differences*
+
+Interpretation problems/marginality principle
+[@venables_exegeseslinear_1998,schielzeth_simple_2010]
+
+```{r}
+head(d <- expand.grid(F=LETTERS[1:3],f=letters[1:3]))
+m0 <- model.matrix(~F*f,d)
+ff <- solve(m0)
+colnames(ff) <- apply(d,1,paste,collapse=".")
+ff["FB",] ## contrast between (A,a) and (B,a)
+ff["fb",] ## contrast between (A,a) and (A,b)
+``` 
+
+```{r}
+old.opts <- options(contrasts=c("contr.sum","contr.poly"))
+m <- model.matrix(~F*f,d)
+ff <- solve(m)*9
+colnames(ff) <- apply(d,1,paste,collapse=".")
+ff["F1",] ## contrast between (A,.) and (grand mean)
+ff["f1",] ## contrast between (a,.) and (grand mean)
+options(old.opts) ## reset
+``` 
+**Exercise:** How would you construct a version of `contr.sum}
+where the first, not the last, level is aliased/dropped?
+
+Things get slightly more interesting/complicated when we have more than two levels of a categorical variable.  I'll look at some data on lizard perching behaviour, from the `brglm} package (and before that from @McCullaghNelder1989, ultimately from @schoener_nonsynchronous_1970.  I'm going to ignore the fact that these data might best be fitted with generalized linear models.
+
+```{r echo=FALSE,message=FALSE}
+if (!file.exists("lizards.csv")) {
+   require("brglm")
+   data(lizards)
+   lizards <- transform(lizards,N=grahami+opalinus,
+                     gfrac=grahami/(grahami+opalinus))
+   write.csv(lizards,file="lizards.csv")
+}
+```
+```{r fakelizards,echo=FALSE}
+lizards <- read.csv("lizards.csv")
+```
+A quick look at the data: response is number of *Anolis grahami* lizards found on perches in particular conditions.
+
+```{r lizard_plot,echo=FALSE,message=FALSE,warning=FALSE,fig.height=3.5,cache=TRUE}
+mliz <- melt(lizards,id.vars="grahami",measure.vars=c("height","diameter","light","time"))
+mliz$value <- gsub("<","$<$",
+                gsub(">","$>$",
+                  gsub(">=","$\\\\geq$",
+                     gsub("<=","$\\\\leq$",
+                         mliz$value))))
+gg_liz1 <- ggplot(mliz,aes(x=value,y=grahami))+geom_boxplot(,fill="lightgray")+
+  facet_wrap(~variable,scale="free_x",nrow=1)+
+    labs(x="",y="number of \\emph{grahami}")+
+  geom_hline(yintercept=mean(lizards$grahami),colour="red",lwd=1,alpha=0.4)
+plot(gg_liz1)
+```
+
+For a moment we're going to just look at the `time` variable.
+If we leave the factors as is (alphabetical) then $\beta_1$="early", $\beta_2$="late"-"early", $\beta_3$="midday"-"early".  At the very least, it probably makes sense to change the order of the levels:
+```{r reordertime}
+lizards$time <- factor(lizards$time,levels=c("early","midday","late"))
+```
+All this does (since we haven't changed the baseline factor) is swap the definitions of $\beta_2$ and $\beta_3$.
+
+In a linear model, we could also use sum-to-zero contrasts:
+```{r lizardsum}
+pr(lm(grahami~time,data=lizards,contrasts=list(time=contr.sum)))
+```
+Now the `(Intercept)` parameter is the overall mean: `time1` and `time2` are the deviations of the first ("early") and second ("midday") groups from the overall mean. (The names are useless: the `car` package offers a slightly better alternative called `contr.Sum`).
+There are other ways to change the contrasts (i.e., use the `contrasts()` function to change the contrasts for a particular variable permanently, or use `options(contrasts=c("contr.sum","contr.poly")))` to change the contrasts for *all* variables), but the way shown above may be the most transparent.
+
+There are other options for contrasts such as `MASS::contr.sdif()`,
+which gives the successive differences between levels.
+```{r lizardsdif}
+pr(lm(grahami~time,data=lizards,contrasts=list(time=contr.sdif)))
+```
+You might have particular contrasts in mind (e.g. "control" vs. all other treatments, then "low" vs "high" within treatments), in which case it is probably worth learning how to set contrasts.  (We will talk about testing *all pairwise differences later*, when we discuss multiple comparisons.  This approach is probably not as useful as it is common.)
+
+## Multiple treatments and interactions
+
+**Additive model**
+
+Let's consider the `light` variable in addition to `time`.
+```{r lizardTL1}
+pr(lmTL1 <- lm(grahami~time+light,data=lizards))
+```
+
+Here's a graphical interpretation of the parameters:
+
+```{r lizardcontrasts1,echo=FALSE,cache=TRUE}
+require("grid")
+pp <- with(lizards,expand.grid(time=levels(time),light=levels(light)))
+pp$grahami <- predict(lmTL1,newdata=pp)
+cc <- as.list(plyr::rename(coef(lmTL1),c(`(Intercept)`="int")))
+labelpos <- with(cc,
+  list(x=c(1,2,3,1),xend=c(1,2,3,1),
+      y=c(int,int,int,int),
+      yend=c(int,int+timemidday,int+timelate,int+lightsunny)))
+xpos <- -0.1
+ggplot(pp,aes(x=time,y=grahami,colour=light))+geom_point()+
+  geom_line(aes(group=light))+
+  annotate("segment",x=labelpos$x,xend=labelpos$xend,y=labelpos$y,
+           yend=labelpos$yend,alpha=0.5,
+           arrow=arrow(length = unit(0.3,"cm"),ends="both"))+
+  annotate("text",x=with(labelpos,(x+xend)/2)+xpos,y=with(labelpos,(y+yend)/2),
+label=paste0("beta[",1:4,"]"),parse=TRUE)+
+  annotate("segment",x=labelpos$x[1],xend=labelpos$x[3],y=labelpos$y[1],
+           yend=labelpos$y[1],alpha=0.3,lty=2)
+```
+$\beta_1$ is the intercept ("early","sunny"); $\beta_2$ and $\beta_3$ are the differences from the baseline level ("early") of the *first* variable (`time`) in the *baseline* level of the other parameter(s) (`light`="shady"); $\beta_4$ is the difference from the baseline level ("sunny") of the *second* variable (`light`) in the *baseline* level of `time` ("early").
+
+Now let's look at an interaction model:
+
+```{r lizardTL2}
+pr(lmTL2 <- lm(grahami~time*light,data=lizards))
+```
+
+```{r lizardcontrasts2,echo=FALSE,cache=TRUE}
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length=n+1)
+  hcl(h=hues, l=65, c=100)[1:n]
+}
+pp2 <- pp
+pp2$grahami <- predict(lmTL2,newdata=pp)
+cc <- as.list(plyr::rename(coef(lmTL2),c(`(Intercept)`="int",
+        `timemidday:lightsunny`="midsunny",`timelate:lightsunny`="latesunny")))
+labelpos <- with(cc,
+  list(x=c(1,2,3,1,2,3),xend=c(1,2,3,1,2,3),
+      y=c(int,int,int,int,int+lightsunny+timemidday,int+lightsunny+timelate),
+      yend=c(int,int+timemidday,int+timelate,int+lightsunny,
+             int+timemidday+lightsunny+midsunny,int+timelate+lightsunny+latesunny)))
+xpos <- -0.1
+ggplot(pp2,aes(x=time,y=grahami,colour=light))+geom_point()+
+  geom_line(aes(group=light))+
+  annotate("segment",x=1:2,xend=2:3,
+           y=with(cc,c(int+lightsunny,int+timemidday+lightsunny)),
+           yend=with(cc,c(int+timemidday+lightsunny,int+timelate+lightsunny)),
+           colour=gg_color_hue(2)[2],lty=2)+
+  annotate("segment",x=labelpos$x,xend=labelpos$xend,y=labelpos$y,
+           yend=labelpos$yend,alpha=0.5) +
+           ## arrow=arrow(length = unit(0.3,"cm"),ends="both"))+
+  annotate("text",x=with(labelpos,(x+xend)/2)+xpos,y=with(labelpos,(y+yend)/2),
+label=paste0("beta[",1:6,"]"),parse=TRUE)+
+  annotate("segment",x=rep(labelpos$x[1],2),
+                     xend=rep(labelpos$x[3],2),
+                     y=labelpos$yend[c(1,4)],
+                     yend=labelpos$yend[c(1,4)],alpha=0.3,lty=2)
+```
+Parameters $\beta_1$ to $\beta_4$ have the same meanings as before.
+Now we also have $\beta_5$ and $\beta_6$, labelled "timemidday:lightsunny" and "timelate:lightsunny", which describe the difference between the expected mean value of these treatment combinations based on the additive model (which are $\beta_1 + \beta_2 + \beta_4$ and $\beta_1 + \beta_3 + \beta_4$ respectively) and their actual values.
+
+
+Now re-do this for sum-to-zero contrasts ... the fits are easy:
+```{r lizardTL1S}
+pr(lmTL1S <- update(lmTL1,contrasts=list(time=contr.sum,light=contr.sum)))
+```
+
+```{r lizardTL2S}
+pr(lmTL2S <- update(lmTL2,contrasts=list(time=contr.sum,light=contr.sum)))
+```
+
+(The intercept doesn't stay exactly the same when we add the interaction
+because the data are unbalanced:
+try `with(lizards,table(light,time))`)
+
+
+
+## Other refs
+
+- http://sas-and-r.blogspot.com/2010/10/example-89-contrasts.html
+- see also: `gmodels::fit.contrast`, `rms::contrast.rms` for on-the-fly contrasts
+-  http://www.ats.ucla.edu/stat/r/library/contrast_coding.htm
+
+## References
