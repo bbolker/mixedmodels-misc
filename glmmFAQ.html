@@ -120,7 +120,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">GLMM FAQ</h1>
 <h4 class="author"><em>Ben Bolker and others</em></h4>
-<h4 class="date"><em>21:05 26 February 2018</em></h4>
+<h4 class="date"><em>21:09 26 February 2018</em></h4>
 
 </div>
 
@@ -238,7 +238,7 @@ $(document).ready(function () {
 </ul>
 <p><strong>DISCLAIMERS:</strong></p>
 <ul>
-<li>(G)LMMs are hard - harder than you may think based on what you may have learned in your second statistics class, which probably focused on picking the appropriate sums of squares terms and degrees of freedom for the numerator and denominator of an <span class="math inline">\(F\)</span> test. ‘Modern’ mixed model approaches, although more powerful (they can handle more complex designs, lack of balance, crossed random factors, some kinds of non-Normally distributed responses, etc.), also require a new set of conceptual tools. In order to use these tools you should have at least a general acquaintance with classical mixed-model experimental designs but you should also, probably, read something about modern mixed model approaches. <span class="citation">Littell et al. (2006)</span> and <span class="citation">Pinheiro and Bates (2000)</span> are two places to start, although Pinheiro and Bates is probably more useful if you want to use R. Other useful references include <span class="citation">Gelman and Hill (2006)</span> (focused on Bayesian methods) and <span class="citation">Zuur et al. (2009)</span>. If you are going to use generalized linear mixed models, you should understand generalized linear models (<span class="citation">Dobson and Barnett (2008)</span>, <span class="citation">Faraway (2006)</span>, and <span class="citation">McCullagh and Nelder (1989)</span> are standard references; the last is the canonical reference, but also the most challenging).</li>
+<li>(G)LMMs are hard - harder than you may think based on what you may have learned in your second statistics class, which probably focused on picking the appropriate sums of squares terms and degrees of freedom for the numerator and denominator of an <span class="math inline">\(F\)</span> test. ‘Modern’ mixed model approaches, although more powerful (they can handle more complex designs, lack of balance, crossed random factors, some kinds of non-Normally distributed responses, etc.), also require a new set of conceptual tools. In order to use these tools you should have at least a general acquaintance with classical mixed-model experimental designs but you should also, probably, read something about modern mixed model approaches. <span class="citation">Littell et al. (2006)</span> and <span class="citation">Pinheiro and Bates (2000)</span> are two places to start, although Pinheiro and Bates is probably more useful if you want to use R. Other useful references include <span class="citation">Gelman and Hill (2006)</span> (focused on Bayesian methods) and <span class="citation">Zuur et al. (2009b)</span>. If you are going to use generalized linear mixed models, you should understand generalized linear models (<span class="citation">Dobson and Barnett (2008)</span>, <span class="citation">Faraway (2006)</span>, and <span class="citation">McCullagh and Nelder (1989)</span> are standard references; the last is the canonical reference, but also the most challenging).</li>
 <li>All of the issues that arise with regular linear or generalized-linear modeling (e.g.: inadequacy of p-values alone for thorough statistical analysis; need to understand how models are parameterized; need to understand the principle of marginality and how interactions can be treated; dangers of overfitting, which are not mitigated by stepwise procedures; the non-existence of free lunches) also apply, and can apply more severely, to mixed models.</li>
 <li>When SAS (or Stata, or Genstat/AS-REML or …) and R differ in their answers, R may not be wrong. Both SAS and R may be `right’ but proceeding in a different way/answering different questions/using a different philosophical approach (or both may be wrong …)</li>
 <li>The advice in this FAQ comes with <strong>absolutely no warranty of any sort</strong>.</li>
@@ -412,7 +412,7 @@ overdisp_fun(m2)</code></pre>
 </div>
 <div id="zero-inflation" class="section level2">
 <h2>Zero-inflation</h2>
-<p>See e.g. <span class="citation">(<span class="citeproc-not-found" data-reference-id="martin_zero_2005"><strong>???</strong></span>)</span> or <span class="citation">Warton (2005)</span> (“many zeros does not mean zero inflation”) or <span class="citation">(<span class="citeproc-not-found" data-reference-id="zuur_zero-truncated_2009"><strong>???</strong></span>)</span> for general information on zero-inflation.</p>
+<p>See e.g. <span class="citation">Martin et al. (2005)</span> or <span class="citation">Warton (2005)</span> (“many zeros does not mean zero inflation”) or <span class="citation">Zuur et al. (2009a)</span> for general information on zero-inflation.</p>
 <div id="count-data" class="section level3">
 <h3>Count data</h3>
 <ul>
@@ -1365,6 +1365,9 @@ withCallingHandlers(tryCatch(fun(n=nvec[j],tau=tauvec[i],...),
 <div id="ref-maindonald_data_2010">
 <p>Maindonald, J., and J. Braun. 2010. <em>Data Analysis and Graphics Using R, an Example-Based Approach</em>. 3rd ed. Cambridge University Press.</p>
 </div>
+<div id="ref-martin_zero_2005">
+<p>Martin, Tara G., Brendan A. Wintle, Jonathan R. Rhodes, Petra M. Kuhnert, Scott A. Field, Samantha J. Low-Choy, Andrew J. Tyre, and Hugh P. Possingham. 2005. “Zero Tolerance Ecology: Improving Ecological Inference by Modelling the Source of Zero Observations: Modelling Excess Zeros in Ecology.” <em>Ecology Letters</em> 8 (11): 1235–46. doi:<a href="https://doi.org/10.1111/j.1461-0248.2005.00826.x">10.1111/j.1461-0248.2005.00826.x</a>.</p>
+</div>
 <div id="ref-matuschek_balancing_2017">
 <p>Matuschek, Hannes, Reinhold Kliegl, Shravan Vasishth, Harald Baayen, and Douglas Bates. 2017. “Balancing Type I Error and Power in Linear Mixed Models.” <em>Journal of Memory and Language</em> 94: 305–15. doi:<a href="https://doi.org/10.1016/j.jml.2017.01.001">10.1016/j.jml.2017.01.001</a>.</p>
 </div>
@@ -1422,8 +1425,11 @@ withCallingHandlers(tryCatch(fun(n=nvec[j],tau=tauvec[i],...),
 <div id="ref-xu_measuring_2003">
 <p>Xu, R. 2003. “Measuring Explained Variation in Linear Mixed Effects Models.” <em>Statist. Med.</em> 22: 3527–41. doi:<a href="https://doi.org/10.1002/sim.1572 doi:10.1002/sim.1572">10.1002/sim.1572 doi:10.1002/sim.1572</a>.</p>
 </div>
+<div id="ref-zuur_zero-truncated_2009">
+<p>Zuur, Alain F., Elena N. Ieno, Neil J. Walker, Anatoly A. Saveliev, and Graham M. Smith. 2009a. “Zero-Truncated and Zero-Inflated Models for Count Data.” In <em>Mixed Effects Models and Extensions in Ecology with R</em>, 261–93. New York, NY: Springer New York. <a href="http://www.springerlink.com/content/m087275807178771/" class="uri">http://www.springerlink.com/content/m087275807178771/</a>.</p>
+</div>
 <div id="ref-zuur_mixed_2009">
-<p>Zuur, Alain F., Elena N. Ieno, Neil J. Walker, Anatoly A. Saveliev, and Graham M. Smith. 2009. <em>Mixed Effects Models and Extensions in Ecology with R</em>. Springer.</p>
+<p>———. 2009b. <em>Mixed Effects Models and Extensions in Ecology with R</em>. Springer.</p>
 </div>
 </div>
 </div>
