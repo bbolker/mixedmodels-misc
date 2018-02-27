@@ -28,7 +28,7 @@ The most commonly used functions for mixed modeling in R are
 ## Other sources of help
 
 - the mailing list is `r-sig-mixed-models@r-project.org`
-    - sign up [here](https://stat.ethz.ch/pipermail/r-sig-mixed-models/)
+    - sign up [here](https://stat.ethz.ch/mailman/listinfo/r-sig-mixed-models)
 	- archives [here](https://stat.ethz.ch/pipermail/r-sig-mixed-models/)
 	- or Google search with the tag `site:https://stat.ethz.ch/pipermail/r-sig-mixed-models/`
 - The source code of this document is available [on GitHub](https://github.com/bbolker/mixedmodels-misc/blob/master/glmmFAQ.rmd); the rendered (HTML) version lives on [GitHub pages](http://bbolker.github.io/mixedmodels-misc/glmmFAQ.html).
@@ -179,6 +179,8 @@ Gamma models can be fitted by a wide variety of platforms (`lme4::glmer`, `MASS:
 
 ## Zero-inflation
 
+See e.g. @martin_zero_2005 or @warton_many_2005 ("many zeros does not mean zero inflation") or @zuur_zero-truncated_2009 for general information on zero-inflation.
+
 ### Count data
 
 - `MCMCglmm` handles zero-truncated, zero-inflated, and zero-altered models, although specifying the models is a little bit tricky: see Sections 5.3 to 5.5 of the [CourseNotes vignette](https://cran.r-project.org/web/packages/MCMCglmm/vignettes/CourseNotes.pdf)
@@ -204,8 +206,8 @@ Continuous data are a special case where the mixture model may make less sense.
 - you can use AIC or variations, with the same caveats
 - you can use Vuong's test, which is often recommended for testing zero-inflation in GLMs, because under some circumstances the various model flavors under consideration (hurdle vs zero-inflated vs "vanilla") are not nested. Vuong's test is implemented (and referenced) in the `pscl` package, and should be feasible to implement for GLMMs, but I don't know of an implementation.  Someone should let me (BMB) know if they find one.
 - two untested but reasonable approaches:
-   -  use a 'simulate' method if it exists to construct a simulated distribution of the proportion of zeros in your dataset, and compare it to the observed proportion
-   - compute the probability of a zero for each observation.  On the basis of Bernoulli trials, compute the expected number of zeros and the confidence intervals -- compare it with the observed number.
+    -  use a `simulate()` method if it exists to construct a simulated distribution of the proportion of zeros expected overall from your model, and compare it to the observed proportion of zeros in the data set
+    - compute the probability of a zero for each observation.  On the basis of (conditionally) independent Bernoulli trials, compute the expected number of zeros and the confidence intervals -- compare it with the observed number.
 
 ## Spatial and temporal correlation models, heteroscedasticity ("R-side" models)
 
@@ -409,7 +411,9 @@ From worst to best:
 - Wald chi-square tests (e.g. `car::Anova`)
 - Likelihood ratio test (via `anova` or `drop1`)
 - **For balanced, nested LMMs** where df can be computed: conditional F-tests 
-- **For LMMs**: conditional F-tests with df correction (e.g. Kenward-Roger in `pbkrtest` package). (@stroup_rethinking_2014 states on the basis of (unpresented) simulation results that K-R actually works reasonably well for GLMMs.  However, at present the code in `KRmodcomp` only handles LMMs.)
+- **For LMMs**: conditional F-tests with df correction (e.g. Kenward-Roger in `pbkrtest` package). (@stroup_rethinking_2014 states (referencing @stroup_non-normal_2013) that K-R actually works reasonably well for GLMMs:
+> Notice the non-integer values of the denominator df. They, and the $F$ and $p$ values, reflect the procedure developed by Kenward and Roger (2009) to account for the effect of the covariance  structure on degrees of freedom and standard errors. Although the Kenward–Roger adjustment was derived for the LMM with normally distributed data and is an ad hoc procedure for GLMMs with non-normal data, informal simulation studies consistently have suggested that the adjustment is accurate. The Kenward-Roger adjustment requires that the SAS GLIMMIX default computing algorithm, pseudo-likelihood, be used rather than the Laplace algorithm used to obtain AICC statistics. Stroup (2013b) found that for binomial and Poisson GLMMs, pseudo-likelihood with the Kenward–Roger adjustment yields better Type I error control than Laplace while preserving the GLMM’s advantage with respect to power and accuracy in estimating treatment means.
+However, K-R is not implemented in R for GLMMs; Stroup suggests that a pseudo-likelihood [@wolfinger_generalized_1993] approach is necessary in order to implement K-R for GLMMs.
 - MCMC or parametric, or nonparametric, bootstrap comparisons (nonparametric bootstrapping must be implemented carefully to account for grouping factors)
 
 ### Is the likelihood ratio test reliable for mixed models?
