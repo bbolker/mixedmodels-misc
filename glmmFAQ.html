@@ -120,7 +120,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">GLMM FAQ</h1>
 <h4 class="author"><em>Ben Bolker and others</em></h4>
-<h4 class="date"><em>09:34 11 December 2017</em></h4>
+<h4 class="date"><em>21:05 26 February 2018</em></h4>
 
 </div>
 
@@ -229,7 +229,7 @@ $(document).ready(function () {
 <ul>
 <li>the mailing list is <code>r-sig-mixed-models@r-project.org</code>
 <ul>
-<li>sign up <a href="https://stat.ethz.ch/pipermail/r-sig-mixed-models/">here</a></li>
+<li>sign up <a href="https://stat.ethz.ch/mailman/listinfo/r-sig-mixed-models">here</a></li>
 <li>archives <a href="https://stat.ethz.ch/pipermail/r-sig-mixed-models/">here</a></li>
 <li>or Google search with the tag <code>site:https://stat.ethz.ch/pipermail/r-sig-mixed-models/</code></li>
 </ul></li>
@@ -412,6 +412,7 @@ overdisp_fun(m2)</code></pre>
 </div>
 <div id="zero-inflation" class="section level2">
 <h2>Zero-inflation</h2>
+<p>See e.g. <span class="citation">(<span class="citeproc-not-found" data-reference-id="martin_zero_2005"><strong>???</strong></span>)</span> or <span class="citation">Warton (2005)</span> (“many zeros does not mean zero inflation”) or <span class="citation">(<span class="citeproc-not-found" data-reference-id="zuur_zero-truncated_2009"><strong>???</strong></span>)</span> for general information on zero-inflation.</p>
 <div id="count-data" class="section level3">
 <h3>Count data</h3>
 <ul>
@@ -442,9 +443,11 @@ overdisp_fun(m2)</code></pre>
 <li>you can use a likelihood ratio test between the regular and zero-inflated version of the model, but be aware of boundary issues (search “boundary” elsewhere on this page …) – the null value (no zero inflation) is on the boundary of the feasible space</li>
 <li>you can use AIC or variations, with the same caveats</li>
 <li>you can use Vuong’s test, which is often recommended for testing zero-inflation in GLMs, because under some circumstances the various model flavors under consideration (hurdle vs zero-inflated vs “vanilla”) are not nested. Vuong’s test is implemented (and referenced) in the <code>pscl</code> package, and should be feasible to implement for GLMMs, but I don’t know of an implementation. Someone should let me (BMB) know if they find one.</li>
-<li>two untested but reasonable approaches:</li>
-<li>use a ‘simulate’ method if it exists to construct a simulated distribution of the proportion of zeros in your dataset, and compare it to the observed proportion</li>
-<li>compute the probability of a zero for each observation. On the basis of Bernoulli trials, compute the expected number of zeros and the confidence intervals – compare it with the observed number.</li>
+<li>two untested but reasonable approaches:
+<ul>
+<li>use a <code>simulate()</code> method if it exists to construct a simulated distribution of the proportion of zeros expected overall from your model, and compare it to the observed proportion of zeros in the data set</li>
+<li>compute the probability of a zero for each observation. On the basis of (conditionally) independent Bernoulli trials, compute the expected number of zeros and the confidence intervals – compare it with the observed number.</li>
+</ul></li>
 </ul>
 </div>
 </div>
@@ -659,7 +662,7 @@ This sets the residual variance to 1.0. You <em>cannot</em> use this to make it 
 <li>Wald chi-square tests (e.g. <code>car::Anova</code>)</li>
 <li>Likelihood ratio test (via <code>anova</code> or <code>drop1</code>)</li>
 <li><strong>For balanced, nested LMMs</strong> where df can be computed: conditional F-tests</li>
-<li><strong>For LMMs</strong>: conditional F-tests with df correction (e.g. Kenward-Roger in <code>pbkrtest</code> package). (<span class="citation">Stroup (2014)</span> states on the basis of (unpresented) simulation results that K-R actually works reasonably well for GLMMs. However, at present the code in <code>KRmodcomp</code> only handles LMMs.)</li>
+<li><strong>For LMMs</strong>: conditional F-tests with df correction (e.g. Kenward-Roger in <code>pbkrtest</code> package). (<span class="citation">Stroup (2014)</span> states (referencing <span class="citation">Stroup (2013)</span>) that K-R actually works reasonably well for GLMMs: &gt; Notice the non-integer values of the denominator df. They, and the <span class="math inline">\(F\)</span> and <span class="math inline">\(p\)</span> values, reflect the procedure developed by Kenward and Roger (2009) to account for the effect of the covariance structure on degrees of freedom and standard errors. Although the Kenward–Roger adjustment was derived for the LMM with normally distributed data and is an ad hoc procedure for GLMMs with non-normal data, informal simulation studies consistently have suggested that the adjustment is accurate. The Kenward-Roger adjustment requires that the SAS GLIMMIX default computing algorithm, pseudo-likelihood, be used rather than the Laplace algorithm used to obtain AICC statistics. Stroup (2013b) found that for binomial and Poisson GLMMs, pseudo-likelihood with the Kenward–Roger adjustment yields better Type I error control than Laplace while preserving the GLMM’s advantage with respect to power and accuracy in estimating treatment means. However, K-R is not implemented in R for GLMMs; Stroup suggests that a pseudo-likelihood <span class="citation">(Wolfinger and O’Connell 1993)</span> approach is necessary in order to implement K-R for GLMMs.</li>
 <li>MCMC or parametric, or nonparametric, bootstrap comparisons (nonparametric bootstrapping must be implemented carefully to account for grouping factors)</li>
 </ul>
 </div>
@@ -783,7 +786,7 @@ exactRLRT(m0=m0,m=m.slope,mA=mA)</code></pre>
 <li>Parametric bootstrap: fit the reduced model, then repeatedly simulate from it and compute the differences between the deviance of the reduced and the full model for each simulated data set. Compare this null distribution to the observed deviance difference. This procedure is implemented in the <code>pbkrtest</code> package.</li>
 </ul>
 <pre class="r"><code>(pb &lt;- pbkrtest::PBmodcomp(m2,m1,seed=101))</code></pre>
-<pre><code>## Parametric bootstrap test; time: 29.05 sec; samples: 1000 extremes: 0;
+<pre><code>## Parametric bootstrap test; time: 34.88 sec; samples: 1000 extremes: 0;
 ## Requested samples: 1000 Used samples: 575 Extremes: 0
 ## large : Reaction ~ Days + (1 | Subject) + (0 + Days | Subject)
 ## small : Reaction ~ Days + (1 | Subject)
@@ -1225,7 +1228,7 @@ withCallingHandlers(tryCatch(fun(n=nvec[j],tau=tauvec[i],...),
 <div id="package-versions-used" class="section level2">
 <h2>Package versions used</h2>
 <pre class="r"><code>sessionInfo()</code></pre>
-<pre><code>## R Under development (unstable) (2017-12-04 r73826)
+<pre><code>## R Under development (unstable) (2018-02-16 r74261)
 ## Platform: x86_64-pc-linux-gnu (64-bit)
 ## Running under: Ubuntu 14.04.5 LTS
 ## 
@@ -1242,24 +1245,25 @@ withCallingHandlers(tryCatch(fun(n=nvec[j],tau=tauvec[i],...),
 ## [11] LC_MEASUREMENT=en_CA.UTF8 LC_IDENTIFICATION=C      
 ## 
 ## attached base packages:
-## [1] methods   stats     graphics  grDevices utils     datasets  base     
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] ggplot2_2.2.1.9000 RLRsim_3.1-3       nlme_3.1-134      
-## [4] lme4_1.1-15        Matrix_1.2-12      pander_0.6.1      
-## [7] knitr_1.17        
+## [1] ggplot2_2.2.1.9000 RLRsim_3.1-3       nlme_3.1-135      
+## [4] lme4_1.1-16        Matrix_1.2-12      pander_0.6.1      
+## [7] knitr_1.18        
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] Rcpp_0.12.14      magrittr_1.5      splines_3.5.0    
-##  [4] MASS_7.3-47       munsell_0.4.3     colorspace_1.3-2 
-##  [7] lattice_0.20-35   rlang_0.1.4       minqa_1.2.4      
-## [10] plyr_1.8.4        stringr_1.2.0     tools_3.5.0      
-## [13] grid_3.5.0        gtable_0.2.0      mgcv_1.8-22      
-## [16] htmltools_0.3.6   lazyeval_0.2.1    yaml_2.1.15      
-## [19] rprojroot_1.2     digest_0.6.12     tibble_1.3.4     
-## [22] nloptr_1.0.4      evaluate_0.10.1   rmarkdown_1.8    
-## [25] labeling_0.3      stringi_1.1.6     compiler_3.5.0   
-## [28] scales_0.5.0.9000 backports_1.1.1</code></pre>
+##  [1] Rcpp_0.12.15      magrittr_1.5      splines_3.5.0    
+##  [4] MASS_7.3-48       munsell_0.4.3     colorspace_1.3-2 
+##  [7] lattice_0.20-35   rlang_0.2.0       minqa_1.2.4      
+## [10] plyr_1.8.4        stringr_1.3.0     tools_3.5.0      
+## [13] grid_3.5.0        gtable_0.2.0      mgcv_1.8-23      
+## [16] withr_2.1.1.9000  htmltools_0.3.6   lazyeval_0.2.1   
+## [19] yaml_2.1.16       rprojroot_1.3-2   digest_0.6.15    
+## [22] tibble_1.4.2      nloptr_1.0.4      evaluate_0.10.1  
+## [25] rmarkdown_1.8     labeling_0.3      stringi_1.1.6    
+## [28] pillar_1.1.0      compiler_3.5.0    scales_0.5.0.9000
+## [31] backports_1.1.2</code></pre>
 </div>
 </div>
 <div id="bibliography" class="section level1 unnumbered">
@@ -1397,6 +1401,9 @@ withCallingHandlers(tryCatch(fun(n=nvec[j],tau=tauvec[i],...),
 <div id="ref-spiegelhalter_bayesian_2002">
 <p>Spiegelhalter, D. J., N. Best, B. P. Carlin, and A. Van der Linde. 2002. “Bayesian Measures of Model Complexity and Fit.” <em>Journal of the Royal Statistical Society B</em> 64: 583–640.</p>
 </div>
+<div id="ref-stroup_non-normal_2013">
+<p>Stroup, W. W. 2013. “Non-Normal Data in Agricultural Experiments.” In. Kansas State University. <a href="http://newprairiepress.org/agstatconference/2013/proceedings/8" class="uri">http://newprairiepress.org/agstatconference/2013/proceedings/8</a>.</p>
+</div>
 <div id="ref-stroup_rethinking_2014">
 <p>Stroup, Walter W. 2014. “Rethinking the Analysis of Non-Normal Data in Plant and Soil Science.” <em>Agronomy Journal</em> 106: 1–17. doi:<a href="https://doi.org/10.2134/agronj2013.0342">10.2134/agronj2013.0342</a>.</p>
 </div>
@@ -1405,6 +1412,12 @@ withCallingHandlers(tryCatch(fun(n=nvec[j],tau=tauvec[i],...),
 </div>
 <div id="ref-venables_modern_2002">
 <p>Venables, W., and Brian D. Ripley. 2002. <em>Modern Applied Statistics with S</em>. 4th ed. New York: Springer.</p>
+</div>
+<div id="ref-warton_many_2005">
+<p>Warton, David I. 2005. “Many Zeros Does Not Mean Zero Inflation: Comparing the Goodness-of-Fit of Parametric Models to Multivariate Abundance Data.” <em>Environmetrics</em> 16 (3): 275–89. doi:<a href="https://doi.org/10.1002/env.702">10.1002/env.702</a>.</p>
+</div>
+<div id="ref-wolfinger_generalized_1993">
+<p>Wolfinger, Russ, and Michael O’Connell. 1993. “Generalized Linear Mixed Models a Pseudo-Likelihood Approach.” <em>Journal of Statistical Computation and Simulation</em> 48 (3-4): 233–43. doi:<a href="https://doi.org/10.1080/00949659308811554">10.1080/00949659308811554</a>.</p>
 </div>
 <div id="ref-xu_measuring_2003">
 <p>Xu, R. 2003. “Measuring Explained Variation in Linear Mixed Effects Models.” <em>Statist. Med.</em> 22: 3527–41. doi:<a href="https://doi.org/10.1002/sim.1572 doi:10.1002/sim.1572">10.1002/sim.1572 doi:10.1002/sim.1572</a>.</p>
