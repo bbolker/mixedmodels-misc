@@ -120,7 +120,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">GLMM FAQ</h1>
 <h4 class="author"><em>Ben Bolker and others</em></h4>
-<h4 class="date"><em>21:09 26 February 2018</em></h4>
+<h4 class="date"><em>16:01 20 March 2018</em></h4>
 
 </div>
 
@@ -155,7 +155,6 @@ $(document).ready(function () {
 <li><a href="#singular-models-random-effect-variances-estimated-as-zero-or-correlations-estimated-as---1">Singular models: random effect variances estimated as zero, or correlations estimated as +/- 1</a></li>
 <li><a href="#setting-residual-variances-to-a-fixed-value-zero-or-other">Setting residual variances to a fixed value (zero or other)</a></li>
 <li><a href="#other-problems">Other problems</a></li>
-<li><a href="#errors-old">Errors (old)</a></li>
 </ul></li>
 <li><a href="#reml-for-glmms">REML for GLMMs</a></li>
 </ul></li>
@@ -179,6 +178,7 @@ $(document).ready(function () {
 <li><a href="#confidence-intervals-on-conditional-meansblupsrandom-effects">Confidence intervals on conditional means/BLUPs/random effects</a><ul>
 <li><a href="#lme4-1">lme4</a></li>
 </ul></li>
+<li><a href="#power-analysis">Power analysis</a></li>
 </ul></li>
 <li><a href="#model-selection-and-averaging">Model selection and averaging</a><ul>
 <li><a href="#can-i-use-aic-for-mixed-models-how-do-i-count-the-number-of-degrees-of-freedom-for-a-random-effect">Can I use AIC for mixed models? How do I count the number of degrees of freedom for a random effect?</a></li>
@@ -612,21 +612,6 @@ This sets the residual variance to 1.0. You <em>cannot</em> use this to make it 
 <p>This occurs because <code>lme4</code> doesn’t do anything to constrain the predicted values, so <code>NaN</code> values pop up, which aren’t handled gracefully. If possible, switch to a link function to one that constrains the response (e.g. logit link for binomial or log link for Gamma).</p></li>
 </ul>
 </div>
-<div id="errors-old" class="section level3">
-<h3>Errors (old)</h3>
-<p><strong>most or all of the errors listed here are obsolete/refer to several-years-old versions of <code>lme4</code>. This section is being retained for now for historical purposes, but will eventually be dropped (relying on Github to keep it in the historical record).</strong></p>
-<ul>
-<li>As pointed out by several users (<a href="https://stat.ethz.ch/pipermail/r-help/2009-April/195135.html">here</a>, <a href="https://stat.ethz.ch/pipermail/r-sig-mixed-models/2010q1/003473.html">here</a>, and <a href="https://stat.ethz.ch/pipermail/r-help/2012-December/332624.html">here</a>, for example), the AICs computed for lmer models in <code>summary</code> and <code>anova</code> are different; <code>summary</code> uses the REML specification as specified when fitting the model, while <code>anova</code> always uses REML=FALSE (to safeguard users against incorrectly using restricted MLs to compare models with different fixed effect components). (This behavior is slightly overzealous since users might conceivably be using <code>anova</code> to compare models with different <strong>random</strong> effects [although this also subject to boundary effects as described elsewhere in this document …])</li>
-<li><code>Error: Length(f1) == length(f2) is not TRUE</code>, typically accompanied by a warning that <code>numerical expression has xxx elements: only the first used</code>: make sure that your grouping variables are all factors.<br />
-</li>
-<li><code>mer_finalize(ans) : gr cannot be computed at initial par (65)</code> warning, followed by <code>Error in asMethod(object) : matrix is not symmetric [1,2]</code>, <strong>or</strong> <code>Error in mer_finalize(ans) : Downdated X'X is not positive definite, 1.</code> <strong>or</strong> <code>Error ... rank of X = &lt;m&gt; &lt; ncol(X) = &lt;n&gt;</code>:</li>
-<li>especially if this happens on the first step (the number at the end of the error message is “1”), you may have incorporated some perfectly collinear terms in your design matrix (see <a href="http://stats.stackexchange.com/questions/35071/what-is-rank-deficiency-and-how-to-deal-with-it">this Stack Exchange question</a> for further information). To confirm that this problem, try a <code>glm</code> or <code>lm</code> fit (i.e. dropping the random effects) and see if some of the parameters are set to <code>NA</code>. (Whether linear modeling software can handle rank-deficient cases depends on the details of the computational linear algebra routines used: so far, those used in <code>lme4</code> have traded the robustness of being able to handle rank-deficiency for speed). One example of a workaround (constructing the design matrix by hand, or in <code>glm</code>, and then dropping the collinear terms) is shown <a href="http://article.gmane.org/gmane.comp.lang.r.general/276472">here</a>.</li>
-<li>Alternatively, you may just have <em>mostly</em> collinear (rather than perfectly collinear) terms. Try centering and scaling your data (usually a good idea anyway, and centering removes the correlation between the intercept and the other predictors). Also check the correlation of the predictors, and if they are strongly correlated try some of the standard tactics – discard predictors, use principal components analysis, …</li>
-<li><code>Error in UseMethod(&quot;ranef&quot;) : no applicable method for 'ranef' applied to an object of class &quot;mer&quot;</code>: this is usually caused by package conflicts, especially with the <code>nlme</code> package. Try <code>detach(&quot;package:nlme&quot;)</code> (the <code>glmmADMB</code> package may also cause such errors).</li>
-<li>Other warnings about “false convergence” often indicates model mis-specification, or insufficient data for estimation; they do not necessarily indicate an error, but results that should be scrutinized particularly carefully. Replicate the analysis in another package, if possible; make sure that the results are consistent with those of a simplified version of the model. Another approach is to use a Bayesian model with stabilizing priors (see <code>MCMCglmm</code>, or <code>brglm</code>)</li>
-<li><code>function 'cholmod_start' not provided by package 'Matrix'</code>: this error, and errors like it, are due to the <code>lme4</code> and <code>Matrix</code> package being out of sync. Here is a table giving versions that do seem to work: || Type || OS || R version || Source || lme4 version || Matrix version || works? || || Source || (Ubuntu 10.04) || 2.13.0 || CRAN || 0.999375-39 || 0.999375-50 || yes || || Source || (Ubuntu 10.04) || 2.13.0 || R-forge || 0.999375-40 || 0.9996875-0 || yes || || Source || (Ubuntu 10.04) || 2.13.0 || SVN || 0.999375-40 (r1322)|| 0.9996875-0 (r2678)|| yes ||</li>
-</ul>
-</div>
 </div>
 <div id="reml-for-glmms" class="section level2">
 <h2>REML for GLMMs</h2>
@@ -786,7 +771,7 @@ exactRLRT(m0=m0,m=m.slope,mA=mA)</code></pre>
 <li>Parametric bootstrap: fit the reduced model, then repeatedly simulate from it and compute the differences between the deviance of the reduced and the full model for each simulated data set. Compare this null distribution to the observed deviance difference. This procedure is implemented in the <code>pbkrtest</code> package.</li>
 </ul>
 <pre class="r"><code>(pb &lt;- pbkrtest::PBmodcomp(m2,m1,seed=101))</code></pre>
-<pre><code>## Parametric bootstrap test; time: 34.88 sec; samples: 1000 extremes: 0;
+<pre><code>## Parametric bootstrap test; time: 81.32 sec; samples: 1000 extremes: 0;
 ## Requested samples: 1000 Used samples: 575 Extremes: 0
 ## large : Reaction ~ Days + (1 | Subject) + (0 + Days | Subject)
 ## small : Reaction ~ Days + (1 | Subject)
@@ -979,6 +964,13 @@ cV &lt;- ranef(fm1, condVar = TRUE)   </code></pre>
 <p>See also section 1.6 of FIXME Batesdraft</p>
 <p>Also, note that at a minimum, the uncertainty of the fixed-effect intercept estimate needs to be incorporated as well; probably manually (remember, the model assumes the fixed and random effects to be orthogonal, so this is straightforward). If you predict on an individual with specific fixed-effect covariate values, those need incorporation too.</p>
 </div>
+</div>
+<div id="power-analysis" class="section level2">
+<h2>Power analysis</h2>
+<p>Power analysis for (G)LMMs is mostly done by simulation, although there are some closed-form solutions and approximations, e.g. <span class="citation">Snijders and Bosker (1993)</span> (Snijders has links to programs and other resources on <a href="https://www.stats.ox.ac.uk/~snijders/">his web page</a>. There are resources and bits of code examples spread all over the internet. e.g. <a href="https://rpubs.com/bbolker/11703">here</a>.</p>
+<p><span class="citation">Kain, Bolker, and McCoy (2015)</span> and <span class="citation">Johnson et al. (2015)</span> are peer-reviewed papers that discuss power analysis via simulation in more detail.</p>
+<pre class="r"><code>library(sos); findFn(&quot;{power analysis} mixed simulation&quot;)</code></pre>
+<p>locates the <code>fullfact</code>, <code>pamm</code>, <code>simr</code>, and <code>simglm</code> packages. Depending on the goal, one of these packages may have sufficient flexibility to do what you want.</p>
 </div>
 </div>
 <div id="model-selection-and-averaging" class="section level1">
@@ -1228,7 +1220,7 @@ withCallingHandlers(tryCatch(fun(n=nvec[j],tau=tauvec[i],...),
 <div id="package-versions-used" class="section level2">
 <h2>Package versions used</h2>
 <pre class="r"><code>sessionInfo()</code></pre>
-<pre><code>## R Under development (unstable) (2018-02-16 r74261)
+<pre><code>## R Under development (unstable) (2018-03-15 r74411)
 ## Platform: x86_64-pc-linux-gnu (64-bit)
 ## Running under: Ubuntu 14.04.5 LTS
 ## 
@@ -1248,22 +1240,24 @@ withCallingHandlers(tryCatch(fun(n=nvec[j],tau=tauvec[i],...),
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] ggplot2_2.2.1.9000 RLRsim_3.1-3       nlme_3.1-135      
-## [4] lme4_1.1-16        Matrix_1.2-12      pander_0.6.1      
-## [7] knitr_1.18        
+##  [1] RLRsim_3.1-3       packdep_0.3.1      igraph_1.2.1      
+##  [4] ggplot2_2.2.1.9000 nlme_3.1-136       glmmADMB_0.8.5    
+##  [7] MASS_7.3-49        rmarkdown_1.9      lme4_1.1-16       
+## [10] Matrix_1.2-12      pander_0.6.1       knitr_1.20        
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] Rcpp_0.12.15      magrittr_1.5      splines_3.5.0    
-##  [4] MASS_7.3-48       munsell_0.4.3     colorspace_1.3-2 
-##  [7] lattice_0.20-35   rlang_0.2.0       minqa_1.2.4      
-## [10] plyr_1.8.4        stringr_1.3.0     tools_3.5.0      
-## [13] grid_3.5.0        gtable_0.2.0      mgcv_1.8-23      
-## [16] withr_2.1.1.9000  htmltools_0.3.6   lazyeval_0.2.1   
-## [19] yaml_2.1.16       rprojroot_1.3-2   digest_0.6.15    
-## [22] tibble_1.4.2      nloptr_1.0.4      evaluate_0.10.1  
-## [25] rmarkdown_1.8     labeling_0.3      stringi_1.1.6    
-## [28] pillar_1.1.0      compiler_3.5.0    scales_0.5.0.9000
-## [31] backports_1.1.2</code></pre>
+##  [1] Rcpp_0.12.16      compiler_3.5.0    pillar_1.2.1     
+##  [4] nloptr_1.0.4      R2admb_0.7.16     plyr_1.8.4       
+##  [7] tools_3.5.0       digest_0.6.15     evaluate_0.10.1  
+## [10] tibble_1.4.2      gtable_0.2.0      lattice_0.20-35  
+## [13] mgcv_1.8-23       pkgconfig_2.0.1   rlang_0.2.0.9000 
+## [16] parallel_3.5.0    yaml_2.1.18       coda_0.19-1      
+## [19] withr_2.1.1.9000  stringr_1.3.0     rprojroot_1.3-2  
+## [22] grid_3.5.0        minqa_1.2.4       magrittr_1.5     
+## [25] codetools_0.2-15  backports_1.1.2   scales_0.5.0.9000
+## [28] htmltools_0.3.6   splines_3.5.0     pbkrtest_0.4-7   
+## [31] colorspace_1.3-2  labeling_0.3      stringi_1.1.7    
+## [34] lazyeval_0.2.1    munsell_0.4.3</code></pre>
 </div>
 </div>
 <div id="bibliography" class="section level1 unnumbered">
@@ -1350,8 +1344,14 @@ withCallingHandlers(tryCatch(fun(n=nvec[j],tau=tauvec[i],...),
 <div id="ref-Hurlbert1984">
 <p>Hurlbert, S. 1984. “Pseudoreplication and the Design of Ecological Field Experiments.” <em>Ecological Monographs</em> 54: 187–211.</p>
 </div>
+<div id="ref-johnson_power_2015">
+<p>Johnson, Paul C. D., Sarah J. E. Barry, Heather M. Ferguson, and Pie Müller. 2015. “Power Analysis for Generalized Linear Mixed Models in Ecology and Evolution.” <em>Methods in Ecology and Evolution</em> 6 (2): 133–42. doi:<a href="https://doi.org/10.1111/2041-210X.12306">10.1111/2041-210X.12306</a>.</p>
+</div>
 <div id="ref-johnson_extension_2014">
 <p>Johnson, Paul C.D. 2014. “Extension of Nakagawa &amp; Schielzeth’s R2GLMM to Random Slopes Models.” <em>Methods in Ecology and Evolution</em> 5 (9): 944–46. doi:<a href="https://doi.org/10.1111/2041-210X.12225">10.1111/2041-210X.12225</a>.</p>
+</div>
+<div id="ref-kain_practical_2015">
+<p>Kain, Morgan P., Ben M. Bolker, and Michael W. McCoy. 2015. “A Practical Guide and Power Analysis for GLMMs: Detecting Among Treatment Variation in Random Effects.” <em>PeerJ</em> 3 (September): e1226. doi:<a href="https://doi.org/10.7717/peerj.1226">10.7717/peerj.1226</a>.</p>
 </div>
 <div id="ref-lawson_disease_1999">
 <p>Lawson, A., A. Biggeri, D. Bohning, E. LeSaffre, J. F. Viel, and R. Bertollini, eds. 1999. <em>Disease Mapping and Risk Assessment for Public Health</em>. New York: Wiley.</p>
@@ -1400,6 +1400,9 @@ withCallingHandlers(tryCatch(fun(n=nvec[j],tau=tauvec[i],...),
 </div>
 <div id="ref-schabenberger_contemporary_2001">
 <p>Schabenberger, Oliver, and Francis J. Pierce. 2001. <em>Contemporary Statistical Models for the Plant and Soil Sciences</em>. Boca Raton, FL: CRC Press.</p>
+</div>
+<div id="ref-snijders_standard_1993">
+<p>Snijders, Tom A. B., and Roel J. Bosker. 1993. “Standard Errors and Sample Sizes for Two-Level Research.” <em>Journal of Educational Statistics</em> 18 (3): 237. doi:<a href="https://doi.org/10.2307/1165134">10.2307/1165134</a>.</p>
 </div>
 <div id="ref-spiegelhalter_bayesian_2002">
 <p>Spiegelhalter, D. J., N. Best, B. P. Carlin, and A. Van der Linde. 2002. “Bayesian Measures of Model Complexity and Fit.” <em>Journal of the Royal Statistical Society B</em> 64: 583–640.</p>
