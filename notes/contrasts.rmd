@@ -1,7 +1,7 @@
 ---
 title: "Contrasts"
 output: tufte_handout
-bibliography: glmm.bib
+bibliography: ../glmm.bib
 header-includes:
 - \usepackage{bm}
 - \hypersetup{colorlinks=true,linkcolor=blue}
@@ -433,7 +433,7 @@ intercept is the value of the first level, rather than the mean?
 Interactions as *differences in differences*
 
 Interpretation problems/marginality principle
-[@venables_exegeseslinear_1998,schielzeth_simple_2010]
+[@venables_exegeses_1998,schielzeth_simple_2010]
 
 ```{r}
 head(d <- expand.grid(F=LETTERS[1:3],f=letters[1:3]))

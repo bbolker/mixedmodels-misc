@@ -362,23 +362,6 @@ PIRLS step-halvings failed to reduce deviance in pwrssUpdate
 ```
 This occurs because `lme4` doesn't do anything to constrain the predicted values, so `NaN` values pop up, which aren't handled gracefully. If possible, switch to a link function to one that constrains the response (e.g. logit link for binomial or log link for Gamma).
 
-### Errors (old)
-
-**most or all of the errors listed here are obsolete/refer to several-years-old versions of `lme4`. This section is being retained for now for historical purposes, but will eventually be dropped (relying on Github to keep it in the historical record).**
-
-- As pointed out by several users ([here](https://stat.ethz.ch/pipermail/r-help/2009-April/195135.html), [here](https://stat.ethz.ch/pipermail/r-sig-mixed-models/2010q1/003473.html), and [here](https://stat.ethz.ch/pipermail/r-help/2012-December/332624.html), for example), the AICs computed for lmer models in `summary` and `anova` are different; `summary` uses the REML specification as specified when fitting the model, while `anova` always uses REML=FALSE (to safeguard users against incorrectly using restricted MLs to compare models with different fixed effect components).  (This behavior is slightly overzealous since users might conceivably be using `anova` to compare models with different **random** effects [although this also subject to boundary effects as described elsewhere in this document ...])
-- `Error: Length(f1) == length(f2) is not TRUE`, typically accompanied by a warning that `numerical expression has xxx elements: only the first used`: make sure that your grouping variables are all factors.  
-- `mer_finalize(ans) : gr cannot be computed at initial par (65)` warning, followed by `Error in asMethod(object) : matrix is not symmetric [1,2]`, **or** `Error in mer_finalize(ans) : Downdated X'X is not positive definite, 1.` **or** `Error ... rank of X = <m> < ncol(X) = <n>`:
- * especially if this happens on the first step (the number at the end of the error message is "1"), you may have incorporated some perfectly collinear terms in your design matrix (see [this Stack Exchange question](http://stats.stackexchange.com/questions/35071/what-is-rank-deficiency-and-how-to-deal-with-it) for further information). To confirm that this problem, try a `glm` or `lm` fit (i.e. dropping the random effects) and see if some of the parameters are set to `NA`.  (Whether linear modeling software can handle rank-deficient cases depends on the details of the computational linear algebra routines used: so far, those used in `lme4` have traded the robustness of being able to handle rank-deficiency for speed).  One example of a workaround (constructing the design matrix by hand, or in `glm`, and then dropping the collinear terms) is shown [here](http://article.gmane.org/gmane.comp.lang.r.general/276472).
- * Alternatively, you may just have *mostly* collinear (rather than perfectly collinear) terms. Try centering and scaling your data (usually a good idea anyway, and centering removes the correlation between the intercept and the other predictors). Also check the correlation of the predictors, and if they are strongly correlated try some of the standard tactics -- discard predictors, use principal components analysis, ...
-- `Error in UseMethod("ranef") : no applicable method for 'ranef' applied to an object of class "mer"`: this is usually caused by package conflicts, especially with the `nlme` package.  Try `detach("package:nlme")` (the `glmmADMB` package may also cause such errors).
-- Other warnings about "false convergence" often indicates model mis-specification, or insufficient data for estimation; they do not necessarily indicate an error, but results that should be scrutinized particularly carefully.  Replicate the analysis in another package, if possible; make sure that the results are consistent with those of a simplified version of the model. Another approach is to use a Bayesian model with stabilizing priors (see `MCMCglmm`, or `brglm`)
-- `function 'cholmod_start' not provided by package 'Matrix'`: this error, and errors like it, are due to the `lme4` and `Matrix` package being out of sync. Here is a table giving versions that do seem to work:
-|| Type   || OS  || R version || Source || lme4 version || Matrix version || works? ||
-|| Source || (Ubuntu 10.04) || 2.13.0 || CRAN || 0.999375-39 || 0.999375-50 || yes ||
-|| Source || (Ubuntu 10.04) || 2.13.0 || R-forge || 0.999375-40 || 0.9996875-0 || yes ||
-|| Source || (Ubuntu 10.04) || 2.13.0 || SVN  || 0.999375-40 (r1322)|| 0.9996875-0 (r2678)|| yes ||
-
 ## REML for GLMMs
 
 While restricted maximum likelihood (REML) procedures ([Wikipedia](http://en.wikipedia.org/wiki/Restricted_maximum_likelihood) are well established for linear mixed models, it is less clear how one should define and compute the equivalent criteria (integrating out the effects of fixed parameters) for GLMMs. @millar_maximum_2011 and @berger_integrated_1999 are possible starting points in the peer-reviewed literature, and there are mailing-list discussions of these issues [here](https://stat.ethz.ch/pipermail/r-sig-mixed-models/2009q1/002104.html) and [here](http://lists.admb-project.org/pipermail/users/2011-June/001224.html).
@@ -702,6 +685,23 @@ will provide the intercept and slope standard errors for the first group's condi
 See also section 1.6 of FIXME Batesdraft
 
 Also, note that at a minimum, the uncertainty of the fixed-effect intercept estimate needs to be incorporated as well; probably manually (remember, the model assumes the fixed and random effects to be orthogonal, so this is straightforward). If you predict on an individual with specific fixed-effect covariate values, those need incorporation too.
+
+## Power analysis
+
+Power analysis for (G)LMMs is mostly done by simulation, although
+there are some closed-form solutions and approximations, e.g.
+@snijders_standard_1993 (Snijders has links to programs and other resources
+on [his web page](https://www.stats.ox.ac.uk/~snijders/). There are resources and bits of code examples spread all over the internet. e.g. [here](https://rpubs.com/bbolker/11703).
+
+@kain_practical_2015 and @johnson_power_2015 are peer-reviewed papers
+that discuss power analysis via simulation in more detail.
+
+```{r eval=FALSE}
+library(sos); findFn("{power analysis} mixed simulation")
+```
+locates the `fullfact`, `pamm`, `simr`, and `simglm` packages.
+Depending on the goal, one of these packages may have sufficient
+flexibility to do what you want.
 
 # Model selection and averaging
 

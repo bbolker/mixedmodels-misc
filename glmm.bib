@@ -917,9 +917,6 @@ Many criteria for statistical parameter estimation, such as maximum likelihood, 
 	pages = {1095--1103},
 }
 
-
-
-
 @book{dobson_introduction_2008,
 	edition = {3},
 	title = {An Introduction to Generalized Linear Models, Third Edition},
@@ -2333,4 +2330,78 @@ pages = {408--418}
 	collaborator = {Zuur, Alain F. and Ieno, Elena N. and Walker, Neil and Saveliev, Anatoly A. and Smith, Graham M.},
 	year = {2009},
 	pages = {261--293}
+}
+
+@book{cleveland_visualizing_1993,
+	address = {Summit, NJ},
+	title = {Visualizing {Data}},
+	publisher = {Hobart Press},
+	author = {Cleveland, William},
+	year = {1993}
+}
+
+@article{johnson_power_2015,
+	title = {Power analysis for generalized linear mixed models in ecology and evolution},
+	volume = {6},
+	issn = {2041-210X},
+	url = {https://besjournals.onlinelibrary.wiley.com/doi/abs/10.1111/2041-210X.12306},
+	doi = {10.1111/2041-210X.12306},
+	language = {en},
+	number = {2},
+	urldate = {2018-03-20},
+	journal = {Methods in Ecology and Evolution},
+	author = {Johnson, Paul C. D. and Barry, Sarah J. E. and Ferguson, Heather M. and Müller, Pie},
+	month = feb,
+	year = {2015},
+	pages = {133--142}
+}
+
+@article{kain_practical_2015,
+	title = {A practical guide and power analysis for {GLMMs}: detecting among treatment variation in random effects},
+	volume = {3},
+	issn = {2167-8359},
+	shorttitle = {A practical guide and power analysis for {GLMMs}},
+	url = {https://peerj.com/articles/1226},
+	doi = {10.7717/peerj.1226},
+	abstract = {In ecology and evolution generalized linear mixed models (GLMMs) are becoming increasingly used to test for differences in variation by treatment at multiple hierarchical levels. Yet, the specific sampling schemes that optimize the power of an experiment to detect differences in random effects by treatment/group remain unknown. In this paper we develop a blueprint for conducting power analyses for GLMMs focusing on detecting differences in variance by treatment. We present parameterization and power analyses for random-intercepts and random-slopes GLMMs because of their generality as focal parameters for most applications and because of their immediate applicability to emerging questions in the field of behavioral ecology. We focus on the extreme case of hierarchically structured binomial data, though the framework presented here generalizes easily to any error distribution model. First, we determine the optimal ratio of individuals to repeated measures within individuals that maximizes power to detect differences by treatment in among-individual variation in intercept, among-individual variation in slope, and within-individual variation in intercept. Second, we explore how power to detect differences in target variance parameters is affected by total variation. Our results indicate heterogeneity in power across ratios of individuals to repeated measures with an optimal ratio determined by both the target variance parameter and total sample size. Additionally, power to detect each variance parameter was low overall (in most cases {\textgreater}1,000 total observations per treatment needed to achieve 80\% power) and decreased with increasing variance in non-target random effects. With growing interest in variance as the parameter of inquiry, these power analyses provide a crucial component for designing experiments focused on detecting differences in variance. We hope to inspire novel experimental designs in ecology and evolution investigating the causes and implications of individual-level phenotypic variance, such as the adaptive significance of within-individual variation.},
+	language = {en},
+	urldate = {2018-03-20},
+	journal = {PeerJ},
+	author = {Kain, Morgan P. and Bolker, Ben M. and McCoy, Michael W.},
+	month = sep,
+	year = {2015},
+	pages = {e1226}
+}
+
+
+@article{snijders_standard_1993,
+	title = {Standard {Errors} and {Sample} {Sizes} for {Two}-{Level} {Research}},
+	volume = {18},
+	issn = {03629791},
+	url = {http://www.jstor.org/stable/1165134?origin=crossref},
+	doi = {10.2307/1165134},
+	number = {3},
+	urldate = {2018-03-20},
+	journal = {Journal of Educational Statistics},
+	author = {Snijders, Tom A. B. and Bosker, Roel J.},
+	year = {1993},
+	pages = {237}
+}
+
+
+@article{muff_stefanie_marginal_2016,
+	title = {Marginal or conditional regression models for correlated non‐normal data?},
+	volume = {7},
+	issn = {2041-210X},
+	url = {https://besjournals.onlinelibrary.wiley.com/doi/abs/10.1111/2041-210X.12623},
+	doi = {10.1111/2041-210X.12623},
+	abstract = {Summary Correlated data are ubiquitous in ecological and evolutionary research, and appropriate statistical analysis requires that these correlations are taken into account. For regressions with correlated, non?normal outcomes, two main approaches are used: conditional and marginal modelling. The former leads to generalized linear mixed models (GLMMs), while the latter are estimated using generalized estimating equations (GEEs), or marginalized multilevel regression models. Differences, advantages and drawbacks of conditional and marginal models have been discussed extensively in the statistical and applied literature, and there is some agreement that the choice of the model must depend on the question under study. Yet, there still appears to be a lot of confusion and disagreement over when to choose which model. We start with a review of conditional and marginal models, and the differences in the interpretation of the resulting parameter estimates. We highlight that the two types of models propagate different linear relations between the covariates and the response. Moreover, while conditional models explicitly account for heterogeneity among clustered observations, marginal models yield averages over such heterogeneities and are therefore often interpreted as population?averaged models. We point out theoretically and with an example that when modelling non?normal outcomes no unambiguous definition of a marginal model generally exists. Instead, marginal model parameters are marginal only with respect to unaccounted differences among clusters and thus depend on the fixed effects in the model. Therefore, marginal model parameters should not be loosely interpreted as population?averaged parameters. In addition, we explain how marginal modelling is mathematically analogous to deliberately omitting covariates with explanatory power, and to deliberately introducing a Berkson measurement error into covariates. We also reiterate that marginal modelling is related to a well?known statistical phenomenon, the Simpson's paradox. In most cases, therefore, we regard the conditional model as the more powerful choice to explain how covariates are associated with a non?normal response. Still, marginal models can be useful, given that the scientific question explicitly requires such a model formulation.},
+	number = {12},
+	urldate = {2018-03-20},
+	journal = {Methods in Ecology and Evolution},
+	author = {{Muff Stefanie} and {Held Leonhard} and {Keller Lukas F.} and {Matthiopoulos Jason}},
+	month = aug,
+	year = {2016},
+	keywords = {attenuation, Berkson measurement error, conditional model, generalized estimating equations, generalized linear mixed model, omitted covariates, Simpson's paradox},
+	pages = {1514--1524}
 }
