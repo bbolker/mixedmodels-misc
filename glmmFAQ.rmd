@@ -691,7 +691,7 @@ Also, note that at a minimum, the uncertainty of the fixed-effect intercept esti
 Power analysis for (G)LMMs is mostly done by simulation, although
 there are some closed-form solutions and approximations, e.g.
 @snijders_standard_1993 (Snijders has links to programs and other resources
-on [his web page](https://www.stats.ox.ac.uk/~snijders/). There are resources and bits of code examples spread all over the internet. e.g. [here](https://rpubs.com/bbolker/11703).
+on [his web page](https://www.stats.ox.ac.uk/~snijders/multilevel.htm)). There are resources and bits of code examples spread all over the internet. e.g. [here](https://rpubs.com/bbolker/11703).
 
 @kain_practical_2015 and @johnson_power_2015 are peer-reviewed papers
 that discuss power analysis via simulation in more detail.
