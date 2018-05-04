@@ -8,6 +8,16 @@ output:
      toc: true
 ---
 
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-3131047-9"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-3131047-9');
+</script>
+
 ```{r setup,message=FALSE,echo=FALSE}
 library(knitr)
 library(pander)
@@ -825,22 +835,22 @@ More recent versions of `lme4` output contain an `@optinfo` slot that stores war
 - ASREML-R
 - sabreR
 
-## Should I use aov(), nlme, or lme4, or some other package?
+## Should I use `aov()`, `nlme`, or `lme4`, or some other package?
 
-- aov (in the `stats` package in base R: balanced, orthogonal designs only (R analogue of SAS PROC GLM)
-- `nlme` (analogue of SAS PROC MIXED/NLMIXED)
-   - allows more complex designs than `aov` (unbalanced, heteroscedasticity and/or correlation among residual errors)
-   - more mature than `lme4`
-   - well-documented [@pinheiro_mixed-effects_2000]
-   - implements R-side effects (heteroscedasticity and correlation)
-   - estimates "denominator degrees of freedom" for $F$ statistics, and hence $p$ values, for LMMs (but see above)
-- stable `lme4` (also SAS PROC MIXED/NLMIXED): 
-   - fastest
-   - best for crossed designs (although they are possible in `lme`)
-   - GLMMs
-   - cutting-edge (for better or worse!)
-   - likelihood profiles
-   - use `lme4` for GLMMs, or if you have big data (thousands to tens of thousands of records)
+- `aov()` (in the `stats` package in base R: balanced, orthogonal designs only (R analogue of SAS PROC GLM)
+- `nlme` (analogue of SAS `PROC MIXED`/`NLMIXED`)
+    - allows more complex designs than `aov` (unbalanced, heteroscedasticity and/or correlation among residual errors)
+    - more mature than `lme4`
+    - well-documented [@pinheiro_mixed-effects_2000]
+    - implements R-side effects (heteroscedasticity and correlation)
+    - estimates "denominator degrees of freedom" for $F$ statistics, and hence $p$ values, for LMMs (but see above)
+- `lme4` (also SAS `PROC MIXED`/`NLMIXED`): 
+    - fastest
+    - best for crossed designs (although they are possible in `lme`)
+    - GLMMs
+    - cutting-edge (for better or worse!)
+    - likelihood profiles
+    - use `lme4` for GLMMs, or if you have big data (thousands to tens of thousands of records)
 
 The following is modified from a contribution by Kingsford Jones, found 2010-03-16
 
@@ -941,6 +951,12 @@ Resources:
 ```{r sessioninfo}
 sessionInfo()
 ```
+
+## To do
+
+- update package descriptions; cross-link with [Task View](http://bbolker.github.io/mixedmodels-misc/MixedModels.html) ? `rethinking`, `brms`, ...
+- more on post-analysis (`broom(.mixed)`, `emmeans`, `multcomp`, ...)
+- more on confidence intervals, simulating from conditional distributions, etc.)
 
 # Bibliography
 
