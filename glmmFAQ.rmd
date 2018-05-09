@@ -30,10 +30,18 @@ This is an informal FAQ list for the `r-sig-mixed-models` mailing list.
 The most commonly used functions for mixed modeling in R are 
 
 - *linear mixed models*: `aov()`, `nlme::lme`[^1], `lme4::lmer`; 
-- *generalized linear mixed models* (GLMMs): `MASS::glmmPQL`, `lme4::glmer`, `MCMCglmm::MCMCglmm`;
+- *generalized linear mixed models* (GLMMs)
+    - frequentist: `MASS::glmmPQL`, `lme4::glmer`; `glmmTMB`
+    - Bayesian: `MCMCglmm::MCMCglmm`; `brms`
 - *nonlinear mixed models*: `nlme::nlme`, `lme4::nlmer`.
 
 [^1]: in R, `foo::bar` (or `foo::bar()`) denotes "function `bar` in package `foo`").
+
+Another quick-and-dirty way to search for mixed-model related packages on CRAN:
+
+```{r avail}
+grep("l.?m[me][^t]",rownames(available.packages()),value=TRUE)
+```
 
 ## Other sources of help
 
@@ -83,7 +91,10 @@ set.alignment(default=c("centre","left"))
 pander(spectab)
 ```
 
-[Another possibly useful treatment](http://www.rensenieuwenhuis.nl/r-sessions-16-multilevel-model-specification-lme4/)
+Two more possibly useful links:
+
+- [Rense Nieuwenhuis's blogpost/lesson on lme4 model specification](http://www.rensenieuwenhuis.nl/r-sessions-16-multilevel-model-specification-lme4/)
+- CrossValidated's [lmer cheat sheet](https://stats.stackexchange.com/questions/13166/rs-lmer-cheat-sheet)
 
 ## Should I treat factor xxx as fixed or random?
 
