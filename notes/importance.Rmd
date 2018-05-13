@@ -1,0 +1,208 @@
+---
+title: "importance sampling"
+author: "Ben Bolker"
+---
+
+\newcommand{\likfun}{{\cal L}}
+
+In general, if we have a way to get a reasonable *candidate distribution*
+and a likelihood function, we can do *importance sampling* to construct
+an improved set of values. In particular, suppose we can have the
+mean ($\hat \theta$) and variance-covariance matrix ($\Sigma$) of the
+sampling distribution of a set of parameters; a likelihood
+function $\likfun$; and some kind of summary or prediction function
+$F$ we'd like to evaluate. If we sample a set of MVN values $\{\theta^*\}$
+from the sampling
+distribution and compute weights $w_i = \likfun(\theta^*_i)/P(\theta^*_i)$,
+then we can compute weighted statistics (particularly quantiles)
+of the function values $F(\theta^*)$.
+
+This is a *little* bit like Metropolis-Hastings sampling, where $\textrm{MVN}(\mu,\Sigma)$ is the candidate distribution, but: (1) we pick from the same candidate distribution every time - it's not centered on the previous value; (2) we don't reject any samples, we just compute appropriate weights for them. The division by $P(\theta^*_i)$ accounts for the sampling probability, like the correction for asymmetric candidate distributions in the M-H formula.
+
+```{r pkgs}
+## modeling packages
+library(lme4)
+library(bbmle)
+library(glmmTMB)
+##
+library(Hmisc)   ## for wtd.mean, median, quantile ...
+library(MASS)    ## for mvrnorm
+library(emdbook) ## for dvmnorm
+```
+
+Define a general-purpose sampling function that implements this approach:
+
+```{r sampfun}
+sampfun <- function(fitted,...) UseMethod("sampfun")
+##' @param fitted fitted function (not actually used! S3 ugliness)
+##' @param mu mean of candidate distribution
+##' @param Sigma var-cov of candidate distribution
+##' @param likfun log-likelihood function (\emph{not} negative LL)
+##' @param seed random-number seed
+##' @param nsamp number of samples
+##' @param qvec vector of quantiles
+##' @param FUN function to evaluate; should take a vector of parameters and return a numeric vector
+sampfun.default <- function(fitted,
+                            mu,
+                            Sigma,
+                            likfun,
+                            seed=NULL,
+                            nsamp=1000,
+                            qvec=c(0.025,0.05,0.1,0.25,0.5,
+                                   0.75,0.9,0.95,0.975),
+                            FUN) {
+    if (!is.null(seed)) set.seed(seed)
+    ## pick sample points from MVN
+    mvrsamp <- MASS::mvrnorm(nsamp,mu=mu,Sigma=Sigma)
+    ## compute log-likelihood at sample points
+    likvec <- apply(mvrsamp,1,likfun)
+    ## replace bad likelihoods with -infinity
+    likvec[!is.finite(likvec)] <- -Inf
+    ## compute sampling probabilities
+    dmvvec <- emdbook::dmvnorm(mvrsamp,mu=mu,Sigma=Sigma,log=TRUE)
+    ## compute weights: L/sample = exp(log_L - log(samp))
+    logwts <- likvec-dmvvec
+    ## scale logwts to max 0 (max wt 1);
+    ##  helps with underflow, and we're going to normalize
+    ##  the weights later anyway
+    logwts <- logwts - max(logwts,na.rm=TRUE)
+    wts <- exp(logwts)
+    ## evaluate function over sampling points
+    funres <- t(apply(mvrsamp,1,FUN))
+    ## construct quantile matrix of results
+    res <- matrix(nrow=length(qvec),ncol=ncol(funres),
+                  dimnames=list(qvec,colnames(funres)))
+    for (i in seq(ncol(funres))) {
+    res[,i] <-
+        Hmisc::wtd.quantile(funres[,i],weights=wts,probs=qvec,normwt=TRUE)
+    }
+    return(res)
+}
+```
+
+## bbmle
+
+```{r sampfun_mle2}
+sampfun.mle2 <- function(fitted,
+                         likfun,
+                         ...) {
+    if (missing(likfun)) {
+        likfun <-function(v) -1*purrr::lift_dv(fitted@minuslogl)(v)
+    }
+    sampfun.default(fitted,mu=coef(fitted),Sigma=vcov(fitted),likfun,...)
+}
+```
+
+```{r mle2_fit} 
+d <- data.frame (x=0:10,
+                 y=c(26, 17, 13, 12, 20, 5, 9, 8, 5, 4, 8))
+fitted_mle2 <- mle2(y~dpois(lambda=ymax/(1+x/xhalf)),
+     data=d,
+     start=list(ymax=15,xhalf=5))
+```
+
+```{r mle2_samp,warning=FALSE}
+mle2_ss <- sampfun(fitted_mle2,FUN=function(x) predict(fitted_mle2,newparams=x))
+```
+
+(note that data are not necessarily actually generated from the
+specified model,so we shouldn't be too worried that the ranges
+don't always include the observations).
+
+```{r mle2_plot}
+bxp(z=list(stats=mle2_ss[as.character(c(0.025,0.25,0.5,0.75,0.975)),],
+           n=rep(1,ncol(mle2_ss))),at=d$x)
+with(d,points(x,y,col="red",pch=16,cex=2))
+points(d$x,predict(fitted_mle2),col="blue",cex=2) ## predictions
+```
+
+## glmer
+
+The GLMM/`glmer` case is slightly easier
+than LMM/`lmer` because optimization is done over
+the full set of parameters (random- and fixed-effects), so a
+full variance-covariance matrix is immediately available.
+
+```{r glmer_sampfun}
+sampfun.glmerMod <- function(fitted,
+                             likfun,
+                             ...) {
+    if (missing(likfun)) {
+        devfun <- update(fitted,devFunOnly=TRUE)
+        likfun <- function(v) -1/2*devfun(v)
+    }
+    sampfun.default(fitted,
+                    mu=unlist(getME(fitted,c("theta","beta"))),
+                    Sigma=2*solve(fitted@optinfo$derivs$Hessian),
+                    likfun,
+                    ...)
+}
+```
+
+```{r glmer_ex}
+fitted_glmer <- glmer(incidence/size~period+(1|herd),weights=size,
+                data=cbpp,family=binomial)
+nd <- data.frame(period=factor(1:4))
+## this is awfully slow (why??), and just an example.
+## Since we're doing population-level
+## prediction, here, brute-force X %*% beta would be much faster ...
+pfun <- function(p) {
+    predict(fitted_glmer,newdata=nd,
+            ## jump through hoops to get matching parameter names ...
+            newparams=list(theta=c(`herd.(Intercept)`=unname(p[1])),
+                           beta=setNames(p[-1],names(fixef(fitted_glmer)))),
+            re.form=NA,
+            type="response")
+}
+```
+
+```{r glmer_samp,cache=TRUE}
+system.time(glmer_ss <- sampfun(fitted_glmer,FUN=pfun))
+print(glmer_ss)
+```
+
+## glmmTMB
+
+```{r sampfun_glmmTMB}
+sampfun.glmmTMB <- function(fitted,
+                            likfun,
+                            ...) {
+    if (missing(likfun)) {
+        nllfun <- fitted$obj$fn
+        likfun <- function(v) -1*nllfun(v)
+    }
+    mu <- fitted$obj$env$last.par
+    random <- fitted$obj$env$random
+    mu <- mu[-random]
+    sampfun.default(fitted,
+                    mu=mu,
+                    Sigma=vcov(fitted,full=TRUE),
+                    likfun,
+                    ...)
+}
+```
+
+```{r glmmTMB_ex,cache=TRUE}
+fitted_tmb <- glmmTMB(count~ mined + (1|site), 
+                      zi=~mined, 
+                      family=poisson, data=Salamanders)
+## construct predict-with-new-params function:
+X <- model.matrix(~mined,data=unique(subset(Salamanders,select=mined)))
+pfun <- function(p) {
+    cond <- exp(X %*% p[names(p)=="beta"])
+    zprob <- plogis(X %*% p[names(p)=="betazi"])
+    drop(cond*(1-zprob))
+}
+pfun(fitted_tmb$obj$env$last.par)
+system.time(tmb_ss <- sampfun(fitted_tmb,FUN=pfun))
+print(tmb_ss)
+```
+
+
+## To do / challenges
+
+- see also: similar methods by Aaron King (code at https://arxiv.org/pdf/1412.0968), although he uses an even sample ([Sobol sequences](https://en.wikipedia.org/wiki/Sobol_sequence)) rather than a MVN sample
+- see also: [fitode package](https://github.com/parksw3/fitode/blob/master/R/fitode-methods.R)
+- need slightly separate code for `lmer`/LMM fits: need to look at `profile.R` to see how deviances would be constructed for parameter vectors including fixed-effect parameters (i.e. without marginalizing them); also, need Hessian/variance-covariance matrix for full parameter vector.
+- not clear how to make this work for singular fits - should be OK as long as we can come up with a reasonable candidate distribution, but ... ? (Mixture distribution with non-zero probabilities on the boundaries?)
+- is there an obvious/simple formula for effective sample size based on the weight distribution?
