@@ -1,5 +1,5 @@
 ---
-title: "GLMM worked examples: additional packages"
+title: "GLMM worked examples"
 author: Ben Bolker
 date: "`r format(Sys.time(), '%H:%M %d %B %Y')`"
 bibliography: glmm.bib
@@ -9,20 +9,34 @@ output:
     toc_depth: 2
 ---
 
+<!--
+ * Jan 2016: lots of minor updates.  Dispense with coefplot2 
+ * re-run 10 Aug 2015 with new lme4; tweaks (newlines after plots etc.)
+ * update 27 Jan 2015: glmmADMB hacks
+ * update 23 Dec 2014: tweaks for final upload (package installation etc.)
+ * update 15 July 2014:
+change scapeMCMC to plotMCMC
+ * re-run with new Mathjax targets etc.
+-->
 ```{r opts,echo=FALSE}
 library("knitr")
 opts_chunk$set(tidy=FALSE,fig.width=6,fig.height=4)
 ## work around transparency problem
 opts_chunk$set(dev.args=list(type="cairo"))
 grDevices::X11.options(type='cairo')
+library("pander")
 ```
 
 # Introduction
 
-Trying out new/additional packages for ecostats examples.
+These are worked examples for a book chapter on mixed models in *Ecological Statistics: Contemporary Theory and Application*  editors Negrete, Sosa, and Fox
+(available from the [Oxford University Press catalog](http://ukcatalogue.oup.com/product/9780199672554.do) or from [Amazon.com](http://www.amazon.com/Ecological-Statistics-Contemporary-theory-application/dp/0199672555) or [Powell's Books](http://www.powells.com/biblio/62-9780199672554-1) or ...).
 
 Data and source code for this file are currently available at [Github](http://github.com/bbolker/mixedmodels-misc).
 
+There's a *lot* of material here. I have erred on the side of including things, and on the side of compact rather than elementary code. Try not to be overwhelmed, just skim it the first time and thereafter focus on the parts that are most relevant to your analyses.
+
+I use a very large set of packages in this example, because I am trying out a wide range of approaches. You should whittle these down to just the ones you need for any given analysis ... if you want to install all of them at once, the following code should be sufficient (remember that you only have to install packages one time on each computer you are using, but you have to use `library()` to load them in every new R session). The packages noted below as "not on CRAN" (`glmmADMB`) are hosted on R-forge (`http://r-forge.r-project.org`), but in order to install them you may have to install from `http://www.math.mcmaster.ca/bolker/R`, as below.
 
 ```{r install_pkgs,eval=FALSE}
 pkgs_CRAN <- c("lme4","MCMCglmm","blme",
@@ -34,14 +48,13 @@ install.packages(pkgs_CRAN)
 rr <- "http://www.math.mcmaster.ca/bolker/R"
 install.packages("glmmADMB",type="source",repos=rr)
 library("devtools")
-install_github("bbolker/broom")
-install
+install_github("bbolker/broom.mixed")
 ```
 ```{r pkgs,message=FALSE,warning=FALSE}
 ## primary GLMM-fitting packages:
 library("lme4")
 library("glmmADMB")      ## (not on CRAN)
-library("glmmTMB")       ## (not on CRAN)
+library("glmmTMB")
 library("MCMCglmm")
 library("blme")
 library("MASS")          ## for glmmPQL (base R)
@@ -53,13 +66,15 @@ theme_set(theme_bw())
 scale_colour_discrete <- function(...,palette="Set1") {
     scale_colour_brewer(...,palette=palette)
 }
+scale_colour_orig <- ggplot2::scale_colour_discrete
 scale_fill_discrete <- function(...,palette="Set1") {
     scale_fill_brewer(...,palette=palette)
 }
 ## to squash facets together ...
-zmargin <- theme(panel.margin=grid::unit(0,"lines"))
+zmargin <- theme(panel.spacing=grid::unit(0,"lines"))
 library("gridExtra")     ## for grid.arrange()
-library("broom")         ## recent version on Github
+library("broom.mixed")   ## first
+library("broom")        
 library("dotwhisker")
 library("coda")      ## MCMC diagnostics
 library("aods3")     ## overdispersion diagnostics
@@ -81,12 +96,25 @@ pkgs_used <- c("lme4","glmmADMB","MCMCglmm","blme",
 pkgs_CRAN <- c("lme4","MCMCglmm","blme",
                "pbkrtest","coda","aods3","bbmle",
                "ggplot2","reshape2","plyr","numDeriv",
-               "Hmisc","plotMCMC","gridExtra")
+               "Hmisc","plotMCMC","gridExtra", "glmmTMB")
 ##print(paste(paste0('"',pkgs_CRAN,'"'),collapse=","),quote=FALSE)
 vers <- sapply(pkgs_used,function(x) as.character(packageVersion(x)))
 print(vers,quote=FALSE)
 ```
 
+If you are using Windows and have problems using `glmmADMB` on some problems, there is a (slightly tedious) workaround:
+
+* check the [directory that contains the latest version of the glmmADMB binary component](http://www.admb-project.org/buildbot/glmmadmb/); find the most recent version of the binaries for your operating system (Windows, MacOS, Linux [Fedora or Ubuntu], and 32 vs 64 bits: check `sessionInfo()$platform` for more information).  For example, the most recent Windows binary as of this writing is `glmmadmb-mingw64-r2885-windows8-mingw64.exe`.  If you find more than one file that seems to apply, just pick one at random.
+* Once you've figured out what file to download, execute the following code (substituting the name of the appropriate binary file in the last line):
+```{r glmmadmb_hack,eval=FALSE}
+library("glmmADMB")
+bb <- glmmADMB:::get_bin_loc()[["bin_loc"]]
+bpath <- gsub("glmmadmb$","",bb)
+file.copy(bb,paste0(bpath,"glmmadmb.bak"))
+bburl <- "http://admb-project.org/buildbot/glmmadmb/"
+download.file(paste0(bburl,
+   "glmmadmb-mingw64-r2885-windows8-mingw64.exe"), dest=bb)
+```
 
 # Tundra carbon 
 
@@ -100,8 +128,52 @@ Read the data:
 mc1 <- read.csv("data/tundra.csv",na.strings=c("-","NA"))
 ```
 
-Aggregate data as in original example:
-```{r tundra_agg,echo=FALSE}
+```{r tundradat_tab,echo=FALSE,results="asis"}
+dd <- read.table(sep="|",text="
+Year | year of data collection
+Site | location
+Lat  | latitude
+Long | longitude
+Method | ?
+GS.NEE | net ecosystem exchange, growing season
+GS.GPP | gross primary production, growing season
+GS.ER  | ecosystem respiration, growing season
+W.NEE  | net ecosystem exchange, winter
+MAT    | ?
+TAP    | ?
+Reference | Literature reference")
+pander(dd)
+```
+
+A first look at the data, plotting net ecosystem exchange during the growing season (`GS.NEE`) against year, using colour to distinguish sites, and superimposing a separate linear regresssion (with confidence bands) per site:
+
+```{r tundra_plot1,warning=FALSE}
+ggplot(mc1,aes(x=Year,y=GS.NEE,colour=Site))+geom_point()+
+    geom_smooth(method="lm",alpha=0.3)+
+    ## oob=squish retains the (truncated) confidence bands;
+    ## otherwise bands that went outside the limits would disappear
+    scale_y_continuous(limits=c(-150,400),oob=scales::squish)+
+    ## use original colours (Dark2 doesn't have enough distinct values)
+    ## suppress legend
+    scale_colour_orig(guide="none")
+```
+
+We have suppressed the legend for the colours,
+because there are a lot of sites and their names will not be
+particularly meaningful except to tundra biologists.
+There is lots of variability among sites,
+both in the trend and in the uncertainty of the trend. The uncertainty
+is caused in part by noisiness of the data, and part by sparsity/shortness
+of the time series for individual sites.
+
+In some cases there were multiple observations per site in a single year.
+We could have handled this by adding a year-within-site random variable,
+but it proved to be easier to aggregate these cases by calculating the
+mean, and account for the different amount of sampling by weighting
+site-year combinations according to the number of samples.
+
+The following (rather complicated) function aggregates the data; in the course of our analysis we ended up needing to aggregate several different response variables according to several different sets of grouping variables.  We re-centred the year to have year=0 at the beginning of the observation period.
+```{r tundra_agg}
 aggfun <- function(dat,agg=c("Year","Site"),response="Winter.adj",
                    baseYear=min(mc1$Year)) {
     ## select only site, year, and response
@@ -121,6 +193,16 @@ mc2 <- aggfun(mc1,response="GS.NEE")
 ## center year at the mean rather than the date of
 ## the first observation:
 mc2B <- aggfun(mc1,response="GS.NEE",baseYear=mean(mc1$Year))
+```
+
+The aggregated data show a similar picture:
+```{r tundra_plot2,warning=FALSE}
+ggplot(mc2,aes(x=cYear,y=GS.NEE,colour=Site))+
+    geom_point(aes(size=n),alpha=0.7)+
+    geom_smooth(method="lm",alpha=0.3,aes(weight=n))+
+    scale_y_continuous(limits=c(-150,400),oob=scales::squish)+
+    scale_colour_orig(guide="none")+
+    scale_size_continuous(range=c(2,5),breaks=c(1,3,6))
 ```
 
 ## Fitting
@@ -202,8 +284,9 @@ cmod_glmmTMB <- glmmTMB(GS.NEE ~ cYear + (1+cYear|Site),
 summary(cmod_glmmTMB)
 ```
 
-```{r dwplot}
-dwplot(list(glmmTMB=cmod_glmmTMB,lmer=cmod_lmer))
+Compare parameters (not yet working!)
+```{r dwplot,eval=FALSE}
+dwplot(list(glmmTMB=cmod_glmmTMB,lmer=cmod_lmer),by_2sd=TRUE)
 ```
 
 We have to admit that the model we are using
@@ -243,7 +326,7 @@ per data point ...
 ggplot(mc2,aes(x=cYear,y=GS.NEE,colour=(Site=="Toolik, AK")))+
     geom_point(aes(size=n),alpha=0.7)+
     geom_smooth(method="lm",alpha=0.3,aes(weight=n,group=Site))+
-    scale_colour_discrete(name="Site",breaks=0:1,labels=c("other","Toolik"))+
+    scale_colour_orig(name="Site",breaks=0:1,labels=c("other","Toolik"))+
     scale_y_continuous(limits=c(-150,400),oob=scales::squish)+
     scale_size_continuous(range=c(2,5),breaks=c(1,3,6))
 ```
@@ -410,10 +493,10 @@ This is my best attempt, but it's more artistic than compelling:
 
 ```{r plot2,message=FALSE}
 ggplot(culcita_dat,aes(x=ttt,y=predation,colour=block,group=block))+
+    scale_colour_orig() + 
     stat_summary(fun.y=sum,geom="line",alpha=0.4)+
     stat_summary(fun.y=sum,geom="point",alpha=0.7,
-                 position=position_dodge(width=0.25))+
-    scale_colour_brewer(palette="Paired")
+                 position=position_dodge(width=0.25))
 ```
 
 ## Fitting
@@ -1016,10 +1099,12 @@ really obvious from the plot).
                         ymin=conf.low,ymax=conf.high,
                         colour=fun,
                         shape=fun,
-                        linetype=CI))+
-    geom_pointrange(position=position_dodge(width=0.5))+
-    scale_y_continuous(lim=c(-15,15),oob=scales::squish,expand=c(0,0))+
-    coord_flip()+xlab("")+ylab("Effect (log-odds of predation)"))
+                        linetype=CI))
+    + geom_pointrange(position=position_dodge(width=0.5))
+    + scale_y_continuous(lim=c(-15,15),oob=scales::squish,expand=c(0,0))
+    + coord_flip()
+    + labs(x="",y="Effect (log-odds of predation)")
+)
 ggsave("../cmod_plotResults.pdf",height=4,width=6)
 ```
 
@@ -1457,7 +1542,7 @@ v0 <- ggplot(subset(gmod_comp$mcmc_ests,variable!="units"),
              aes(variable,value))
 v0 + geom_violin(fill="gray") +
   geom_point(data=gmod_comp$allres,aes(colour=sum))+
-    facet_wrap(~type,scale="free")  
+  facet_wrap(~type,scale="free")  
 ```
 
 ## Diagnostics
@@ -1727,6 +1812,8 @@ grid.arrange(gplot_pred1,gplot_pred2,nrow=1)
 
 # Grouse ticks
 
+## Data
+
 These data are those used in @elston_analysis_2001 (kindly donated by Robert Moss *via* David Elston).
 
 ```{r tick0}
@@ -1740,7 +1827,7 @@ ggplot(tickdata,aes(x=HEIGHT,y=1+TICKS,colour=YEAR))+
     scale_y_log10()+
     scale_size_continuous(breaks=c(2,6,10),range=c(2,7))+
     geom_smooth(method="glm",method.args=list(family=quasipoisson))
-```    
+```
 
 The quasi-Poisson GLM fits shown here ignore the grouping structure,
 but are useful for structuring the data (although the `HEIGHT`
@@ -1755,6 +1842,8 @@ MCMC-based approaches.
 ```{r cheight}
 tickdata <- transform(tickdata,cHEIGHT=HEIGHT-mean(HEIGHT))
 ```
+
+## Fitting
 
 Because `INDEX`, `BROOD`, and `LOCATION` are uniquely labeled,
 we can specify the random effect as *either*
@@ -2002,6 +2091,8 @@ all_Results <- rbind(data.frame(example="ticks",tmod_Results),
 save("all_Results",file="data/all_Results.RData")
 ```
 
+## Inference
+
 Using the results from `MCMCglmm` we can compute the posterior probability (for example) that the among-brood variance is greater than the among-chick variance:
 
 ```{r misc}
@@ -2026,7 +2117,9 @@ HPDinterval(mcmc(with(as.data.frame(tmod_MG2$VCV),BROOD/units)))
 
 # To do
 
-- try to use `tidyr`/`dotwhisker` throughout
+- better downstream processing:
+     - use `broom.mixed`/`dotwhisker` throughout
+     - use `effects`, `DHARMa`, `sj*`, `marginal`, `emmeans`, ... as appropriate
 - re-do as many examples as possible with `rstanarm`, `brms`, `glmmTMB`, `lme4ord`, `INLA`, ...
 - re-do Banta/*Arabidopsis* example with more attention to overfitting random effects?
 
