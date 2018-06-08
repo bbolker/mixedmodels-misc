@@ -1,6 +1,6 @@
 SRCDIR=../
 
-%.html: ${SRCDIR}/%.rmd
+%.html: ${SRCDIR}/%.[Rr]md
 	Rscript -e "rmarkdown::render(\"$<\",output_dir='.')"
 
 %.pdf: ${SRCDIR}/%.rmd
