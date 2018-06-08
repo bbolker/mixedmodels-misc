@@ -218,7 +218,8 @@ See e.g. @martin_zero_2005 or @warton_many_2005 ("many zeros does not mean zero 
 
 Continuous data are a special case where the mixture model may make less sense.
 
-- The simplest solution is to fit a Bernoulli model to the zero/non-zero data, then a continuous model (lognormal?  Gamma?) for the non-zero values. If you want to fit a truncated continuous distribution to the non-zero values, that gets harder ...
+- The simplest solution is to fit a Bernoulli model to the zero/non-zero data, then a continuous model (lognormal?  Gamma?) for the non-zero values; this is effectively a *hurdle model*. Many of the distributions in the exponential family (Gamma; log-Normal; Beta) don't allow zero values anyway, so any observation of zero must be a "structural" zero rather than a "sample" zero.
+- you might have *censored* data where all values below a certain limit (e.g. a detection limit) are recorded as zero; in this case you might be able to use `survreg()` and `frailty()` in the `survival` package for random-intercept models (as [suggested on r-help by Thomas Lumley in 2003](https://stat.ethz.ch/pipermail/r-help/2003-June/034905.html) or [on StackOverflow by user 42- in 2014](https://stackoverflow.com/questions/25317021/interaction-terms-and-random-effects-in-tobit-regression-model-in-r).
 - The `cplm` package handles 'Tweedie compound Poisson linear models', which in a particular range of parameters allows for skewed continuous responses with a spike at zero
 
 ### Tests for zero-inflation
