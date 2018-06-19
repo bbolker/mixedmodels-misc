@@ -1,0 +1,501 @@
+---
+title: "Wald errors of variances"
+author: "Ben Bolker"
+date: "`r format(Sys.time(), '%H:%M %d %B %Y')`"
+output: html_document
+---
+
+## Introduction
+
+`lme4` users frequently request the capability to compute the variances (standard errors, variance-covariance matrix) of the random-effects variance parameters. `lme4` has switched to providing profile and parametric bootstrap, but *not* Wald confidence intervals on the random-effect variances, because the Wald intervals on variance-covariance parameters are often really bad. Nevertheless, one sometimes does want the asymptotic (Wald) variance-covariance matrix of the variance-covariance parameters ...  This document shows how to do that for `merMod` objects, and discusses the issues more generally.
+
+In the `nlme` package the Wald variances are (implicitly) available via the `intervals()` function in the `nlme` package, which returns confidence intervals based on Wald intervals on the transformed ("unconstrained" scale, i.e. the log scale for variance parameters and the (tanh(x)/2) scale for correlation parameters; the underlying approximate variance-covariance matrices (on the unconstrained scale) are stored as the `$apVar` component in the model object.
+
+The basic problem is that `lme4`'s deviance function uses a scaled Cholesky-factor parameterization, e.g. for a random slope model the variance-covariance matrix is
+
+$$
+\Sigma = \sigma^2 L L^T = \sigma^2 
+\left( 
+\begin{array}{cc} \theta_1 & 0  \\ \theta_2 & \theta_3  \end{array} 
+\right)
+\left(
+\begin{array}{cc} \theta_1 & \theta_2  \\ 0 & \theta_3 \end{array}
+\right)
+$$
+
+It's easy enough to get an approximate Hessian of the $\theta$ parameters by finite differences, but not so easy to get estimates of the variance-covariance parameters.  There are a few strategies for converting from this to the variance scale:
+
+* Use an internal deviance function (`devfun2`) that is parameterized on the $\sigma$ scale.  (At present `devfun2` [only works for ML, not REML](https://github.com/lme4/lme4/issues/325); this could be hacked ...)
+* Use the delta method on the equation above (but we need the variance in the $\sigma^2$ parameter ... ?)
+* Compute dependence of the $\sigma$-scale parameters on the $\theta$ parameters and use the delta method.
+
+## Preliminaries
+
+```{r pkgs,message=FALSE}
+library("lme4")
+library("numDeriv")
+library("ggplot2"); theme_set(theme_bw())
+```
+
+Fit the good old `sleepstudy` model:
+```{r fitmodels,message=FALSE}
+fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+```
+
+For comparison with the `devfun2` likelihood profile (which uses ML rather than REML) we also fit the ML equivalent:
+```{r mlfit}
+fm1.ML <- refitML(fm1)
+```
+
+Also fit with `lme` so that we can compare the results of `intervals()`:
+```{r lmefit,message=FALSE}
+library(nlme)
+fm1.lme <- lme(Reaction ~ Days, random = ~Days| Subject, sleepstudy)
+fm1.lme.ML <- update(fm1.lme,method="ML")
+``` 
+
+## Delta method
+
+Suppose we have parameters $\mathbf \theta$ (possibly also including fixed-effect parameters in this case; I mean the full set of parameters that determine the deviance), and a variance-covariance matrix $\Sigma_{\mathbf \theta}$ for them, but we have a set of derived parameters $\mathbf \sigma$ and we want to get $\Sigma_{\mathbf \sigma}$.  Then all we actually need is the Jacobian matrix ${\mathbf J} = ( \partial \sigma_i/\partial \theta_j )$, which we can get by finite differencing; then $\mathbf J^T \Sigma_{\mathbf \theta} \mathbf J$ should give us  $\Sigma_{\mathbf \sigma}$.
+
+We can also get the derivatives of $\sigma_{ij}$ with respect to $\theta$ analytically (see below).
+Unfortunately, for a LMM the actual variance-covariance parameters are scaled by the residual variance $\sigma^2$;
+if we're willing to ignore the uncertainty in $\sigma^2$ we can simply scale the Jacobian by $\sigma$ ...
+
+$$
+\left(
+\begin{array}{ccc}
+\sigma^2_x & \sigma_{xy} & \sigma_{xz} \\
+\sigma_{xy} & \sigma^2_y & \sigma_{yz} \\
+\sigma_{xz} & \sigma_{yz} & \sigma^2_z 
+\end{array}
+\right)
+=
+\left(
+\begin{array}{ccc}
+\theta_1 & 0 & 0 \\
+\theta_2 & \theta_4 & 0 \\
+\theta_3 & \theta_5 & \theta_6 
+\end{array}
+\right)
+\left(
+\begin{array}{ccc}
+\theta_1 & \theta_2 & \theta_3 \\
+0 & \theta_4 & \theta_5 \\
+0 & 0 & \theta_6
+\end{array} 
+\right)
+\qquad ,
+$$
+
+What are the derivatives of $\{\sigma^2_x, \sigma_{xy}, \sigma_{xz}, \ldots\}$
+with respect to $\{\theta_i\}$?
+
+It turns out this has a nice sparsity structure, made up of lower-triangular blocks
+based on each of the original parameters.
+For the $3 \times 3$ case (with rows=$\theta$ values, columns=$\sigma_{\cdot \cdot}$ values
+(lower triangle, column-wise order), this is
+$$
+\left(
+\begin{array}{cccccc}
+2 \theta_1 & 0 & 0 & 0 & 0 & 0 \\
+\theta_1   & \theta_1 & 0 & 0 & 0 & 0 \\
+\theta_1   & 0 & \theta_1 & 0 & 0 & 0 \\
+0 & 2 \theta_2 & 0 & 2 \theta_4 & 0 & 0 \\
+0 & \theta_2 & \theta_2 & \theta_4 & \theta_4 & 0 \\
+0 & 0 & 2 \theta_3 & 0 & 2 \theta_5 & 2 \theta_6
+\end{array}
+\right)
+$$
+
+```{r cholblock,echo=FALSE}
+bmat <- function(t,n) {
+    m <- matrix(0,n,n)
+    diag(m) <- t
+    m[,1] <- t
+    m[1,1] <- 2*t
+    return(m)
+}
+bigmat <- function(t) {
+    n <- (sqrt(8*length(t)+1)-1)/2
+    N <- n*(n+1)/2
+    M <- matrix(0,N,N)
+    svec <- n:1
+    posvec <- cumsum(c(1,n:2))
+    tc <- 1
+    for (i in 1:n) {  ## horizontal blocks
+        ipos <- posvec[i]
+        for (j in i:n) { ## vertical blocks
+            jpos <- posvec[j]
+            hadj <- (j-i)
+            yy <- (ipos+hadj):(ipos+hadj+svec[j]-1)
+            xx <- jpos:(jpos+svec[j]-1)
+            M[xx,yy] <- bmat(t[tc],svec[j])
+            tc <- tc+1
+        }
+    }
+    return(M)
+}
+```
+
+In particular:
+
+```{r update}
+## generate a model with a modified set of theta parameters
+update.lmerMod <- function(object,theta,...) {
+    if (missing(theta)) return(update.default(object,...))
+    object2 <- object
+    ## deep-copy the (only) reference-class slots ...
+    object2@pp <- object@pp$copy()
+    object2@resp <- object@resp$copy()
+    object2@pp$setTheta(theta)
+    dd <- as.function(object2)
+    dval <- dd(theta)  ## update internal structures
+    ## object2@resp$updateMu(object2@resp$mu)  ## ?? not helping/not necessary
+    
+    mkMerMod(environment(dd),
+             opt=list(par=theta,fval=dval,conv=0),
+             fr=model.frame(object2),
+             reTrms=getME(object2,
+                          c("Zt","Lambdat","Lind","theta",
+                            "lower","flist","cnms","Gp"))
+    )
+}
+## for GLMMs: update.glmerMod will need a beta parameter;
+## object@pp$setBeta0(beta)
+## dd <- update(object,devFunOnly=TRUE)
+## parvec <- c(theta,beta)
+## dval <- dd(parvec)
+## opt=list(par=parvec,...)
+
+## test: is it safe?
+fm2 <- update(fm1,theta=c(2,2,2))
+orig_theta <- getME(fm1,"theta")
+stopifnot(identical(unname(getME(fm2,"theta")),c(2,2,2)))
+stopifnot(identical(orig_theta,getME(fm1,"theta")))
+tn <- function(object) {
+    c(names(getME(object,"theta")),"sigma")
+}
+## compute standard deviations/correlations for a given theta vector
+outfun <- function(object,t) {
+    newmod <- update(object,theta=t)
+    av <- as.data.frame(VarCorr(newmod),
+                        order="lower.tri")
+    r <- setNames(av[,"sdcor"],tn(object))
+    return(r)
+}
+```
+
+Test derivative calculations for $\sigma$:
+```{r test_outfun,cache=TRUE,fig.width=10,fig.height=3}
+pp <- getME(fm1.ML,"theta")
+Jmat <- jacobian(outfun,pp,object=fm1.ML)
+slicefun <- function(pos) {
+    tvec <- seq(0.8*pp[pos],1.2*pp[pos],length=51)
+    svec <- sapply(tvec,function(x) {
+                       pp2 <- pp
+                       pp2[pos] <- x
+                       outfun(fm1.ML,t=pp2)["sigma"]
+                       })
+    list(x=tvec,y=svec)
+}
+ss <- lapply(1:3,slicefun)
+par(las=1,bty="l",mfrow=c(1,3))
+for (i in 1:3) {
+    plot(ss[[i]],xlab=paste0("theta[",i,"]"),ylab="sigma")
+    curve((x-pp[i])*Jmat[4,i]+sigma(fm1.ML),add=TRUE,col=2)
+}
+```
+
+Does my `update` function correctly update sigma?
+Apparently so ...
+
+```{r test_update}
+up1 <- update(fm1,theta=c(2,2,2))
+## update 'from scratch'
+up2 <- suppressWarnings(update(fm1,
+                               start=c(2,2,2),
+                               control=lmerControl(optCtrl=list(maxfun=1))))
+identical(unname(getME(up2,"theta")),c(2,2,2))
+all.equal(sigma(up1),sigma(up2))
+```
+
+```{r waldvar1}
+waldVar1 <- function(object) {
+    pp <- getME(object,"theta") ## GLMM: unlist(getME(dd,c("theta","beta")))
+    Jmat <- jacobian(outfun,pp,object=object)
+    dimnames(Jmat) <- list(tn(object),paste0("theta",seq(ncol(Jmat))))
+    dd <- as.function(object) ## deviance/REMLcrit function
+    hh <- 1/2*hessian(dd,pp)  ## ... calculate information matrix ...
+                              ## 1/2 = deviance to log-lik scale)
+    ## vv <- solve(hh)        ## invert to get Wald vars of theta parameters
+    ## m2 <- Jmat %*% vv %*% t(Jmat)  ## delta method
+    ## slightly better linear algebra:
+    m1 <- Jmat %*% solve(hh,t(Jmat))
+    return(m1)
+}
+wsd1 <- sqrt(diag(waldVar1(fm1)))
+wsd1.ML <- sqrt(diag(waldVar1(fm1.ML)))
+```
+As we'll see, the estimate of the standard deviation for `sigma` 
+is off by a factor of about 2 (but not exactly) compared to both the second method
+(using `devfun2`) and the `lme` results.
+I can't figure out why right now - this would occur naturally if
+I got confused between variance and standard deviation scale,
+but (a) it should be an exact factor of 2 (b) if so I can't find where it's happening.
+
+### Finite differences on the $\sigma$ scale
+
+The other way to do this is using the internal `devfun2()` function, which is used within `profile` --- it is essentially the same as the basic `devfun()`, but it uses a standard deviation/correlation parameterization (and adds the residual standard deviation as a parameter) rather than a Cholesky parameterization:
+```{r devfun2}
+waldVar2 <- function(object) {
+    ## test for/warn if ML fit?
+    dd <- lme4:::devfun2(object,useSc=TRUE,signames=FALSE)
+    nvp <- length(attr(dd,"thopt"))+1 ## variance parameters (+1 for sigma)
+    pars <- attr(dd,"optimum")[seq(nvp)] ## var params come first
+    hh <- hessian(dd,pars)
+    ## factor of 2: deviance -> negative log-likelihood
+    vv <- 2*solve(hh)
+    nn <- tn(object)
+    dimnames(vv) <- list(nn,nn)
+    return(vv)
+}
+## would be identical applied to fm1 (would get ML-ized anyway)
+wsd2.ML <- sqrt(diag(waldVar2(fm1.ML)))
+```
+
+At the moment `devfun2()` cannot be used for REML fits
+(as it is designed for computing likelihood profiles, that wouldn't
+make much sense).
+
+### Convert scales
+
+I have a bunch of code now (not shown here) for converting
+estimates+standard deviations to confidence intervals on 
+a different scale. We translate the estimates and standard
+deviations to the link scale; compute the Wald confidence
+intervals on that scale; and back-transform.
+
+```{r linkconv,echo=FALSE}
+loglink <- poisson()[c("linkfun","linkinv","mu.eta")]
+tanhlink <- list(linkfun=function(x) tanh(x/2),
+                 linkinv=function(x) 2*atanh(x),
+                 mu.eta=function(x) -2/(x^2-1) ## 1/(cosh(x)+1))
+                 )
+sqrtlink <- list(linkfun=sqrt,
+                linkinv=function(x) x^2,
+                mu.eta=function(x) 2*x)
+identitylink <- list(linkfun=identity,linkinv=identity,
+                     mu.eta=function(x) 1)
+linktest <- function(link,value,verbose=FALSE) {
+    with(link,
+         {
+             a1 <- all.equal(linkfun(linkinv(value)),value)
+             a2 <- all.equal(grad(linkinv,value),mu.eta(value))
+             if (verbose) {
+                 cat("link/inv-link: ")
+                 print(a1)
+                 cat("gradient: ")
+                 print(a2)
+             }
+             isTRUE(a1) && isTRUE(a2)
+         })
+}
+stopifnot(linktest(loglink,0.8))
+stopifnot(linktest(tanhlink,0.8))
+stopifnot(linktest(sqrtlink,0.8))
+
+conv <- function(est,sd,link,inv=TRUE) {
+    with(link, {
+         if (inv) {
+             sd <- sd*mu.eta(est)
+             est <- linkinv(est)
+         } else {
+             sd <- sd/mu.eta(linkfun(est))
+             est <- linkfun(est)
+         }
+         list(est=est,sd=sd)
+     })
+}
+## round-trip:
+c0 <- list(est=0.5,sd=0.2)
+c1 <- do.call(conv,c(c0,list(link=loglink,inv=TRUE)))
+c2 <- do.call(conv,c(c1,list(link=loglink,inv=FALSE)))
+stopifnot(all.equal(c0,c2))
+c1 <- do.call(conv,c(c0,list(link=tanhlink,inv=TRUE)))
+c2 <- do.call(conv,c(c1,list(link=tanhlink,inv=FALSE)))
+stopifnot(all.equal(c0,c2))
+
+##' variation of confint.default that allows for transformation
+##' @param object an object with \code{coef} and \code{vcov} methods
+##' @param parm a vector of numeric or character labels for parameters
+##' @param level
+##' @param either a single list with \code{linkinv}, \code{linkfun},
+##' and \code{mu.eta} components, or a list with elements \code{trans}
+##' (a list of transformation objects) and \code{pars} (a list of
+##' numeric vectors of parameter indices corresponding to each transformation)
+confint2 <- function (object, parm, level = 0.95,
+          trans = NULL, ...) 
+{
+    cf <- coef(object)
+    pnames <- names(cf)
+    if (missing(parm)) 
+        parm <- pnames
+    else if (is.numeric(parm)) 
+        parm <- pnames[parm]
+    a <- (1 - level)/2
+    a <- c(a, 1 - a)
+    pct <- stats:::format.perc(a, 3)
+    fac <- qnorm(a)
+    ci <- array(NA, dim = c(length(parm), 2L),
+                dimnames = list(parm, pct))
+    ses <- sqrt(diag(vcov(object)))[parm]
+    ci[] <- cf[parm] + ses %o% fac
+    if (!is.null(trans)) {
+        if (all(c("linkinv","linkfun","mu.eta") %in% names(trans))) {
+            ## trans is given just as a link object -- convert
+            ## to full list (excluding param #1 by default)
+            npar <- length(cf)
+            trans <- list(links=trans,pars=2:npar)
+        }
+        for (i in seq_along(trans$pars)) {
+            p <- trans$pars[[i]]
+            lf <- trans$links[[i]]
+            for (j in p) {
+                cc <- conv(cf[j],ses[j],link=lf,inv=FALSE)
+                ci[j,] <- lf$linkinv(cc$est + fac*cc$sd)
+            }
+        }
+    }
+    ci
+}
+## test
+set.seed(101)
+dd <- data.frame(x=1:10,y=rnorm(10))
+m1 <- lm(y~x,dd)
+stopifnot(all.equal(confint2(m1),confint.default(m1)))
+```
+
+
+### Results and comparisons
+
+Now that we have the Wald variance-covariance matrix, I'm going
+to cook up a little bit of structure that will let us use 
+`confint.default` to compute the Wald intervals:
+
+```{r confints}
+pars <- as.data.frame(VarCorr(fm1.ML),order="lower.tri")[,"sdcor"]
+names(pars) <- tn(fm1.ML)
+vhack1 <- list(coefficients=pars,vcov=waldVar1(fm1.ML))
+vhack2 <- list(coefficients=pars,vcov=waldVar2(fm1.ML))
+vcov.default <- function(object,...) object$vcov
+## convert variance parameters to log scale,
+## correlation to atanh scale (to match lme)
+trans_list1 <- list(links=list(loglink,tanhlink),
+                    pars=list(c(1,3,4),2))
+(wc1S <- confint2(vhack1,trans=trans_list1))
+(wc2S <- confint2(vhack2,trans=trans_list1))
+## non-scaled versions for comparison
+wc1 <- confint2(vhack1)
+wc2 <- confint2(vhack2)
+```
+
+```{r intervals}
+(lmeint <- intervals(fm1.lme.ML,which="var-cov"))
+```
+
+#### Comparison with likelihood profile
+
+Compute the likelihood profile:
+```{r fitprof,cache=TRUE}
+## automatically ML-ified
+pp <- profile(fm1,which="theta_",signames=FALSE)
+```
+
+The linear approximation to the profile for a focal parameter $x$ should
+be $\zeta \approx (x-\hat x)/\sigma_x$, where $\hat x$ is the MLE and
+$\sigma_x$ is the Wald standard deviation:
+```{r profplot}
+dfprof <- as.data.frame(pp)
+mframe <- data.frame(.par=levels(dfprof$.par),ctr=pars,slope=1/wsd2.ML)
+dfprof <- merge(dfprof,mframe)
+ggplot(dfprof,aes(.focal,.zeta))+geom_line()+geom_point(size=0.8)+
+    facet_wrap(~.par,scale="free")+
+    geom_hline(yintercept=0,color="gray")+
+    geom_hline(yintercept=c(-1.96,1.96),color="gray",lty=2)+
+    geom_line(aes(y=(.focal-ctr)*slope),color="red")
+```    
+
+In this particular example, there's not a huge divergence from
+linearity over the range defined by the 95% confidence intervals
+(dashed horizontal lines) ... as confirmed by the confidence intervals.
+(Should check with `waldVar1`, sort out problem with `sigma` ...)
+
+#### Comparison of CIs
+
+```{r cmpconf,echo=FALSE,fig.height=3,fig.width=10}
+pci <- confint(pp)
+nf  <- function(x) setNames(as.data.frame(x),c("lwr","upr"))
+lme4Dat <- rbind(
+   data.frame(method="profile_lme4",
+              par=tn(fm1),est=pars,nf(pci)),
+    data.frame(method="Wald1",
+               par=rownames(wc1S),est=pars,nf(wc1S)),
+    data.frame(method="Wald2",
+               par=rownames(wc2S),est=pars,nf(wc2S)),
+    data.frame(method="Wald1_noscale",
+               par=rownames(wc1),est=pars,nf(wc1)),
+    data.frame(method="Wald2_noscale",
+               par=rownames(wc2),est=pars,nf(wc2)))
+
+lmeDat <- data.frame(method="Wald_lme",
+     par=tn(fm1),est=pars, ## close enough to identical
+     rbind(nf(lmeint$reStruct$Subject[c(1,3,2),c(1,3)]),
+           nf(rbind(lmeint$sigma[c(1,3)]))))
+allDat <- rbind(lme4Dat,lmeDat)
+newlev <- c("Wald1_noscale","Wald1","Wald2_noscale","Wald2",
+            "Wald_lme","profile_lme4")
+allDat <- transform(allDat,method=factor(method,level=newlev))
+ggplot(allDat,aes(par,est,ymin=lwr,ymax=upr,colour=method))+
+    geom_pointrange(position=position_dodge(width=0.5))+
+    facet_wrap(~par,scale="free",nrow=1)+
+        scale_x_discrete(breaks=NULL)+
+            labs(x="",y="Standard deviation/correlation")+
+                scale_colour_brewer(palette="Paired")
+```
+
+Discrepancies:
+
+* for this case, the profile CIs are actually very
+close to the appropriately link-scaled CIs overall
+* the discrepancy in the $\sigma$ CI from `waldVar1`
+is obvious; it stems from the discrepancy in the 
+estimated std dev of $\sigma$ (`r round(wsd1.ML["sigma"],2)`
+for `waldVar1` vs. `r round(wsd2.ML["sigma"],2)` for
+`waldVar2`)
+* the largest other discrepancies are for
+the correlation parameter.  They're close, but:
+did I get the `lme` link scale correct?
+
+
+### Continuing
+
+(*Don't remember what I was doing this for: trying to get higher
+derivatives to test for optimal transformations?*)
+Second derivative via chain rule?  We're looking for $\frac{\partial^2 f(g(x))}{\partial x^2}$ (or $\frac{\partial^2 (f \circ g)(x)}{\partial x^2}$ may be easier notation in this case).
+
+I should have been able to figure this out myself, but looking at
+[Faà di Bruno's formula](http://en.wikipedia.org/wiki/Fa%C3%A0_di_Bruno%27s_formula):
+
+$$
+\frac{\partial^n}{\partial x_1 \dots \partial x_n} =
+\sum_{\pi \in \Pi} f^{(|\pi|}(y) \cdot \prod_{B \in \pi} \frac{\partial^{|B|}y}{\prod_{j \in B} \partial x_j}
+$$
+
+For $n=2$ the partitions are just $\{\{1\},\{2\}\}$ and $\{\{1,2\}\}$
+$$
+\frac{\partial^2 f(y)}{\partial x_1 x_2} = 
+f'(y) \frac{\partial^2 y}{\partial x_1 x_2} + f''(y) \frac{\partial y}{\partial x_1} \frac{\partial y}{\partial x_2}
+$$
+
+The derivative of a matrix cross-product $\mathbf X \mathbf X^T$ should be fairly straightforward (I think?); e.g. for a two-by-two crossproduct works out as $(\mathbf\lambda \mathbf\lambda^T)' = \mathbf\lambda' \mathbf\lambda^T + \mathbf\lambda \mathbf(\lambda^T)'$, where differentiation is element-by-element on the RHS.

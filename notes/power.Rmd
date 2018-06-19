@@ -1,0 +1,133 @@
+---
+title: "Notes on power analysis"
+author: Greg Snow and Ben Bolker
+---
+
+Here is some basic code to get started:
+
+```{r pkgs}
+library(lme4)
+library(plyr) ## for raply(), optional ...
+```
+
+
+```{r def1}
+sim1 <- function(bSex=0, bFreq=0, bSF=0, b0=1000, Vsubj=1, Vword=1, Verror=1) {
+	Subject <- rep( 1:60, each=50 )
+	Word <- rep( 1:50, 60 )
+	Sex <- rep(c('M','F'), each=50*30)
+	## or use expand.grid(), although it won't work perfectly for this case:
+	## expand.grid(Word=1:50,Subject=1:30,Sex=c('M','F')) would give
+	## subjects 1 to 30 in EACH sex rather subjects 1 to 60 of which 
+	## half are each sex
+	#  assume frequency is constant across word, random from 1-100
+	tmp <- sample( 1:100, 50, replace=TRUE )
+	Frequency <- tmp[Word]
+	# random effects per subject
+	S.re <- rnorm(60, 0, sqrt(Vsubj))
+	# random effects per word
+	W.re <- rnorm(50, 0, sqrt(Vword))
+	# epsilons
+	eps <- rnorm(50*60, 0, sqrt(Verror))
+	# put it all together
+	# or use model.matrix() for more complex problems
+	ReactionTime <- b0 + bSex*(Sex=='M') + bFreq*Frequency +
+            bSF*(Sex=='M')*Frequency +
+            S.re[Subject] + W.re[Word] + eps
+	# put into a data frame
+	mydata <- data.frame( Subject = paste0('s',Subject), 
+                             Word = paste('w', Word),
+                             Sex=Sex, Frequency=Frequency,
+                             ReactionTime = ReactionTime)
+
+	# analyze looking at interaction term with LR test
+	fit1 <- lmer( ReactionTime ~ (Sex*Frequency) +
+                          (1|Subject) + (1|Word), data=mydata)
+	fit2 <- update(fit1, . - Sex:Frequency)
+	anova(fit2,fit1)[2,"Pr(>Chisq)"]
+}
+```
+
+Set random number seed for reproducibility:
+```{r set.seed}
+set.seed(1001)
+```
+
+```{r dosim1,cache=TRUE}
+system.time(out1 <- raply( 100, 
+              sim1( bSex=10, bFreq=2, bSF=0.25,
+                   Vsub=4000, Vword=2500, Verror=10000)))
+```
+
+(1000 replicates took 580 seconds on a few-year-old Dell laptop ...)
+
+```{r hist1}
+hist(out1)
+```
+
+```{r meanpow}
+mean( out1 < 0.05 )
+```
+
+Now edit the `sim1` function to match your real situation (in any cases that I guessed wrong) and analysis.  Run the simulation for reasonable values (guesses) and see what the power is.  I usually start with about 100 runs just to get a feel in a reasonable amount of time, change the values and rerun the last 4 lines several times.  Once you have the values that you want to use, up the number of simulations (change the progress bar as well) to 1,000 or maybe even 10,000 (start it running at the end of the day, then go home and let it run over night) to get your final values.
+
+You may want to include a table/graph that shows the power for different effects of the interaction term, etc.  If you like, you can encapsulate the 
+
+```{r}
+getpower <- function(nsim,params=list(),alpha=0.05) {
+   out1 <- replicate( nsim, do.call("sim1",as.list(params)))
+   mean(out1<alpha)
+}
+```
+and then use `sapply` or a `for` loop to run `getpower` for a range of parameter values.
+
+## More from Greg Snow
+
+> This code just redoes the last set of simulations using a new function that uses the estimates from the simulated data as the base rather than the simulation parameters).  The results are pretty much the same as before (p-value is uniform under the null, good power under the alternative).
+
+Use simulated means/vars:
+```{r sim2}
+sleepsimfun4 <- function(b0, b1, Vb0, Vb1, V01, Serror) {
+    mydata <- expand.grid( Days=0:9, Subject=1:18 )
+    RE <- MASS::mvrnorm(18, c(0,0), matrix( c(Vb0,V01,V01,Vb1), 2) )
+    mydata$Reaction <- with(mydata, 
+       (b0+RE[Subject,1]) + (b1+RE[Subject,2])*Days + rnorm(180, 0, Serror)
+    )
+    fit1 <- lmer(Reaction ~ Days + (Days|Subject), mydata)
+    fit2 <- lmer(Reaction ~ 1 + (1|Subject), mydata)
+    ts <- anova(fit2,fit1)[2,5]
+    d.b0 <- fixef(fit2)[1]
+    d.Vb0 <- VarCorr(fit2)$Subject[1,1]
+    d.Serror <- summary(fit2)@sigma
+    out.null <- raply(1000, 
+		sleepsimfun2(d.b0, 0, d.Vb0, 0, 0, d.Serror)[2,5])
+    mean( out.null >= ts, na.rm=TRUE )
+}
+```
+
+Check under the null:
+```{r pownull}
+out5 <- raply(1000, 
+              sleepsimfun4(100, 0, 1000, 0, 0, 45))
+
+hist(out5)
+mean(out5 <= 0.05)
+prop.test( sum(out5<=0.05), 1000)
+```
+	
+Find power for b1=5, Vb1=0, V01=0:
+```{r}
+out6 <- raply(1000,
+              sleepsimfun4(100, 5, 1000, 0, 0, 45))
+
+hist(out6)
+mean(out6 <= 0.05)
+prop.test( sum(out6<=0.05), 1000)
+```
+
+## Notes/to do:
+
+* watch out for convergence failures, warnings in lmer runs
+* all of this assumes that the likelihood ratio test is OK in this context: probably, since numbers of levels of random effects (50 words, 60 subjects) are large
+* check using ML rather than REML?
+* could rewrite `sim1` to use `nsubjects` and `nwords` as parameters -- would make power estimation on experiment size easier

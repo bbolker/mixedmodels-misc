@@ -1,0 +1,35 @@
+---
+title: "multinomial models"
+---
+
+Should be able to do this by turning the response into 0 for baseline value (arbitrary; first level of factor), 1 for any other response, then using either `respfac*model` or `respfac:model` as the fixed-effect fit ...
+
+[SO](https://stats.stackexchange.com/questions/24705/can-i-use-glm-algorithms-to-do-a-multinomial-logistic-regression)
+
+```{r}
+set.seed(101)
+dd <- data.frame(y=rep(c("a","b","c"),each=20),
+                 x=rnorm(60))
+dd <- transform(dd,y.dummy = as.numeric(y!=levels(y)[1]))
+glm(y.dummy~y,data=dd,family=binomial)
+```
+
+```{r}
+options(contrasts = c("contr.treatment", "contr.poly"))
+library(nnet)
+library(MASS)
+bwt.mu <- multinom(low ~ ., bwt)
+logLik(bwt.mu)
+bwt.glm <- glm(low~.,bwt, family=binomial)
+logLik(bwt.glm)
+## https://stats.idre.ucla.edu/r/dae/multinomial-logistic-regression/
+library(foreign)
+ml <- read.dta("https://stats.idre.ucla.edu/stat/data/hsbdemo.dta")
+ml$prog2 <- relevel(ml$prog, ref = "academic")
+test <- multinom(prog2 ~ ses + write, data = ml)
+ml <- transform(ml,
+                prog2.dummy = as.numeric(prog2!=levels(prog2)[1]))
+test2 <- glm(prog2.dummy ~ prog2:(ses+write),family=binomial, data=ml)
+```
+OK, this is overfitted.  Want some way to fit different models for
+each contrasts ...?
