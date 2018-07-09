@@ -137,21 +137,17 @@ Also see [this thread](https://stat.ethz.ch/pipermail/r-sig-mixed-models/2010q2/
 
 - with the usual caveats, plus a few extras -- counting degrees of freedom, etc. -- the usual procedure of calculating the sum of squared Pearson residuals and comparing it to the residual degrees of freedom should give at least a crude idea of overdispersion.  The following attempt counts each variance or covariance parameter as one model degree of freedom and presents the sum of squared Pearson residuals, the ratio of (SSQ residuals/rdf), the residual df, and the $p$-value based on the (approximately!!) appropriate $\chi^2$ distribution. **Do PLEASE note the usual, and extra, caveats noted here: this is an APPROXIMATE estimate of an overdispersion parameter**. Even in the GLM case, the expected deviance per point equaling 1 is only true as the distribution of individual deviates approaches normality, i.e. the usual $\lambda>5$ rules of thumb for Poisson values and $\textrm{min}(Np, N(1-p)) > 5$ for binomial values (e.g. see @venables_modern_2002, [p. 209](http://books.google.com/books?id=974c4vKurNkC&pg=PA209)). (And that's without the extra complexities due to GLMM, i.e. the "effective" residual df should be large enough to make the sums of squares converge on a $\chi^2$ distribution ...)
 
-The following function works for (at least) `lme4` and `glmmADMB` ...
+The following function should work for a variety of model types
+(at least `glmmADMB`, `glmmTMB`, `lme4`, ...).
+
 ```{r overdisp_fun}
 overdisp_fun <- function(model) {
-  ## number of variance parameters in 
-  ##   an n-by-n variance-covariance matrix
-  vpars <- function(m) {
-    nrow(m)*(nrow(m)+1)/2
-  }
-  model.df <- sum(sapply(VarCorr(model),vpars))+length(fixef(model))
-  rdf <- nrow(model.frame(model))-model.df
-  rp <- residuals(model,type="pearson")
-  Pearson.chisq <- sum(rp^2)
-  prat <- Pearson.chisq/rdf
-  pval <- pchisq(Pearson.chisq, df=rdf, lower.tail=FALSE)
-  c(chisq=Pearson.chisq,ratio=prat,rdf=rdf,p=pval)
+    rdf <- df.residual(model)
+    rp <- residuals(model,type="pearson")
+    Pearson.chisq <- sum(rp^2)
+    prat <- Pearson.chisq/rdf
+    pval <- pchisq(Pearson.chisq, df=rdf, lower.tail=FALSE)
+    c(chisq=Pearson.chisq,ratio=prat,rdf=rdf,p=pval)
 }
 ```
 
@@ -170,17 +166,45 @@ m2 <- glmmadmb(y~x+(1|f),data=d,family="poisson")
 overdisp_fun(m2)
 ```
 
-The `gof` function in the `aods3` package works for recent versions of the `lme4` package -- it provides essentially the same set of information.
+The `gof` function in the `aods3` provides similar functionality
+(it reports both deviance- and $\chi^2$-based estimates of
+overdispersion and tests).
 
 ### Fitting models with overdispersion?
 
 - quasilikelihood estimation: [MASS::glmmPQL](http://finzi.psych.upenn.edu/R/library/MASS/html/glmmPQL.html). Quasi- was deemed unreliable in `lme4`, and is no longer available. (Part of the problem was questionable numerical results in some cases; the other problem was that DB felt that he did not have a sufficiently good understanding of the theoretical framework that would explain what the algorithm was actually estimating in this case.) [geepack::geelgm](http://finzi.psych.upenn.edu/R/library/geepack/html/geeglm.html) may be workable (haven't tried it)
+
+    If you really want quasi-likelihood analysis for `glmer` fits, you can do it yourself by adjusting the
+coefficient table - i.e., by multiplying the standard error by the square root
+of the dispersion factor [^2] and recomputing the $Z$- and $p$-values
+accordingly, as follows:
+
+[^2]: the dispersion factor is estimated on a
+variance, so we need to take the square root to apply it to the
+standard error
+
+```{r quasi}
+## extract summary table; you may also be able to do this via
+##  broom::tidy or broom.mixed::tidy
+cc <- coef(summary(m1))
+phi <- overdisp_fun(m1)["ratio"]
+cc <- within(as.data.frame(cc),
+{   `Std. Error` <- `Std. Error`*sqrt(phi)
+    `z value` <- Estimate/`Std. Error`
+    `Pr(>|z|)` <- 2*pnorm(abs(`z value`), lower.tail=FALSE)
+})
+printCoefmat(cc,digits=3)
+```
+
+(In this case it doesn't make much difference, since the data we simulated in the first place were Poisson.) Keep in mind that once you switch to quasi-likelihood you will either have to eschew inferential methods such as the likelihood ratio test, profile confidence intervals, AIC, etc., or make more heroic assumptions to compute "quasi-" analogs of all of the above (such as QAIC).
+
 - individual-level random effects (MCMCglmm **or** recent version of lme4, 0.999375-34 or later) [or WinBUGS or ADMB or ...]. If you want to a citation for this approach, try @elston_analysis_2001, who cite @lawson_disease_1999; apparently there is also an example in section 10.5 of @maindonald_data_2010, and (according to an R-sig-mixed-models post) this is also discussed by @rabehesketh_multilevel_2008. Also see @browne_variance_2005 for an example in the binomial context (i.e. logit-normal-binomial rather than lognormal-Poisson). Agresti's excellent (2002) book @agresti_categorical_2002 also discusses this (section 13.5), referring back to @breslow_extrapoisson_1984 and @hinde_compound_1982. [**Notes**: (a) I haven't checked all these references myself, (b) I can't find the reference any more, but I have seen it stated that individual-level random effect estimation is probably dodgy for PQL approaches as used in Elston et al 2001] 
 - alternative distributions
    - Poisson-lognormal model (see above, "individual-level random effects")
    - negative binomial
        - `lme4::glmer.nb()` should fit a negative binomial, although it is somewhat slow and fragile compared to some of the other methods suggested here.
        - [glmmADMB](http://github.com/bbolker/glmmADMB/) and [glmmTMB](https://github.com/glmmtmb/glmmTMB/) (both on GitHub) will fit two parameterizations of the negative binomial: `family="nbinom"` gives the classic parameterization with $\sigma^2=\mu(1+mu/k)$ ("NB2" in Hardin and Hilbe's terminology) while `family="nbinom1"` gives a parameterization with $\sigma^2=\phi \mu$, $\phi>1$ ("NB1" to Hardin and Hilbe). The latter might also be called a "quasi-Poisson" parameterization because it matches the mean-variance relationship assumed by quasi-Poisson models, i.e. the variance is strictly proportional to the mean (although the proportionality constant must be >1, a limitation that does not apply to quasi-likelihood approaches)
+	   - the `brms` package has a `negbinomial` family
   * gamlss.mx:gamlssNP
   * WinBUGS/JAGS (via R2WinBUGS/Rjags)
   * AD Model Builder (possibly via R2ADMB)
@@ -210,7 +234,7 @@ See e.g. @martin_zero_2005 or @warton_many_2005 ("many zeros does not mean zero 
     - truncated Poisson and negative binomial distributions (which allows two-stage fitting of hurdle models)
 - `glmmTMB` handles a variety of Z-I and Z-T models (allows covariates, and random effects, in the zero-alteration model)
 - `brms` does too
-- Gavin Simpson has a [detailed writeup](http://www.fromthebottomoftheheap.net/2017/05/04/compare-mgcv-with-glmmTMB/) showing that `mgcv::gam()` can do simple mixed models with zero-inflation, and comparing `mgcv` with `glmmTMB` results
+- Gavin Simpson has a [detailed writeup](http://www.fromthebottomoftheheap.net/2017/05/04/compare-mgcv-with-glmmTMB/) showing that `mgcv::gam()` can do simple mixed models (Poisson, not NB) with zero-inflation, and comparing `mgcv` with `glmmTMB` results
 - `gamlssNP` in the `gamlss.mx` package should handle zero-inflation, and the `gamlss.tr` package should handle truncated (i.e. hurdle) models -- but I haven't tried them
 - roll-your-own: ADMB/R2admb, WinBUGS/R2WinBUGS, TMB, Stan, ... 
 
