@@ -400,19 +400,20 @@ the results are).
 
 > The resulting function is not useful for general nonlinear optimization — one can easily wander into parameter regimes corresponding to infeasible (non-positive semidefinite) variance-covariance matrices — but it serves for likelihood profiling, where one focal parameter is varied at a time and the optimization over the other parameters is likely to start close to an optimum.
 
-### Other problems
+### Other problems/`lme4` error messages
 
-- When using `lme4` to fit GLMMs with link functions that do not automatically constrain the response to the allowable range of the distributional family (e.g. binomial models with a log link, where the estimated probability can be >1, or inverse-Gamma models, where the estimated mean can be negative), it is not unusual to get the error
-```
-PIRLS step-halvings failed to reduce deviance in pwrssUpdate
-```
-This occurs because `lme4` doesn't do anything to constrain the predicted values, so `NaN` values pop up, which aren't handled gracefully. If possible, switch to a link function to one that constrains the response (e.g. logit link for binomial or log link for Gamma).
+Most of the following error messages are relatively unusual, and happen mostly with complex/large/unstable models. There is often no simple fix; the standard suggestions for troubleshooting are (1) try rescaling and/or centering predictors; (2) see if a simpler model can be made to work; (3) look for severe lack of balance and/or complete separation in the data set.
+
+- `PIRLS step-halvings failed to reduce deviance in pwrssUpdate`
+    - When using `lme4` to fit GLMMs with link functions that do not automatically constrain the response to the allowable range of the distributional family (e.g. binomial models with a log link, where the estimated probability can be >1, or inverse-Gamma models, where the estimated mean can be negative), it is not unusual to get this error.  This occurs because `lme4` doesn't do anything to constrain the predicted values, so `NaN` values pop up, which aren't handled gracefully. If possible, switch to a link function to one that constrains the response (e.g. logit link for binomial or log link for Gamma).
+- `Downdated VtV is not positive definite`: no specific advice, see general suggestions above
+- `convergence code 3 from bobyqa: bobyqa -- a trust region step failed to reduce q`: again no specific advice about fixing this, although there is a [useful discussion of the meaning of the error message on CrossValidated](https://stats.stackexchange.com/questions/89945/meaning-of-a-convergence-warning-in-glmer)
 
 ## REML for GLMMs
 
-While restricted maximum likelihood (REML) procedures ([Wikipedia](http://en.wikipedia.org/wiki/Restricted_maximum_likelihood) are well established for linear mixed models, it is less clear how one should define and compute the equivalent criteria (integrating out the effects of fixed parameters) for GLMMs. @millar_maximum_2011 and @berger_integrated_1999 are possible starting points in the peer-reviewed literature, and there are mailing-list discussions of these issues [here](https://stat.ethz.ch/pipermail/r-sig-mixed-models/2009q1/002104.html) and [here](http://lists.admb-project.org/pipermail/users/2011-June/001224.html).
-
-Note that in the current version of lme4, glmer **silently ignores** the REML specification (!)
+- While restricted maximum likelihood (REML) procedures ([Wikipedia](http://en.wikipedia.org/wiki/Restricted_maximum_likelihood) are well established for linear mixed models, it is less clear how one should define and compute the equivalent criteria (integrating out the effects of fixed parameters) for GLMMs. @millar_maximum_2011 and @berger_integrated_1999 are possible starting points in the peer-reviewed literature, and there are mailing-list discussions of these issues [here](https://stat.ethz.ch/pipermail/r-sig-mixed-models/2009q1/002104.html) and [here](http://lists.admb-project.org/pipermail/users/2011-June/001224.html).
+- Attempting to use `REML=TRUE` with `glmer` will produce the warning `extra argument(s) ‘REML’ disregarded`
+- `glmmTMB` allows `REML=TRUE` for GLMMs (it uses the Laplace approximation to integrate over the fixed effect parameters), since version 0.2.2 
 
 # Model diagnostics
 
