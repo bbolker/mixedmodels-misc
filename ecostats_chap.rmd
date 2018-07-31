@@ -3,6 +3,7 @@ title: "GLMM worked examples"
 author: Ben Bolker
 date: "`r format(Sys.time(), '%H:%M %d %B %Y')`"
 bibliography: glmm.bib
+csl: apa.csl
 output: 
   html_document:
     toc: true
@@ -1321,6 +1322,7 @@ load("data/gopherdat2.RData")
     geom_line(aes(group=Site),alpha=0.2)+
     labs(x="Seroprevalence",y="1+shells/Area (log scale)"))
 ```
+
 There does indeed seem to be a general upward trend 
 in shell density as a function of seroprevalence,
 but the rest of the plot is pretty messy.  Lines
@@ -1401,9 +1403,12 @@ gmod_blmer_L <- bglmer(shells~prev+offset(log(Area))+factor(year)+(1|Site),
 ```{r blmer_CI,eval=FALSE}
 gmod_blmer_prof <- confint(gmod_blmer_L)
 ```
-```{r blmer_CI2,cache=TRUE,message=FALSE}
+```{r blmer_CI2,cache=TRUE,message=FALSE,warning=FALSE}
 gmod_blmer_bootCI <- confint(gmod_blmer_L,method="boot")
 ```
+
+(Some warnings suppressed.)
+
 
 Now we do estimate a positive (but small) among-site variance:
 ```{r blmer_vc}

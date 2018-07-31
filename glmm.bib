@@ -1619,7 +1619,7 @@ author={Andrew Gelman and John B. Carlin and  Hal S. Stern and David B. Dunson
 @InCollection{feng_small_2004,
   author = 	 {Feng, Ziding and Braun, Thomas and McCulloch, Charles},
   title = 	 {Small Sample Inference for Clustered Data},
-  booktitle = 	 {Proceedings of the Second Seattle Symposium in Biostatistics},
+  booktitle = 	 {Proceedings of the Second {Seattle} Symposium in Biostatistics},
   publisher =	 {Springer},
   year =	 {2004},
   editor =	 {D. Y. Lin and P. J. Heagerty},
@@ -2460,15 +2460,6 @@ issue = 1,
 	pages = {181--187}
 }
 
-@Book{Bolker2008,
-  author =	 {Benjamin M. Bolker},
-  title = 	 {Ecological Models and Data in R},
-  publisher = 	 {Princeton University Press},
-  year = 	 {2008},
-  address =	 {Princeton, NJ}
-}
-
-
 @article{laird_random-effects_1982,
 	title = {Random-{Effects} {Models} for {Longitudinal} {Data}},
 	volume = {38},
@@ -2482,4 +2473,114 @@ issue = 1,
 	author = {Laird, Nan M. and Ware, James H.},
 	year = {1982},
 	pages = {963--974}
+}
+
+
+@article{greenland_penalization_2015,
+	title = {Penalization, bias reduction, and default priors in logistic and related categorical and survival regressions},
+	volume = {34},
+	copyright = {Copyright © 2015 John Wiley \& Sons, Ltd.},
+	issn = {1097-0258},
+	url = {https://onlinelibrary.wiley.com/doi/abs/10.1002/sim.6537},
+	doi = {10.1002/sim.6537},
+	abstract = {Penalization is a very general method of stabilizing or regularizing estimates, which has both frequentist and Bayesian rationales. We consider some questions that arise when considering alternative penalties for logistic regression and related models. The most widely programmed penalty appears to be the Firth small-sample bias-reduction method (albeit with small differences among implementations and the results they provide), which corresponds to using the log density of the Jeffreys invariant prior distribution as a penalty function. The latter representation raises some serious contextual objections to the Firth reduction, which also apply to alternative penalties based on t-distributions (including Cauchy priors). Taking simplicity of implementation and interpretation as our chief criteria, we propose that the log-F(1,1) prior provides a better default penalty than other proposals. Penalization based on more general log-F priors is trivial to implement and facilitates mean-squared error reduction and sensitivity analyses of penalty strength by varying the number of prior degrees of freedom. We caution however against penalization of intercepts, which are unduly sensitive to covariate coding and design idiosyncrasies. Copyright © 2015 John Wiley \& Sons, Ltd.},
+	language = {en},
+	number = {23},
+	urldate = {2018-04-25},
+	journal = {Statistics in Medicine},
+	author = {Greenland, Sander and Mansournia, Mohammad Ali},
+	month = oct,
+	year = {2015},
+	keywords = {maximum likelihood, penalized likelihood, Bayes estimators, bias correction, Firth bias reduction, Jeffreys prior, logistic regression, regularization, shrinkage, sparse data, stabilization},
+	pages = {3133--3143}
+}
+
+@ARTICLE{Crome+1996,
+  author = {F. H. J. Crome and M. R. Thomas and L. A. Moore},
+  title = {A Novel {Bayesian} Approach to Assessing Impacts of Rain Forest Logging},
+  journal = {Ecological Applications},
+  year = {1996},
+  volume = {6},
+  pages = {1104-1123}
+}
+
+@misc{carpenter_computational_2017,
+	title = {Computational and statistical issues with uniform interval priors},
+	url = {http://andrewgelman.com/2017/11/28/computational-statistical-issues-uniform-interval-priors/},
+	abstract = {There are two anti-patterns* for prior specification in Stan programs that can be sourced directly to idioms developed for BUGS. One is the diffuse gamma priors that Andrew’s already written about at length. The second is interval-based priors. Which brings us to today’s post. Interval priors An interval prior is something like this in Stan …},
+	language = {en-US},
+	urldate = {2018-05-15},
+	journal = {Statistical Modeling, Causal Inference, and Social Science},
+	author = {Carpenter, Bob},
+	month = nov,
+	year = {2017}
+}
+
+
+@article{lewandowski_generating_2009,
+	title = {Generating random correlation matrices based on vines and extended onion method},
+	volume = {100},
+	issn = {0047-259X},
+	url = {http://www.sciencedirect.com/science/article/pii/S0047259X09000876},
+	doi = {10.1016/j.jmva.2009.04.008},
+	abstract = {We extend and improve two existing methods of generating random correlation matrices, the onion method of Ghosh and Henderson [S. Ghosh, S.G. Henderson, Behavior of the norta method for correlated random vector generation as the dimension increases, ACM Transactions on Modeling and Computer Simulation (TOMACS) 13 (3) (2003) 276–294] and the recently proposed method of Joe [H. Joe, Generating random correlation matrices based on partial correlations, Journal of Multivariate Analysis 97 (2006) 2177–2189] based on partial correlations. The latter is based on the so-called D-vine. We extend the methodology to any regular vine and study the relationship between the multiple correlation and partial correlations on a regular vine. We explain the onion method in terms of elliptical distributions and extend it to allow generating random correlation matrices from the same joint distribution as the vine method. The methods are compared in terms of time necessary to generate 5000 random correlation matrices of given dimensions.},
+	number = {9},
+	urldate = {2018-07-27},
+	journal = {Journal of Multivariate Analysis},
+	author = {Lewandowski, Daniel and Kurowicka, Dorota and Joe, Harry},
+	month = oct,
+	year = {2009},
+	keywords = {Correlation matrix, Dependence vines, Onion method, Partial correlation},
+	pages = {1989--2001}
+}
+
+
+@article{gelman_statistical_2014,
+	title = {The {Statistical} {Crisis} in {Science}},
+	volume = {102},
+	url = {https://search.proquest.com/openview/a83b0c4daa7508482a6b7e47eb7b8a3e/1?pq-origsite=gscholar&cbl=40798},
+	language = {en},
+	number = {6},
+	urldate = {2018-07-28},
+	journal = {American Scientist},
+	author = {Gelman, Andrew and Loken, Eric},
+	year = {2014},
+	pages = {460--465}
+}
+
+
+@article{gelman_scaling_2008,
+	title = {Scaling regression inputs by dividing by two standard deviations},
+	volume = {27},
+	issn = {02776715, 10970258},
+	url = {http://doi.wiley.com/10.1002/sim.3107},
+	doi = {10.1002/sim.3107},
+	language = {en},
+	number = {15},
+	urldate = {2018-02-04},
+	journal = {Statistics in Medicine},
+	author = {Gelman, Andrew},
+	month = jul,
+	year = {2008},
+	pages = {2865--2873}
+}
+
+
+@misc{singmann_compute_2018,
+	title = {Compute effect sizes for mixed() objects},
+	url = {https://afex.singmann.science/forums/topic/compute-effect-sizes-for-mixed-objects},
+	author={Singmann, Henrik},
+	urldate = {2018-07-31},
+	journal = {afex: Analysis of Factorial EXperiments},
+	month = jul,
+	year = {2018}
+}
+
+@article{rights_quantifying_2018,
+	title = {Quantifying explained variance in multilevel models: {An} integrative framework for defining {R}-squared measures.},
+	doi = {10.1037%2Fmet0000184},
+	abstract = {Researchers often mention the utility and need for R-squared measures of explained variance for multilevel models (MLMs). Although this topic has been addressed by methodologists, the MLM R-squared literature suffers from several shortcomings: (a) analytic relationships among existing measures have not been established so measures equivalent in the population have been redeveloped 2 or 3 times; (b) a completely full partitioning of variance has not been used to create measures, leading to gaps in the availability of measures to address key substantive questions; (c) a unifying approach to interpreting and choosing among measures has not been provided, leading to researchers’ difficulty with implementation; and (d) software has inconsistently and infrequently incorporated available measures. We address these issues with the following contributions. We develop an integrative framework of R-squared measures for MLMs with random intercepts and/or slopes based on a completely full decomposition of variance. We analytically relate 10 existing measures from different disciplines as special cases of 5 measures from our framework. We show how our framework fills gaps by supplying additional total and level-specific measures that answer new substantive research questions. To facilitate interpretation, we provide a novel and integrative graphical representation of all the measures in the framework; we use it to demonstrate limitations of current reporting practices for MLM R-squareds, as well as benefits of considering multiple measures from the framework in juxtaposition. We supply and empirically illustrate an R function, r2MLM, that computes all measures in our framework to help researchers in considering effect size and conveying practical significance.},
+	journal = {Psychological Methods},
+	author = {Rights, Jason D. and Sterba, Sonya K.},
+	year = {2018}
 }
