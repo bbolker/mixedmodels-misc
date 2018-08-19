@@ -136,6 +136,7 @@ Also see [this thread](https://stat.ethz.ch/pipermail/r-sig-mixed-models/2010q2/
 ### Testing for overdispersion/computing overdispersion factor
 
 - with the usual caveats, plus a few extras -- counting degrees of freedom, etc. -- the usual procedure of calculating the sum of squared Pearson residuals and comparing it to the residual degrees of freedom should give at least a crude idea of overdispersion.  The following attempt counts each variance or covariance parameter as one model degree of freedom and presents the sum of squared Pearson residuals, the ratio of (SSQ residuals/rdf), the residual df, and the $p$-value based on the (approximately!!) appropriate $\chi^2$ distribution. **Do PLEASE note the usual, and extra, caveats noted here: this is an APPROXIMATE estimate of an overdispersion parameter**. Even in the GLM case, the expected deviance per point equaling 1 is only true as the distribution of individual deviates approaches normality, i.e. the usual $\lambda>5$ rules of thumb for Poisson values and $\textrm{min}(Np, N(1-p)) > 5$ for binomial values (e.g. see @venables_modern_2002, [p. 209](http://books.google.com/books?id=974c4vKurNkC&pg=PA209)). (And that's without the extra complexities due to GLMM, i.e. the "effective" residual df should be large enough to make the sums of squares converge on a $\chi^2$ distribution ...)
+- Remember that (1) overdispersion is irrelevant for models that estimate a scale parameter (i.e. almost anything but Poisson or binomial: Gaussian, Gamma, negative binomial ...) and (2) overdispersion is not estimable (and hence practically irrelevant) for Bernoulli models (= binary data = binomial with $N=1$).
 
 The following function should work for a variety of model types
 (at least `glmmADMB`, `glmmTMB`, `lme4`, ...).
@@ -155,6 +156,7 @@ Example:
 ```{r lme4,message=FALSE}
 library(lme4)
 ```
+
 ```{r overdisp_ex,cache=TRUE,message=FALSE}
 set.seed(101)  
 d <- data.frame(y=rpois(1000,lambda=3),x=runif(1000),
@@ -198,20 +200,34 @@ printCoefmat(cc,digits=3)
 
 (In this case it doesn't make much difference, since the data we simulated in the first place were Poisson.) Keep in mind that once you switch to quasi-likelihood you will either have to eschew inferential methods such as the likelihood ratio test, profile confidence intervals, AIC, etc., or make more heroic assumptions to compute "quasi-" analogs of all of the above (such as QAIC).
 
-- individual-level random effects (MCMCglmm **or** recent version of lme4, 0.999375-34 or later) [or WinBUGS or ADMB or ...]. If you want to a citation for this approach, try @elston_analysis_2001, who cite @lawson_disease_1999; apparently there is also an example in section 10.5 of @maindonald_data_2010, and (according to an R-sig-mixed-models post) this is also discussed by @rabehesketh_multilevel_2008. Also see @browne_variance_2005 for an example in the binomial context (i.e. logit-normal-binomial rather than lognormal-Poisson). Agresti's excellent (2002) book @agresti_categorical_2002 also discusses this (section 13.5), referring back to @breslow_extrapoisson_1984 and @hinde_compound_1982. [**Notes**: (a) I haven't checked all these references myself, (b) I can't find the reference any more, but I have seen it stated that individual-level random effect estimation is probably dodgy for PQL approaches as used in Elston et al 2001] 
+- observation-level random effects (OLRE: this approach should work in most packages). If you want to a citation for this approach, try @elston_analysis_2001, who cite @lawson_disease_1999; apparently there is also an example in section 10.5 of @maindonald_data_2010, and (according to an R-sig-mixed-models post) this is also discussed by @rabehesketh_multilevel_2008. Also see @browne_variance_2005 for an example in the binomial context (i.e. logit-normal-binomial rather than lognormal-Poisson). Agresti's excellent (2002) book @agresti_categorical_2002 also discusses this (section 13.5), referring back to @breslow_extrapoisson_1984 and @hinde_compound_1982. [**Notes**: (a) I haven't checked all these references myself, (b) I can't find the reference any more, but I have seen it stated that observation-level random effect estimation is probably dodgy for PQL approaches as used in Elston et al 2001] 
 - alternative distributions
-   - Poisson-lognormal model (see above, "individual-level random effects")
-   - negative binomial
-       - `lme4::glmer.nb()` should fit a negative binomial, although it is somewhat slow and fragile compared to some of the other methods suggested here.
-       - [glmmADMB](http://github.com/bbolker/glmmADMB/) and [glmmTMB](https://github.com/glmmtmb/glmmTMB/) (both on GitHub) will fit two parameterizations of the negative binomial: `family="nbinom"` gives the classic parameterization with $\sigma^2=\mu(1+mu/k)$ ("NB2" in Hardin and Hilbe's terminology) while `family="nbinom1"` gives a parameterization with $\sigma^2=\phi \mu$, $\phi>1$ ("NB1" to Hardin and Hilbe). The latter might also be called a "quasi-Poisson" parameterization because it matches the mean-variance relationship assumed by quasi-Poisson models, i.e. the variance is strictly proportional to the mean (although the proportionality constant must be >1, a limitation that does not apply to quasi-likelihood approaches)
-	   - the `brms` package has a `negbinomial` family
-  * gamlss.mx:gamlssNP
-  * WinBUGS/JAGS (via R2WinBUGS/Rjags)
-  * AD Model Builder (possibly via R2ADMB)
-  * gnlmm in the `repeated` package ([off-CRAN](http://www.commanster.eu/rcode.html))
+    - Poisson-lognormal model for counts or binomial-logit-Normal model for proportions (see above, "observation-level random effects")
+    - negative binomial for counts or beta-binomial for proportions
+         - `lme4::glmer.nb()` should fit a negative binomial, although it is somewhat slow and fragile compared to some of the other methods suggested here. `lme4` cannot fit beta-binomial models (these cannot be formulated as a part of the exponential family of distributions)
+	     - [glmmADMB](http://github.com/bbolker/glmmADMB/) and [glmmTMB](https://github.com/glmmtmb/glmmTMB/) (both on GitHub) will fit two parameterizations of the negative binomial: `family="nbinom"` (or `family="nbinom2"` in `glmmTMB`) gives the classic parameterization with $\sigma^2=\mu(1+mu/k)$ ("NB2" in Hardin and Hilbe's terminology) while `family="nbinom1"` gives a parameterization with $\sigma^2=\phi \mu$, $\phi>1$ ("NB1" to Hardin and Hilbe). The latter might also be called a "quasi-Poisson" parameterization because it matches the mean-variance relationship assumed by quasi-Poisson models, i.e. the variance is strictly proportional to the mean (although the proportionality constant must be >1, a limitation that does not apply to quasi-likelihood approaches).
+	   - `glmmTMB` allows beta-binomial models ([@harrison_comparison_2015] suggests comparing beta-binomial with OLRE models to assess reliability)
+	   - the `brms` package has a `negbinomial` family (no beta-binomial, but it does have a wide range of other families)
+- other packages/approaches (less widely used, or requiring a bit more effort)
+    - `gamlss.mx:gamlssNP`
+    - WinBUGS/JAGS (via R2WinBUGS/Rjags)
+    - AD Model Builder (possibly via `R2admb` package) or `TMB`
+    - `gnlmm` in the `repeated` package ([off-CRAN](http://www.commanster.eu/rcode.html))
   * [ASREML](http://www.asreml.com/software/genstat/htmlhelp/server/GLMM.htm)
 
-Negative binomial models in `glmmADMB` or `glmmTMB` and lognormal-Poisson models in `glmer` (or `MCMCglmm`) are probably the best quick alternatives. If you need to explore alternatives (different variance-mean relationships, different distributions), then ADMB, TMB, WinBUGS, Stan are the most flexible alternatives.
+Negative binomial models in `glmmTMB` and lognormal-Poisson models in `glmer` (or `MCMCglmm`) are probably the best quick alternatives for overdispersed count data. If you need to explore alternatives (different variance-mean relationships, different distributions), then `ADMB`, `TMB`, `WinBUGS`, `Stan`, `NIMBLE` are the most flexible alternatives.
+
+### Underdispersion
+
+Underdispersion (much *less* variability than expected) is a less common problem than overdispersion.
+
+- mild overdispersion is sometimes ignored, since it tends in general to lead to conservative rather than anti-conservative results
+- quasi-likelihood (and the quasi-hack listed above) can handle under- as well as underdispersion
+- some other solutions exist, but are less widely implemented
+    - for distributions with a small range (e.g. litter sizes of large mammals), one can treat responses as ordinal (e.g. using the `ordinal` package, or `MCMCglmm` or `brms` for Bayesian solutions)
+    - the COM-Poisson distribution and generalized Poisson distributions, implemented in `glmmTMB`, can handle underdispersion (J. Hilbe recommends the latter in [this CrossValidated answer](https://stats.stackexchange.com/questions/67385/what-is-the-appropriate-model-for-underdispersed-count-data). (`VGAM` has a generalized Poisson distribution, but doesn't handle random effects.)
+     
+
 
 ## Gamma GLMMs
 
