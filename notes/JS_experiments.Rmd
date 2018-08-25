@@ -1,0 +1,34 @@
+---
+title: "maximal model for a microbiome experiment"
+---
+
+(I don't know why I'm writing this in Rmarkdown, I just am ...)
+
+We have:
+
+- four treatments: `{0,P,G,C}`
+- two time points: `{day0, day14}`
+- mice within cages (within treatments) within experiments
+- most experiments contain most treatments, but all experiments don't contain all treatments
+
+## Parameterizing before/after
+
+```{r interax}
+tvec <- c("0","P","G","C")
+dd <- expand.grid(Trt=factor(tvec,levels=tvec),
+                  Time=factor(c("0","14")))
+colnames(model.matrix(~1 + Time + Time:Trt, dd))
+```
+
+```{r interax2}
+dd$n_Time <- ifelse(dd$Time=="0",0,1)
+colnames(model.matrix(~1 + n_Time + n_Time:Trt, dd))
+```
+
+## Full model
+
+- mouse: use `(1|mouseID)`. We shouldn't include `Exp` or `Trt`, since these don't vary within mouse. Since we measure mice at two time points we might think we want `(Time|mouseID)`, but since there is a single observation per mouse and time point, this would be equivalent to an observation-level random effect. Since we're already using a model (negative binomial) that estimates the dispersion/observation-level variance, that would be redundant, so we simplify to `(1|mouseID)`
+- cage: same logic as mouse (no variation in `Exp` or `Trt` within cages); use `(Time|mouseID)`
+- experiment: time and treatment both vary within experiment, so in principle weshould use all the fixed effects (i.e. `(1 + n_Time + n_Time:Trt|Exp)`). However, this would give us a $5 \times 5$ variance-covariance matrix (15 parameters); let's think about simplifying.
+
+## Compound symmetry
