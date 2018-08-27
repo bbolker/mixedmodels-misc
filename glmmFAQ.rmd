@@ -32,8 +32,9 @@ The most commonly used functions for mixed modeling in R are
 - *linear mixed models*: `aov()`, `nlme::lme`[^1], `lme4::lmer`; 
 - *generalized linear mixed models* (GLMMs)
     - frequentist: `MASS::glmmPQL`, `lme4::glmer`; `glmmTMB`
-    - Bayesian: `MCMCglmm::MCMCglmm`; `brms`
-- *nonlinear mixed models*: `nlme::nlme`, `lme4::nlmer`.
+    - Bayesian: `MCMCglmm::MCMCglmm`; `brms::brm`
+- *nonlinear mixed models*: `nlme::nlme`, `lme4::nlmer`; `brms::brm`
+- *GNLMMs*: `brms::brm`	
 
 [^1]: in R, `foo::bar` (or `foo::bar()`) denotes "function `bar` in package `foo`").
 
