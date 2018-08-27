@@ -29,7 +29,7 @@ This is an informal FAQ list for the `r-sig-mixed-models` mailing list.
 
 The most commonly used functions for mixed modeling in R are 
 
-- *linear mixed models*: `aov()`, `nlme::lme`[^1], `lme4::lmer`; 
+- *linear mixed models*: `aov()`, `nlme::lme`[^1], `lme4::lmer`; `brms::brm`
 - *generalized linear mixed models* (GLMMs)
     - frequentist: `MASS::glmmPQL`, `lme4::glmer`; `glmmTMB`
     - Bayesian: `MCMCglmm::MCMCglmm`; `brms::brm`
