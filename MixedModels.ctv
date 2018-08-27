@@ -2,7 +2,7 @@
   <name>MixedModels</name>
   <topic>Mixed Models</topic>
   <maintainer email="bolker@mcmaster.ca">Ben Bolker</maintainer>
-  <version>2015-03-15</version>
+  <version>2018-08-27</version>
 
   <info>
     <p>
@@ -10,9 +10,7 @@
     </p>
 
     <p>
-The <a href="https://stat.ethz.ch/mailman/listinfo/r-sig-mixed-models">R-SIG-mixed-models mailing list</a> 
-(also available via the <a href="http://news.gmane.org/gmane.comp.lang.r.lme4.devel">Gmane web aggregator</a>)
-is an active forum for discussion of mixed-model-related questions, course announcements, etc.. <a href="http://stackoverflow.com/questions/tagged/r+mixed-models">Stack Overflow</a> and <a href="http://stats.stackexchange.com">Stack Exchange</a> also host relevant discussions.
+The <a href="https://stat.ethz.ch/mailman/listinfo/r-sig-mixed-models">R-SIG-mixed-models mailing list</a> is an active forum for discussion of mixed-model-related questions, course announcements, etc.. <a href="http://stackoverflow.com/questions/tagged/r+mixed-models">Stack Overflow</a> and <a href="http://stats.stackexchange.com">Cross Validated</a> also host relevant discussions.
     </p>
     <h3>Fitting linear mixed models</h3>
     <p>
@@ -20,24 +18,24 @@ is an active forum for discussion of mixed-model-related questions, course annou
       (i.e., models with Normal residuals, predictors that are linear functions
       of the input variables, and Normal distributions of the random effects
       within grouping variables) are <pkg>nlme::</pkg><code>lme</code>
-      and <pkg>lme4::</pkg><code>lmer</code>. <pkg>MCMCglmm</pkg> fits 
-      linear mixed models in a Bayesian MCMC framework.
+      and <pkg>lme4::</pkg><code>lmer</code>. <pkg>MCMCglmm</pkg>, <pkg>rstanarm</pkg>, and <pkg>brms</pkg> fit linear mixed models in a Bayesian MCMC framework.
     </p>
     <h3>Fitting generalized linear mixed models</h3>
     <p>
       The most commonly used packages/functions for fitting generalized linear mixed models
       (i.e., models with conditional distributions in the exponential family,
-       e.g. Bernoulli/binomial/Poisson/Gamma and distributions of the
+             e.g. Bernoulli/binomial/Poisson/Gamma, and distributions of the
       conditional modes that are Normal on the scale of the
       linear predictor)
       are <pkg>MASS::</pkg><code>glmmPQL</code>
-      and <pkg>lme4::</pkg><code>glmer</code>. <pkg>MCMCglmm</pkg> fits 
-      generalized linear mixed models in a Bayesian MCMC framework.
+      and <pkg>lme4::</pkg><code>glmer</code>. <pkg>MCMCglmm</pkg>,
+      <pkg>rstanarm</pkg>, and <pkg>brms</pkg> fit linear mixed models in a Bayesian MCMC framework.
+fits 
     </p>
     <p>
       Other, less commonly used, packages for fitting GLMMs include
-      <pkg>glmmML</pkg>; <code>glmmADMB</code> (not on CRAN, and
-      possibly out of date on R-forge); <pkg>repeated</pkg>;
+      <pkg>glmmML</pkg>; <code>glmmADMB</code> (not on CRAN);
+      <pkg>repeated</pkg>;
       <pkg>glmm</pkg>; <pkg>hglm</pkg>.
     </p>
     <h3>Fitting nonlinear mixed models</h3>
@@ -49,9 +47,9 @@ is an active forum for discussion of mixed-model-related questions, course annou
     (See also "Inference")
     <h4>Model diagnostics and summary statistics</h4>
     <pkg>influence.ME</pkg>, <pkg>aods3</pkg>, <pkg>cAIC4</pkg>, <pkg>HLMdiag</pkg>,
-    <pkg>lmmfit</pkg>, <pkg>iccbeta</pkg>
+    <pkg>lmmfit</pkg>, <pkg>iccbeta</pkg>,  <pkg>DHARMa</pkg>
     <h4>Model presentation and prediction</h4>
-    <pkg>effects</pkg>, <pkg>rockchalk</pkg>, <pkg>arm</pkg> (coefficient plots), 
+    <pkg>effects</pkg>, <pkg>rockchalk</pkg>, <pkg>arm</pkg>, <pkg>emmeans</pkg>, <pkg>dotwhisker</pkg>, <pkg>huxtable</pkg>, <pkg>sjPlots</pkg>, <pkg>car</pkg>
     <h3>Convenience wrappers</h3>
     These functions don't necessarily add new functionality, but 
     provide convenient frameworks for (typically) less experienced
@@ -87,9 +85,9 @@ is an active forum for discussion of mixed-model-related questions, course annou
     <h4>Ecological and environmental applications</h4>
     (See also "Environmental task view")
     <pkg>IPMpack</pkg>; <pkg>HydroME</pkg>; <pkg>dsm</pkg>; <pkg>climwin</pkg>; <pkg>cati</pkg>;
-    <pkg>carcass</pkg>; <pkg>blmeco</pkg>; <pkg>BBRecapture</pkg>; <pkg>secr</pkg>
+    <pkg>carcass</pkg>; <pkg>blmeco</pkg>; <pkg>BBRecapture</pkg>; <pkg>secr</pkg>; <pkg>gllvm</pkg>
     <h4>Factor analytic, latent variable, and structural equation models</h4>
-    <pkg>sem</pkg>; <pkg>lavaan</pkg>
+    <pkg>sem</pkg>; <pkg>lavaan</pkg>l ; <pkg>gllvm</pkg>
     (See also "Psychometrics task view")
     <h4>Other</h4>
     <pkg>blme</pkg>
