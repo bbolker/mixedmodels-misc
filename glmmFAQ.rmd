@@ -533,7 +533,7 @@ m0 <- lm(Reaction~Days,sleepstudy)
 anova(m2,m1,m0) ## two sequential tests
 ```
 With recent versions of `lme4`, goodness-of-fit (deviance) can be compared between `(g)lmer` and `(g)lm` models, although `anova()` must be called with the mixed (`(g)lmer`) model listed first.
-Keep in mind that LRT-based null hypothesis tests are conservative when the null value (such as $\sigma^2=0$) is on the boundary of the feasible space; in the simplest case (single random effect variance), the p-value is approximately twice as large as it should be [@pinheiro_mixed-effects_2000].
+Keep in mind that LRT-based null hypothesis tests are conservative when the null value (such as $\sigma^2=0$) is on the boundary of the feasible space [@self_asymptotic_1987;@stram_variance_1994;@GoldmanWhelan2000]; in the simplest case (single random effect variance), the p-value is approximately twice as large as it should be [@pinheiro_mixed-effects_2000].
 
 - Consider *not* testing the significance of random effects. If the random effect is part of the experimental design, this procedure may be considered 'sacrificial pseudoreplication' [@Hurlbert1984]. Using stepwise approaches to eliminate non-significant terms in order to squeeze more significance out of the remaining terms is dangerous in any case.
 - consider using the `RLRsim` package, which has a fast implementation of simulation-based tests of null hypotheses about zero variances, for simple tests. (However, it only applies to `lmer` models, and is a bit tricky to use for more complex models.)
