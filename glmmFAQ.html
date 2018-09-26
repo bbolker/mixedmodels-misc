@@ -123,7 +123,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">GLMM FAQ</h1>
 <h4 class="author"><em>Ben Bolker and others</em></h4>
-<h4 class="date"><em>21:50 25 September 2018</em></h4>
+<h4 class="date"><em>22:01 25 September 2018</em></h4>
 
 </div>
 
@@ -555,7 +555,7 @@ findFn(&quot;corStruct&quot;)</code></pre>
 <div id="penalizationhandling-complete-separation" class="section level2">
 <h2>Penalization/handling complete separation</h2>
 <p><em>Complete separation</em> occurs in a binary-response model when there is some linear combination of the parameters that perfectly separates failures from successes - for example, when all of the observations are zero for some particular combination of categories. The symptoms of this problem are unrealistically large parameter estimates; ridiculously large Wald standard errors (the <em>Hauck-Donner effect</em>); and various warnings.</p>
-<p>In particular, binomial <code>glmer()</code> models with complete separation can lead to “Downdated VtV is not positive definite” (e.g. see <a href="https://github.com/lme4/lme4/issues/483">here</a>) or “…” errors. Roughly speaking, the complete separation is likely to appear even if one considers only the fixed effects part of the model (counterarguments or counterexamples welcome!), suggesting two quick-and-dirty diagnostic methods. If <code>fixed_form</code> is the formula including only the fixed effects:</p>
+<p>In particular, binomial <code>glmer()</code> models with complete separation can lead to “Downdated VtV is not positive definite” (e.g. see <a href="https://github.com/lme4/lme4/issues/483">here</a>) or “PIRLS step-halvings failed to reduce deviance in pwrssUpdate” errors (e.g. see <a href="https://github.com/lme4/lme4/issues/179#issuecomment-424445187">here</a>). Roughly speaking, the complete separation is likely to appear even if one considers only the fixed effects part of the model (counterarguments or counterexamples welcome!), suggesting two quick-and-dirty diagnostic methods. If <code>fixed_form</code> is the formula including only the fixed effects:</p>
 <ul>
 <li><code>summary(g1 &lt;- glm(fixed_form, family=binomial, data=...))</code> will show one or more of the following symptoms:
 <ul>
