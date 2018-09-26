@@ -318,15 +318,35 @@ problem are unrealistically large parameter estimates; ridiculously
 large Wald standard errors (the *Hauck-Donner effect*); and various
 warnings.
 
-The standard extension of logistic regression to handle this case
+In particular, binomial `glmer()` models with complete separation can lead to
+"Downdated VtV is not positive definite" (e.g. see [here](https://github.com/lme4/lme4/issues/483)) or "PIRLS step-halvings failed to reduce deviance in pwrssUpdate" errors (e.g. see [here](https://github.com/lme4/lme4/issues/179#issuecomment-424445187)). Roughly speaking, the complete separation is likely to appear even if one considers only the fixed effects part of the model (counterarguments or counterexamples welcome!), suggesting two quick-and-dirty diagnostic methods. If `fixed_form` is the formula including only the fixed effects:
+
+- `summary(g1 <- glm(fixed_form, family=binomial, data=...))` will show one or more of the following symptoms:
+     - warnings that `glm.fit: fitted probabilities numerically 0 or 1 occurred`
+     - parameter estimates of large magnitude (e.g. `any(abs(g1)>8)`, assuming that predictors are either categorical or scaled to have standard deviations of $\approx 1$)
+	 - extremely large Wald standard errors, and large p-values (*Hauck-Donner effect*)
+	 - the `brglm2` package has a method for detecting complete separation: `library("brglm2"); glm(fixed_form, data = ..., family = binomial, method="detect_separation")`. This should say whether complete separation occurs, and in which (combinations of) variables, e.g.
+
+```
+Separation: TRUE 
+Existence of maximum likelihood estimates
+(Intercept)      height 
+        Inf         Inf 
+0: finite value, Inf: infinity, -Inf: -infinity
+```
+
+If complete separation is occurring between categories of a single categorical fixed-effect predictor with a large number of levels, one option would be to treat this fixed effect as a random effect, which will allow some degree of shrinkage to the mean. (It might be reasonable to specify the variance of this term *a priori* to a large value [minimal shrinkage], rather than trying to estimate it from the data.)
+
+(**TODO**: worked example)
+
+The general approach to handling complete separation in logistic regression
 is called *penalized regression*; it's available in the `brglm`,
 `brglm2`, `logistf`, and `rms` packages. However, these packages
-don't handle mixed models, so the best available approach is to
+don't handle mixed models, so the best available *general* approach is to
 use a Bayesian method that allows you to set a prior on the fixed effects,
 e.g. a Gaussian with standard deviation of 3; this can be done
 in any of the Bayesian GLMM packages (e.g. `blme`, `MCMCglmm`, `brms`, ...)
-
-See [supplementary material for Fox et al. 2016](http://bbolker.github.io/mixedmodels-misc/ecostats_chap.html#digression-complete-separation) for a worked example.
+(See [supplementary material for Fox et al. 2016](http://bbolker.github.io/mixedmodels-misc/ecostats_chap.html#digression-complete-separation) for a worked example.)
 
 # Estimation 
 

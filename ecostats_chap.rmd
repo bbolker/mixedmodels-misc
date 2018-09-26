@@ -1,7 +1,7 @@
 ---
 title: "GLMM worked examples"
 author: Ben Bolker
-date: "`r format(Sys.time(), '%H:%M %d %B %Y')`"
+date: "`r format(Sys.time(), '%d %B %Y')`"
 bibliography: glmm.bib
 csl: apa.csl
 output: 
@@ -44,12 +44,11 @@ pkgs_CRAN <- c("lme4","MCMCglmm","blme",
                "pbkrtest","coda","aods3","bbmle","ggplot2",
                "reshape2","plyr","numDeriv","Hmisc",
                "plotMCMC","gridExtra","R2admb",
-               "broom","dotwhisker")
+               "broom.mixed","dotwhisker")
 install.packages(pkgs_CRAN)
 rr <- "http://www.math.mcmaster.ca/bolker/R"
 install.packages("glmmADMB",type="source",repos=rr)
 library("devtools")
-install_github("bbolker/broom.mixed")
 ```
 ```{r pkgs,message=FALSE,warning=FALSE}
 ## primary GLMM-fitting packages:
@@ -74,8 +73,8 @@ scale_fill_discrete <- function(...,palette="Set1") {
 ## to squash facets together ...
 zmargin <- theme(panel.spacing=grid::unit(0,"lines"))
 library("gridExtra")     ## for grid.arrange()
-library("broom.mixed")   ## first
-library("broom")        
+library("broom.mixed")
+## n.b. as of 25 Sep 2018, need bbolker github version of dotwhisker ...
 library("dotwhisker")
 library("coda")      ## MCMC diagnostics
 library("aods3")     ## overdispersion diagnostics
@@ -723,28 +722,23 @@ cmod_MG2 <- MCMCglmm(predation~ttt,
                            V=diag(9,4)))))
 ```
 
+Another possible option (haven't worked out the details yet!) is to
+make the treatment effect a *random effect*, which allows for some
+shrinkage toward the overall mean ... it some cases it might be
+useful, or necessary, to fix the variance parameter for the treatment
+random effect - at present, this would have to be done at a low level
+(see `?lme4::modular`)
+
+```{r ttt_random}
+cmod_lme4_L3 <- glmer(predation~(1|ttt)+(1|block),
+                      data=newdat,family=binomial)
+```
+
 Both methods of constraining the parameters give similar results:
 
 ```{r constr_CI,echo=FALSE}
-tfun <- function(x) {
-    t1 <- tidy(x,conf.int=TRUE,effects="fixed")
-    t1[,c("term","estimate","conf.low","conf.high")]
-}
-c0_constr <- tfun(cmod_lme4_L2)
-c0_constr <- data.frame(fun="glmer",c0_constr)
-c1_constr <- tfun(cmod_blme_L2)
-c1_constr <- data.frame(fun="bglmer",c1_constr)
-ss2 <- summary(cmod_MG2)
-ff <- fixef(cmod_lme4_L)
-cc <- c("post.mean","l-95% CI","u-95% CI")
-c4_constr <- setNames(data.frame(rownames(ss2$solutions),
-                                 ss2$solutions[,cc]),
-                      c("term","estimate","conf.low","conf.high"))
-c4_constr <- data.frame(c4_constr,fun="MCMCglmm")                       
-cmod_constr_Results <- rbind(c0_constr,c1_constr,c4_constr)
-ggplot(cmod_constr_Results,aes(x=term,y=estimate,ymin=conf.low,ymax=conf.high,
-                               colour=fun))+
-  geom_pointrange(position=position_dodge(width=0.1))+coord_flip()
+modList <- list(glmer=cmod_lme4_L2,bglmer=cmod_blme_L2,MCMCglmm=cmod_MG2)
+dotwhisker::dwplot(modList,effects="fixed",by_2sd=FALSE)
 ```
 
 There are other packages in R (`brglm`, `logistf`) that can handle completely separated data, but they only apply to logistic regression, and they cannot simultaneously incorporate random effects (@pasch_interspecific_2013 dropped random effects and used `brglm` to handle completely separated data, arguing that random effects were small and/or hard to estimate in their system.)
