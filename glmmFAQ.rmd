@@ -92,6 +92,35 @@ set.alignment(default=c("centre","left"))
 pander(spectab)
 ```
 
+Or in a little more detail:
+
+```{r ftab,echo=FALSE,results="asis"}
+ftab <- matrix(c("β_0 + β_{1}X_{i} + e_{si}",
+                 "n/a (Not a mixed-effects model)",
+                 "(β_0 + b_{S,0s}) + β_{1}X_i + e_{si}",
+                 "∼ X + (1∣Subject)",
+                 "(β_0 + b_{S,0s}) +  (β_{1} + b_{S,1s}) X_i + e_{si}",
+                 "~ X + (1 + X∣Subject)",
+                 "(β_0 + b_{S,0s} + b_{I,0i}) + (β_{1} + b_{S,1s}) X_i + e_{si}",
+                 "∼ X + (1 + X∣Subject) + (1∣Item)",
+                 "As above, but $S_{0s}$, $S_{1s}$ independent",
+                 "∼ X + (1∣Subject) + (0 + X∣ Subject) + (1∣Item)", 
+                 "(β_0 + b_{S,0s} + b_{I,0i}) + β_{1}X_i + e_{si}",
+                 "∼ X + (1∣Subject) + (1∣Item)", 
+                 "(β_0 + b_{I,0i}) +  (β_{1} + b_{S,1s})X_i + e_{si}",
+                 "∼ X + (0 + X∣Subject) + (1∣Item)"),
+               byrow=TRUE,ncol=2,
+               dimnames=list(NULL,c("equation","formula")))
+ftab <- data.frame(ftab,stringsAsFactors=FALSE)
+ff <- !grepl("As above",ftab$equation)
+ftab$equation[ff] <- sprintf("$%s$",ftab$equation[ff])
+ff <- !grepl("n/a",ftab$formula)
+ftab$formula[ff] <- sprintf("`%s`",ftab$formula[ff])
+pander::pander(ftab,justify="left")
+```
+
+Modified from: http://stats.stackexchange.com/questions/13166/rs-lmer-cheat-sheet?lq=1 (Livius)
+
 Two more possibly useful links:
 
 - [Rense Nieuwenhuis's blogpost/lesson on lme4 model specification](http://www.rensenieuwenhuis.nl/r-sessions-16-multilevel-model-specification-lme4/)
@@ -251,6 +280,7 @@ See e.g. @martin_zero_2005 or @warton_many_2005 ("many zeros does not mean zero 
     - truncated Poisson and negative binomial distributions (which allows two-stage fitting of hurdle models)
 - `glmmTMB` handles a variety of Z-I and Z-T models (allows covariates, and random effects, in the zero-alteration model)
 - `brms` does too
+- so does `GLMMadaptive`
 - Gavin Simpson has a [detailed writeup](http://www.fromthebottomoftheheap.net/2017/05/04/compare-mgcv-with-glmmTMB/) showing that `mgcv::gam()` can do simple mixed models (Poisson, not NB) with zero-inflation, and comparing `mgcv` with `glmmTMB` results
 - `gamlssNP` in the `gamlss.mx` package should handle zero-inflation, and the `gamlss.tr` package should handle truncated (i.e. hurdle) models -- but I haven't tried them
 - roll-your-own: ADMB/R2admb, WinBUGS/R2WinBUGS, TMB, Stan, ... 
@@ -348,6 +378,12 @@ e.g. a Gaussian with standard deviation of 3; this can be done
 in any of the Bayesian GLMM packages (e.g. `blme`, `MCMCglmm`, `brms`, ...)
 (See [supplementary material for Fox et al. 2016](http://bbolker.github.io/mixedmodels-misc/ecostats_chap.html#digression-complete-separation) for a worked example.)
 
+## Non-Gaussian random effects
+
+I'm not aware of easy ways to fit mixed models with non-Gaussian random effects distributions in R (i.e., convenient, flexible, well-tested implementations). @mcculloch_misspecifying_2011 discusses when this misspecification may be important. [This presentation](https://niasra.uow.edu.au/content/groups/public/@web/@inf/@math/documents/mm/uow236296.pdf) discusses various approaches to solving the problem (e.g. using a Gamma rather than a Normal distribution of REs in log-link  models). The `spaMM` package implements H-likelihood models [@lee_generalized_2017], and claims to allow a range of random-effects distributions (perhaps not well tested though ...)
+
+In principle you can implement any random-effects distribution you want in a fully capable Bayesian modeling language (e.g. JAGS/Stan/PyMC/etc.); see e.g. [this StackOverflow answer](https://stackoverflow.com/questions/45656714/user-defined-random-intercept-distribution-for-glmer), which uses the `rethinking` package's interface to Stan.
+
 # Estimation 
 
 ## What methods are available to fit (estimate) GLMMs?
@@ -383,6 +419,7 @@ Most of the current advice about troubleshooting `lme4` convergence problems can
 
 - double-check the Hessian calculation with the more expensive Richardson extrapolation method (see examples)
 - restart the fit from the apparent optimum, or from a point perturbed slightly away from the optimum (`getME(model,c("theta","beta"))` should retrieve the parameters in a form suitable to be used as the `start` parameter)
+- a common error is to specify an offset to a log-link model as a raw searching-effort value, i.e. `offset(effort)` rather than `offset(log(effort))`. While the intention is to fit a model where $\textrm{counts} \propto \textrm{effort}$, specifying `offset(effort)` leads to a model where $\textrm{counts} \propto \exp(\textrm{effort})$ instead; `exp(effort)` is often a huge (and model-destabilizing) number.
 
 <a id="singular-fit"></a>
 <a id="zero-variance"></a>
@@ -402,6 +439,7 @@ theta <- getME(model,"theta")
 diag.element <- getME(model,"lower")==0
 any(theta[diag.element]<1e-5)
 ```
+As of `lme4` version 1.1-19, this functionality is available as `isSingular(model)`.
 - In `MCMCglmm`, singular or near-singular models will provoke an error and a requirement to specify a stronger prior.
 
 At present there are a variety of strong opinions about how to resolve such problems. Briefly:
