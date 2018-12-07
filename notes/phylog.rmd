@@ -98,25 +98,30 @@ Here's a (probably not very efficent) way to construct the Z matrix.
 (There must be a way to not walk the tree multiple times from every tip ...
 
 ```{r phylo.to.Z}
-phylo.to.Z <- function(r) {
-    ntip <- length(r$tip.label)
-    Z <- Matrix(0.0,ncol=length(r$edge.length),nrow=ntip)
-    nodes <- (ntip+1):max(r$edge)
-    root <- nodes[!(nodes %in% r$edge[,2])]
-    for (i in 1:ntip) {
-        cn <- i  ## current node
-        while (cn != root) {
-            ce <- which(r$edge[,2]==cn)   ## find current edge
-            Z[i,ce] <- r$edge.length[ce]  ## set Z to branch length
-            cn <- r$edge[ce,1]            ## find previous node
-        }
+phylo.to.Z <- function(r,stand=FALSE){
+  ntip <- length(r$tip.label)
+  Zid <- Matrix(0.0,ncol=length(r$edge.length),nrow=ntip)
+  nodes <- (ntip+1):max(r$edge)
+  root <- nodes[!(nodes %in% r$edge[,2])]
+  for (i in 1:ntip){
+    cn <- i  ## current node
+    while (cn != root){
+      ce <- which(r$edge[,2]==cn)   ## find current edge
+      Zid[i,ce] <- 1   ## set Zid to 1
+      cn <- r$edge[ce,1]            ## find previous node
     }
-    return(Z)
+  }
+  V <- vcv(r)
+  # V <- V/max(V)
+  sig <- exp(as.numeric(determinant(V)["modulus"])/ntip)
+  # sig <- det(V)^(1/ntip)
+  Z <- t(sqrt(r$edge.length) * t(Zid))
+  if(stand){Z <- t(sqrt(r$edge.length/sig) * t(Zid))}
+  rownames(Z) <- r$tip.label
+  colnames(Z) <- 1:length(r$edge.length)
+  return(Z)                                  
 }
 phylo.to.Z(r)
-```
-
-```{r phylo.to.Z2}
 ```
 
 (This could benefit from the repeated-entry sparse matrix class that Steve Walker wrote.)
@@ -128,79 +133,7 @@ On the other hand, it only takes a few seconds to run for a 200-species phylogen
 "All" we need to do is (1) call `(g)lFormula`, with a formula that includes a `(1|phylo)` term, to build the basic (wrong) structure; (2) modify the `reTrms` component of the structure appropriately; (3) go through the rest of the modular procedure for building a (G)LMM.
 
 ```{r phylocode}
-#' split a square (block) matrix into component blocks 
-#' @param M square matrix
-#' @param ind indices (0,n1,n2,...) giving the endpoint of each block
-split_blkMat <- function(M,ind) {
-    res <- list()
-    if (length(ind)==1) return(list(M))
-    for (i in 1:(length(ind)-1)) {
-        v <- (ind[i]+1):ind[i+1]
-        res[[i]] <- M[v,v]
-    }
-    return(res)
-}
-
-#' modify reTrms object
-#' @param rt a reTrms object
-#' @param phylo a phylo object (phylogenetic tree)
-#' @param phylonm name of phylogenetic term in model
-#' @param phyloZ Z matrix built on branch length
-modify_phylo_retrms <- function(rt,phylo,phylonm="phylo",
-                                phyloZ=phylo.to.Z(phylo)) {
-    ## FIXME: better way to specify phylonm
-    ## need to replace Zt, Lind, Gp, flist, Ztlist
-    ## we have the same number of parameters (theta, lower),
-    ##  same number of obs
-    n.edge <- nrow(phylo$edge)
-    phylo.pos <- which(names(rt$cnms)==phylonm)
-    inds <- c(0,cumsum(sapply(rt$Ztlist,nrow)))
-    ## Zt: substitute phylo Z for previous dummy (scalar-intercept) Z
-    rt[["Ztlist"]][[phylo.pos]] <- t(phyloZ)
-    ## reconstitute Zt from new Ztlist
-    rt[["Zt"]] <- do.call(rbind,rt[["Ztlist"]])
-    ## Gp: substitute new # random effects (n.edge) for old # (n.phylo)
-    Gpdiff <- diff(rt$Gp)  ## old numbers
-    Gpdiff_new <- Gpdiff
-    Gpdiff_new[phylo.pos] <- n.edge  ## replace
-    rt[["Gp"]] <- as.integer(c(0,cumsum(Gpdiff_new)))          ## reconstitute
-    ## Lind: replace phylo block with the same element, just more values
-    Lind_list <- split(rt[["Lind"]],rep(seq_along(Gpdiff),Gpdiff))
-    Lind_list[[phylo.pos]] <- rep(Lind_list[[phylo.pos]][1],n.edge)
-    rt[["Lind"]] <- unlist(Lind_list)
-    ## Lambdat: replace block-diagonal element in Lambdat with a
-    ##   larger diagonal matrix
-    Lambdat_list <- split_blkMat(rt[["Lambdat"]],inds)
-    Lambdat_list[[phylo.pos]] <- Diagonal(n.edge,1.0)
-    rt[["Lambdat"]] <- Matrix::.bdiag(Lambdat_list)
-    ## flist: 
-    rt[["flist"]] <- as.list(rt[["flist"]])
-    rt[["flist"]][[phylonm]] <- factor(paste0("edge_",seq(n.edge)))
-    return(rt)
-}
-
-#' 
-phylo_glmm <- function(formula,data,family,phylo,phyloZ) {
-    glmod <- glFormula(formula=formula,data = data, family = family)
-    glmod$reTrms <- modify_phylo_retrms(glmod$reTrms,phylo,
-                                        phylonm="phylo",phyloZ)
-    devfun <- do.call(mkGlmerDevfun, glmod)
-    opt <- optimizeGlmer(devfun)
-    devfun <- updateGlmerDevfun(devfun, glmod$reTrms)
-    opt <- optimizeGlmer(devfun, stage=2)
-    mkMerMod(environment(devfun), opt, glmod$reTrms, fr = glmod$fr)
-}
-
-phylo_lmm <- function(formula,data,phylo,phyloZ,control) {
-  lmod <- lFormula(formula=formula,data = data,control=control)
-  lmod$reTrms <- modify_phylo_retrms(lmod$reTrms,phylo,
-                                     phylonm="phylo",phyloZ)
-  devfun <- do.call(mkLmerDevfun, lmod)
-  opt <- optimizeLmer(devfun)
-  # devfun <- updateLmerDevfun(devfun, lmod$reTrms)
-  # opt <- optimizeLmer(devfun, stage=2)
-  mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr)
-}
+source("../R/new_phylo_setup.R")
 ```
 
 ## glmmTMB fits: nuts and bolts
@@ -212,21 +145,7 @@ conditional distribution). This is also a little clunky, some adjustment on the 
 side might make it a bit easier.
 
 ```{r tmbfit0}
-modify_TMBstruc <- function(tmbstruc,phylo,phylonm="phylo",
-                            phyloZ=phylo.to.Z(phylo)) {
-    n.edge <- nrow(phylo$edge)
-    ## stuff in tmbstruc (but not within data.tmb) is (maybe) necessary
-    ##  for cosmetics, proper reporting
-    tmbstruc$condList$reTrms <- modify_phylo_retrms(tmbstruc$condList$reTrms,
-                                                    phylo,phylonm,phyloZ)
-    tmbstruc$condReStruc$`1 | phylo`$blockReps <- n.edge
-    tmbstruc$condList$Z <- t(tmbstruc$condList$reTrms$Zt)
-    ## data *inside* data.tmb is actually the most critical to allow correct fit
-    tmbstruc$data.tmb$terms$`1 | phylo`$blockReps <- n.edge
-    tmbstruc$data.tmb$Z <- t(tmbstruc$condList$reTrms$Zt)
-    tmbstruc$parameters$b <- rep(0,ncol(tmbstruc$data.tmb$Z))
-    return(tmbstruc)
-}
+source("../R/tmb_setup.R")
 ```
 
 
@@ -246,14 +165,6 @@ if (!file.exists("data/phylo.nex")) {
     setwd("..")
 }
 phylo <- read.nexus("data/phylo.nex")
-dat <- read.table("data/data_pois.txt",header=TRUE)
-```
-
-Add an observation-level random effect (not a bad idea in any case, but
-in particular we want to match with `MCMCglmm` results).
-
-```{r obsran}
-dat$obs <- factor(seq(nrow(dat)))
 ```
 
 Compute appropriate $Z$ matrix up front, to measure speed (also
@@ -263,121 +174,74 @@ reusable in a few places below):
 system.time(phyloZ <- phylo.to.Z(phylo))
 ```
 
-### lme4 fit
-
-```{r phylofit}
-phylo_glmm_fit <- phylo_glmm(phen_pois~cofactor+(1|phylo)+(1|obs),
-                             data=dat,family=poisson,phylo=phylo,
-                             phyloZ=phyloZ)
-```
-
-```{r phylores}
-lme4_res <- rbind(coef(summary(phylo_glmm_fit))[,1:2],
-      cbind(matrix(unlist(VarCorr(phylo_glmm_fit))),NA))
-```
-
-From Garamszegi ch. 11 code examples. 
-```{r MCMCglmm,cache=TRUE}
-nitt <- 5e3 ## was 5e6
-inv.phylo <- inverseA(phylo,nodes="TIPS",scale=TRUE)
-prior <- list(G=list(G1=list(V=1,nu=0.02)),R=list(V=1,nu=0.02))
-MCMC_time <- system.time(
-    MCMCglmm_fit <- MCMCglmm(phen_pois~cofactor,random=~phylo,
-                       family="poisson",ginverse=list(phylo=inv.phylo$Ainv),
-                       prior=prior,data=dat,nitt=nitt,burnin=1000,
-                       thin=nitt/1000,verbose=FALSE))
-```
-```{r MCMCres}
-ss <- summary(MCMCglmm_fit)
-MCMCglmm_res <- with(ss,rbind(solutions[,1:3],Gcovariances[,1:3],Rcovariances[,1:3]))
-```
-
-`MCMCglmm` fit takes about `r round(MCMC_time["elapsed"]/60)` minutes ... effective sample size is 1000, which means the initial suggested 5 million steps may be overkill ? (However, with only 5e4 parameter sets we get wonky-looking trace plots/effective sample size of only 200, so 5e5 may be necessary ...)
-
-```{r glmmPQL,cache=TRUE}
-rownames(dat) <- as.character(dat$phylo)
-dat$allGrp <- factor(1) ## dummy grouping var because glmmPQL needs a group ...
-glmmPQL_fit <- glmmPQL(phen_pois~cofactor,random=~1|phylo,
-        data=dat,
-        family="poisson",
-        correlation=corBrownian(phy=phylo),
-        verbose=FALSE)
-```
-```{r glmmPQL_res}
-fixef(glmmPQL_fit)
-```
-Don't know if I got this right or not, but the answers look quite different ...  Use `gls()` with `varPower()` to
-simulate Poisson errors?
-
-```{r tmbfit,cache=TRUE}
-
-### Don't need this in BB's update
-fit_TMBstruc <- function(TMBStruc,verbose=FALSE) {
-    obj <- with(TMBStruc, TMB:::MakeADFun(data.tmb, parameters, map = mapArg, 
-                                          random = randomArg, profile = NULL, silent = !verbose, 
-                                          DLL = "glmmTMB"))
-    optTime <- system.time(fit <- with(obj, nlminb(start = par, 
-                                                   objective = fn, gradient = gr)))
-    fit$parfull <- obj$env$last.par.best
-    sdr <- TMB:::sdreport(obj)
-    return(list(fit=fit,sdr=sdr))
-}
-
-###
-
-TMBstruc <- glmmTMB(phen_pois~cofactor+(1|phylo)+(1|obs),
-                    data=dat,family=poisson,
-                    debug=TRUE) # doFit=FALSE) in BB's update
-
-TMBstruc_new <- modify_TMBstruc(TMBstruc,phylo,"phylo",phyloZ)
-
-# glmmTMB_fit <- glmmTMB:::fitTMB(TMBstruc_new)
-# tt <- tidy(glmmTMB_fit,scales=c(ran_pars="vcov",fixed=NA))
-# glmmTMB_res <- tt[,c("term","estimate","std.error")]
-
-glmmTMB_fit <- fit_TMBstruc(TMBstruc_new)
-glmmTMB_res <- matrix(c(glmmTMB_fit$fit$par[1:2],exp(glmmTMB_fit$fit$par[3:4])^2),
-                      ncol=1,
-                      dimnames=list(c("intercept","cofactor","var.phylo","var.obs"),
-                                    NULL))
-```
-
-## result comparison
-
-```{r results}
-glmmTMB_res
-lme4_res
-MCMCglmm_res
-```
-
-`lme4` and `glmmTMB` get very close to the same answer.
-Close but not identical to `MCMCglmm`, in part because of priors ...
-
 
 ## Result comparison with Gaussian example in chapter 11
 
 ```{r G_results}
 datG <- read.table("data/data_simple.txt",header=TRUE)
 datG$obs <- factor(seq(nrow(datG)))
-phylo_lmm_fit <- phylo_lmm(phen~cofactor+(1|phylo) +(1|obs),
-                           data=datG,phylo=phylo,
-                           control=lmerControl(check.nobs.vs.nlev="ignore",check.nobs.vs.nRE="ignore"),
-                           phyloZ=phyloZ)
-lme4_resLMM <- rbind(coef(summary(phylo_lmm_fit))[,1:2],
-                     cbind(matrix(unlist(VarCorr(phylo_lmm_fit))),NA))
+datG <- datG %>% mutate(sp = phylo)
+phylo_lmm_fit <- phylo_lmm(phen~cofactor+(1|sp)
+  , data=datG
+  , phylonm = "sp"
+  , phylo = phylo
+  , phyloZ=phyloZ
+  , REML = TRUE
+  , control=lmerControl(check.nobs.vs.nlev="ignore",check.nobs.vs.nRE="ignore")
+)
+                          
+# lme4_resLMM <- rbind(coef(summary(phylo_lmm_fit))[,1:2],
+#                      cbind(matrix(unlist(VarCorr(phylo_lmm_fit))),NA))
 
-TMBstruc <- glmmTMB(phen~cofactor+(1|phylo)+(1|obs),
-              data=datG,family=gaussian,
-              debug=TRUE)
-TMBstruc_new <- modify_TMBstruc(TMBstruc,phylo,"phylo",phyloZ)
-glmmTMB_fit <- fit_TMBstruc(TMBstruc_new)
-glmmTMB_res <- matrix(c(glmmTMB_fit$fit$par[1:2],exp(glmmTMB_fit$fit$par[3:4])^2),
-                    ncol=1,
-                    dimnames=list(c("intercept","cofactor","var.phylo","var.obs"),
-                      NULL))
+print(summary(phylo_lmm_fit))
 
-print(lme4_resLMM)
-print(glmmTMB_res)
+```
+
+
+## Result comparison with Gaussian with repeated measures example in chapter 11
+
+```{r GR_results}
+datR <- read.table("data/data_repeat.txt",header=TRUE)
+datR$obs <- factor(seq(nrow(datR)))
+datR <- (datR 
+  %>% mutate(sp = species
+        , animals = phylo
+        )
+)
+datR$spec_mean_cf <- sapply(split(datR$cofactor,datR$phylo),mean)[datR$phylo]
+datR$within_spec_cf <- datR$cofactor-datR$spec_mean_cf
+phylo_lmm_fit <- phylo_lmm(phen~spec_mean_cf+within_spec_cf+(1|sp) + (1|animals)
+  , data=datR
+  , phylonm = "sp"
+  , phylo = phylo
+  , phyloZ=phyloZ
+  , REML = FALSE
+  , control=lmerControl(check.nobs.vs.nlev="ignore",check.nobs.vs.nRE="ignore")
+)
+             
+print(summary(phylo_lmm_fit))
+
+```
+
+
+## Result comparison with non-Gaussian example in chapter 11
+
+```{r P_results}
+dat <- read.table("data/data_pois.txt",header=TRUE)
+dat$obs <- factor(seq(nrow(dat)))
+
+
+dat <- dat %>% mutate(sp=phylo) 
+phylo_glmm_fit <- phylo_glmm(phen_pois~cofactor+(1|sp)+(1|obs)
+  , data=dat
+  , phylonm = "sp"
+  , family = poisson
+  , phylo = phylo
+  , phyloZ=phyloZ
+  , control=lmerControl(check.nobs.vs.nlev="ignore",check.nobs.vs.nRE="ignore")
+)
+
+summary(phylo_glmm_fit)
 
 ```
 
@@ -400,18 +264,3 @@ print(glmmTMB_res)
    - `spAMM::HLCor` ?
    - `lme4ord` (via Pagel's $\lambda$)
    - `ape::binaryPGLMM`
-
-
-```{r check_retrms,echo=FALSE}
-## utility function: what do we know that ought to be consistent?
-check_retrms <- function(rt) {
-    with(rt,{
-        n.theta <- length(theta)
-        n.re
-        stopifnot(sum(sapply(Ztlist,nrow))==nrow(Zt))
-        stopifnot(length(lower=n.theta))
-        
-    })
-    return(NULL)
-}
-```
