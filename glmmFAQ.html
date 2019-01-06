@@ -186,7 +186,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">GLMM FAQ</h1>
 <h4 class="author"><em>Ben Bolker and others</em></h4>
-<h4 class="date"><em>15:07 05 January 2019</em></h4>
+<h4 class="date"><em>19:46 05 January 2019</em></h4>
 
 </div>
 
@@ -1053,7 +1053,7 @@ exactRLRT(m0=m0,m=m.slope,mA=mA)</code></pre>
 </div>
 <div id="predictions-andor-confidence-or-prediction-intervals-on-predictions" class="section level2">
 <h2>Predictions and/or confidence (or prediction) intervals on predictions</h2>
-<p>Note that none of the following approaches takes the uncertainty of the random effects parameters into account …</p>
+<p>Note that none of the following approaches takes the uncertainty of the random effects parameters into account … if you want to take RE parameter uncertainty into account, a Bayesian approach is probably the easiest way to do it.</p>
 <p>The general recipe for computing predictions from a linear or generalized linear model is to</p>
 <ul>
 <li>figure out the model matrix <span class="math inline">\(X\)</span> corresponding to the new data;</li>
@@ -1181,12 +1181,13 @@ g1 + geom_linerange(data=newdat,
 <div id="lme4-1" class="section level3">
 <h3>lme4</h3>
 <p>(From Harold Doran, updated by Assaf Oron Nov. 2013:)</p>
-<p>If you want the standard errors of the conditional means, then you can extract them as follows:</p>
+<p>If you want the standard errors of the conditional means, you can extract them as follows:</p>
 <pre class="r"><code>library(lme4)
 fm1 &lt;- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 cV &lt;- ranef(fm1, condVar = TRUE)   </code></pre>
 <p><code>cV</code> is a list; each element is a data frame containing the conditional modes for a particular grouping factor. If you use scalar random effects (typically random intercepts), then specifying <code>ranef(...,drop=TRUE)</code> will return the conditional modes as a single named vector instead.</p>
-<p>The conditional variances are returned as an attribute of the conditional modes. For example, if we set</p>
+<p>The conditional variances are returned as an attribute of the conditional modes. It may be easiest to use <code>as.data.frame(cV)</code>, or <code>broom.mixed::tidy(fm1, effects=&quot;ran_vals&quot;)</code>, to extract all of the conditional means and standard deviations.</p>
+<p>Or, digging in to the data structure by hand: if we set</p>
 <pre class="r"><code>ranvar &lt;- attr(cV[[1]], &quot;postVar&quot;)</code></pre>
 <p>then <code>ranvar</code> is a 3-D array (the attribute is still called <code>postVar</code>, rather than <code>condVar</code>, for historical reasons/backward compatibility). Individual-level covariance matrices of the conditional modes will sit on the <code>[,,i]</code> faces. For example, <code>ranvar[,,1]</code> is the variance-covariance matrix of the conditional distribution for the first group, so</p>
 <pre class="r"><code>sqrt(diag(ranvar[,,1]))</code></pre>
@@ -1194,33 +1195,16 @@ cV &lt;- ranef(fm1, condVar = TRUE)   </code></pre>
 <p>will provide the intercept and slope standard standard deviations for the first group’s conditional modes. If you have a scalar random effect and used <code>drop=TRUE</code> in <code>ranef()</code>, then you will (mercifully) receive only a vector of individual variances here (one for each level of the grouping factor). The following incantation will give a matrix of conditional variances with one row for each group and one column for each parameters:</p>
 <pre class="r"><code>ng &lt;- dim(ranvar)[3]
 np &lt;- dim(ranvar)[2]
-matrix(ranvar[cbind(rep(seq(np),ng),
+mm &lt;- matrix(ranvar[cbind(rep(seq(np),ng),
              rep(seq(np),ng),
              rep(ng,each=np))],
        byrow=TRUE,
        nrow=ng)</code></pre>
-<pre><code>##           [,1]     [,2]
-##  [1,] 145.6943 5.312131
-##  [2,] 145.6943 5.312131
-##  [3,] 145.6943 5.312131
-##  [4,] 145.6943 5.312131
-##  [5,] 145.6943 5.312131
-##  [6,] 145.6943 5.312131
-##  [7,] 145.6943 5.312131
-##  [8,] 145.6943 5.312131
-##  [9,] 145.6943 5.312131
-## [10,] 145.6943 5.312131
-## [11,] 145.6943 5.312131
-## [12,] 145.6943 5.312131
-## [13,] 145.6943 5.312131
-## [14,] 145.6943 5.312131
-## [15,] 145.6943 5.312131
-## [16,] 145.6943 5.312131
-## [17,] 145.6943 5.312131
-## [18,] 145.6943 5.312131</code></pre>
-<p>It may be more convenient to use <code>as.data.frame(cV)</code> to extract all of the conditional means and standard deviations.</p>
-<p>See also section 1.6 of FIXME Batesdraft</p>
-<p>Also, note that at a minimum, the uncertainty of the fixed-effect intercept estimate needs to be incorporated as well; probably manually (remember, the model assumes the fixed and random effects to be orthogonal, so this is straightforward). If you predict on an individual with specific fixed-effect covariate values, those need incorporation too.</p>
+<p>Getting the uncertainty of the coefficients (i.e., what’s returned by <code>coef()</code>: the sum of the fixed-effect and random-effect predictions for a particular level) is not (alas) currently easy with <code>lme4</code>. If the fixed and random effects were independent then we could simply add the conditional variance and the variance of the fixed-effect predictions, but they aren’t in general. There is a long <a href="https://stat.ethz.ch/pipermail/r-sig-mixed-models/2013q1/019795.html">r-sig-mixed-models mailing list thread</a> that discusses the issues, focusing on (1) how to extract the covariance between fixed-effect estimate and the random-effect prediction; (2) whether this value (the covariance between an <em>estimated</em> parameter and a <em>predicted</em> mode of a conditional distribution of a random variable) even makes sense in a frequentist framework. If you’re willing to <em>assume</em> independence of the conditional variance and the fixed-effect sampling variance, then (e.g.) the variance of the intercepts for each group would be the sum of the fixed-effect intercept variance and the conditional variance of the intercept for each group:</p>
+<pre class="r"><code>vcov(fm1)[1,1]+mm[,1]</code></pre>
+<pre><code>##  [1] 192.2582 192.2582 192.2582 192.2582 192.2582 192.2582 192.2582
+##  [8] 192.2582 192.2582 192.2582 192.2582 192.2582 192.2582 192.2582
+## [15] 192.2582 192.2582 192.2582 192.2582</code></pre>
 </div>
 </div>
 <div id="power-analysis" class="section level2">
