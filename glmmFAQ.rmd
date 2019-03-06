@@ -489,8 +489,10 @@ exactly zero, but you can make it very small (and experiment with setting
 it to different small values, e.g. 0.001 vs 0.0001, to see how sensitive
 the results are).
 - Similarly, you can fix the residual variance to a small positive value in `[n]lme` via the `control()` argument [@heisterkamp_update_2017]:
-```{r}
-lme(Reaction~Days,random=~1|Subject,lme4::sleepstudy,control=list(sigma=1e-8))
+```{r lme_zvar,results="hide"}
+nlme::lme(Reaction~Days,random=~1|Subject,
+          data=lme4::sleepstudy,
+          control=list(sigma=1e-8))
 ```
 - the `glmmTMB` package can set the residual variance to zero, by specifying `dispformula = ~0`
 - There is an [rrBlupMethod6 package](https://CRAN.R-project.org/package=rrBlupMethod6) on CRAN ("Re-parametrization of mixed model formulation to allow for a fixed residual variance when using RR-BLUP for genom[e]wide estimation of marker effects"), but it seems fairly special-purpose.

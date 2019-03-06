@@ -40,7 +40,7 @@
 @incollection{breslow_whither_2004,
 	title = {Whither {PQL?}},
 	isbn = {0387208623},
-	booktitle = {Proceedings of the second Seattle symposium in biostatistics: Analysis of correlated data},
+	booktitle = {Proceedings of the second {Seattle} symposium in biostatistics: Analysis of correlated data},
 	publisher = {Springer},
 	author = {N. E. Breslow},
 	editor = {Danyu Y. Lin and P. J. Heagerty},
@@ -821,7 +821,7 @@ Many criteria for statistical parameter estimation, such as maximum likelihood, 
 
  @Book{wickham2009,
     author = {Hadley Wickham},
-    title = {ggplot2: elegant graphics for data analysis},
+    title = {{ggplot2}: elegant graphics for data analysis},
     publisher = {Springer New York},
     year = {2009},
     isbn = {978-0-387-98140-6},
@@ -2220,22 +2220,17 @@ issue = 1,
   edition = {2d}
 }
 
-
-
 @article{brooks_modeling_2017,
-	title = {Modeling {Zero}-{Inflated} {Count} {Data} {With} {glmmTMB}},
-	url = {http://biorxiv.org/content/early/2017/05/01/132753},
-	doi = {10.1101/132753},
+title={{glmmTMB} balances speed and flexibility among packages for zero-inflated generalized linear mixed modeling},
+author = {Mollie E. Brooks and Kasper Kristensen and Koen J. {van Benthem} and Arni Magnusson and Casper W. Berg and Anders Nielsen and Hans J. Skaug and Martin Mächler and Benjamin M. Bolker},
+journal={R Journal},
+year = 2017,
+volume = 9,
+issue = 2,
+pages= {378-400},
+url={https://journal.r-project.org/archive/2017/RJ-2017-066/RJ-2017-066.pdf},
 	abstract = {Ecological phenomena are often measured in the form of count data. These data can be analyzed using generalized linear mixed models (GLMMs) when observations are correlated in ways that require random effects. However, count data are often zero-inflated, containing more zeros than would be expected from the standard error distributions used in GLMMs, e.g., parasite counts may be exactly zero for hosts with effective immune defenses but vary according to a negative binomial distribution for non-resistant hosts. We present a new R package, glmmTMB, that increases the range of models that can easily be fitted to count data using maximum likelihood estimation. The interface was developed to be familiar to users of the lme4 R package, a common tool for fitting GLMMs. To maximize speed and flexibility, estimation is done using Template Model Builder (TMB), utilizing automatic differentiation to estimate model gradients and the Laplace approximation for handling random effects. We demonstrate glmmTMB and compare it to other available methods using two ecological case studies. In general, glmmTMB is more flexible than other packages available for estimating zero-inflated models via maximum likelihood estimation and is faster than packages that use Markov chain Monte Carlo sampling for estimation; it is also more flexible for zero-inflated modelling than INLA, but speed comparisons vary with model and data structure. Our package can be used to fit GLMs and GLMMs with or without zero-inflation as well as hurdle models. By allowing ecologists to quickly estimate a wide variety of models using a single package, glmmTMB makes it easier to find appropriate models and test hypotheses to describe ecological processes.},
-	language = {en},
-	urldate = {2017-05-09},
-	journal = {bioRxiv},
-	author = {Brooks, Mollie E. and Kristensen, Kasper and Benthem, Koen J. van and Magnusson, Arni and Berg, Casper W. and Nielsen, Anders and Skaug, Hans J. and Maechler, Martin and Bolker, Benjamin M.},
-	month = may,
-	year = {2017},
-	pages = {132753}
 }
-
 
 @inproceedings{stroup_non-normal_2013,
 	address = {Kansas State University},
@@ -2848,3 +2843,77 @@ Regression Models},
 	pages = {239--251}
 }
 
+
+@article{dezeure_high-dimensional_2015,
+	title = {High-{Dimensional} {Inference}: {Confidence} {Intervals}, \$p\$-{Values} and {R}-{Software} hdi},
+	volume = {30},
+	issn = {0883-4237, 2168-8745},
+	shorttitle = {High-{Dimensional} {Inference}},
+	url = {https://projecteuclid.org/euclid.ss/1449670857},
+	doi = {10.1214/15-STS527},
+	abstract = {We present a (selective) review of recent frequentist high-dimensional inference methods for constructing ppp-values and confidence intervals in linear and generalized linear models. We include a broad, comparative empirical study which complements the viewpoint from statistical methodology and theory. Furthermore, we introduce and illustrate the R-package hdi which easily allows the use of different methods and supports reproducibility.},
+	language = {EN},
+	number = {4},
+	urldate = {2019-01-09},
+	journal = {Statistical Science},
+	author = {Dezeure, Ruben and Bühlmann, Peter and Meier, Lukas and Meinshausen, Nicolai},
+	month = nov,
+	year = {2015},
+	mrnumber = {MR3432840},
+	zmnumber = {06946201},
+	keywords = {\$p\$-value, Clustering, confidence interval, generalized linear model, high-dimensional statistical inference, linear model, multiple testing, R-software},
+	pages = {533--558}
+}
+
+@book{james_introduction_2013,
+	title = {An introduction to statistical learning},
+	volume = {112},
+	publisher = {Springer},
+	author = {James, Gareth and Witten, Daniela and Hastie, Trevor and Tibshirani, Robert},
+	year = {2013}
+}
+
+
+@article{lynch_dealing_2014,
+	title = {Dealing with under- and over-dispersed count data in life history, spatial, and community ecology},
+	volume = {95},
+	issn = {0012-9658},
+	url = {https://www.jstor.org/stable/43495231},
+	abstract = {[Count data arise frequently in ecological analyses, but regularly violate the equi-dispersion constraint imposed by the most popular distribution for analyzing these data, the Poisson distribution. Several approaches for addressing over-dispersion have been developed (e.g., negative binomial distribution), but methods for including both under-dispersion and over-dispersion have been largely overlooked. We provide three specific examples drawn from life-history theory, spatial ecology, and community ecology, and illustrate the use of the Conway-Maxwell-Poisson (CMP) distribution as compared to other common models for count data. We find that where equi-dispersion is violated, the CMP distribution performs significantly better than the Poisson distribution, as assessed by information criteria that account for the CMP's additional distribution parameter. The Conway-Maxwell-Poisson distribution has seen rapid development in other fields such as risk analysis and linguistics, but is relatively unknown in the ecological literature. In addition to providing a more flexible exponential distribution for count data that is easily integrated into generalized linear models, the CMP allows ecologists to focus on the magnitude of under-or over-dispersion as opposed to the simple rejection of the equi-dispersion null hypothesis. By demonstrating its suitability in a variety of common ecological applications, we hope to encourage its wider adoption as a flexible alternative to the Poisson.]},
+	number = {11},
+	urldate = {2019-01-27},
+	journal = {Ecology},
+	author = {Lynch, Heather J. and Thorson, James T. and Shelton, Andrew Olaf},
+	year = {2014},
+	pages = {3173--3180}
+}
+
+
+@article{vats_revisiting_2018,
+	title = {Revisiting the {Gelman}-{Rubin} {Diagnostic}},
+	url = {http://arxiv.org/abs/1812.09384},
+	abstract = {Gelman and Rubin's (1992) convergence diagnostic is one of the most popular methods for terminating a Markov chain Monte Carlo (MCMC) sampler. Since the seminal paper, researchers have developed sophisticated methods of variance estimation for Monte Carlo averages. We show that this class of estimators find immediate use in the Gelman-Rubin statistic, a connection not established in the literature before. We incorporate these estimators to upgrade both the univariate and multivariate Gelman-Rubin statistics, leading to increased stability in MCMC termination time. An immediate advantage is that our new Gelman-Rubin statistic can be calculated for a single chain. In addition, we establish a relationship between the Gelman-Rubin statistic and effective sample size. Leveraging this relationship, we develop a principled cutoff criterion for the Gelman-Rubin statistic. Finally, we demonstrate the utility of our improved diagnostic via examples.},
+	urldate = {2019-01-29},
+	journal = {arXiv:1812.09384 [stat]},
+	author = {Vats, Dootika and Knudson, Christina},
+	month = dec,
+	year = {2018},
+	note = {arXiv: 1812.09384},
+	keywords = {Statistics - Computation, Statistics - Methodology}
+}
+
+
+@article{nakagawa_coefficient_2017,
+	title = {The coefficient of determination {R}2 and intra-class correlation coefficient from generalized linear mixed-effects models revisited and expanded},
+	volume = {14},
+	url = {https://royalsocietypublishing.org/doi/full/10.1098/rsif.2017.0213},
+	doi = {10.1098/rsif.2017.0213},
+	abstract = {The coefficient of determination R2 quantifies the proportion of variance explained by a statistical model and is an important summary statistic of biological interest. However, estimating R2 for generalized linear mixed models (GLMMs) remains challenging. We have previously introduced a version of R2 that we called  for Poisson and binomial GLMMs, but not for other distributional families. Similarly, we earlier discussed how to estimate intra-class correlation coefficients (ICCs) using Poisson and binomial GLMMs. In this paper, we generalize our methods to all other non-Gaussian distributions, in particular to negative binomial and gamma distributions that are commonly used for modelling biological data. While expanding our approach, we highlight two useful concepts for biologists, Jensen's inequality and the delta method, both of which help us in understanding the properties of GLMMs. Jensen's inequality has important implications for biologically meaningful interpretation of GLMMs, whereas the delta method allows a general derivation of variance associated with non-Gaussian distributions. We also discuss some special considerations for binomial GLMMs with binary or proportion data. We illustrate the implementation of our extension by worked examples from the field of ecology and evolution in the R environment. However, our method can be used across disciplines and regardless of statistical environments.},
+	number = {134},
+	urldate = {2019-01-29},
+	journal = {Journal of The Royal Society Interface},
+	author = {Nakagawa, Shinichi and Johnson, Paul C. D. and Schielzeth, Holger},
+	month = sep,
+	year = {2017},
+	pages = {20170213}
+}

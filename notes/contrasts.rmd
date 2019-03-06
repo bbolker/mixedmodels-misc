@@ -595,6 +595,20 @@ because the data are unbalanced:
 try `with(lizards,table(light,time))`)
 
 
+## "Effects" contrasts
+
+What if we want the equivalent of coding a binary response as (-0.5,0.5) (so the effects sum to zero, but the difference is
+
+```{r}
+coef(lm(grahami~light, data=lizards))
+coef(lm(grahami~light, data=lizards, contrasts=list(light=contr.sum)))
+coef(lm(grahami~light, data=lizards,
+        contrasts=list(light=matrix(c(0.5,-0.5)))))
+with(lizards,mean(grahami[light=="sunny"])-mean(grahami[light=="shady"]))
+## equivalent of sum-to-zero but with (A-B) rather than (A
+inv_cc <- matrix(c(0.5,0.5,-0.5,0.5),nrow=2,byrow=TRUE)
+solve(inv_cc)
+```
 
 ## Other refs
 
