@@ -1,5 +1,5 @@
 ---
-title: "estimating group membership models with lme4"
+title: "estimating group/multi-membership models with lme4"
 author: "Ben Bolker"
 date: "`r format(Sys.time(),'%d %B %Y')`"
 ---
@@ -20,22 +20,22 @@ design (structure).
 
 ```{r simdesign}
 nm <- 20
-nobs <- 500
+nobs0 <- 500
 set.seed(101)
 ## choose items for observations
-pres <- matrix(rbinom(nobs*nm, prob=0.25, size=1),nrow=nobs,ncol=nm)
-dimnames(pres) <- list(NULL,LETTERS[seq(nm)])
-pres[1:5,]
-table(rowSums(pres))
+W <- matrix(rbinom(nobs0*nm, prob=0.25, size=1),nrow=nobs0,ncol=nm)
+dimnames(W) <- list(NULL,LETTERS[seq(nm)])
+W[1:5,]
+table(rowSums(W))
 ```
 
 The first 10 observations:
 
 ```{r showobs}
-image(Matrix(pres),ylim=c(1,10),sub="",ylab="Observation",
+image(Matrix(W),ylim=c(1,10),sub="",ylab="Observation",
       xlab="Item",
       ## draw tick labels at top
-      scales=list(at=1:20,x=list(labels=colnames(pres),
+      scales=list(at=1:20,x=list(labels=colnames(W),
                                  alternating=2)))
 ```
 
@@ -57,25 +57,28 @@ Now simulate the response variable.
 
 ```{r simvals}
 b <- rnorm(nm)  ## item-level effects
+beta <- c(1,2)
+M <- data.frame(x=runif(nobs0))
+X <- model.matrix(~x, data=M)
 ## n.b. get in trouble if we don't add residual error
 ## (theta is scaled relative to residual error)
 ## here, use theta=sigma=1
-y <- c(pres %*% b) +rnorm(nobs,sd=1)
+M$y <- c(X %*% beta) + c(W %*% b) +rnorm(nobs0,sd=1)
 ```
 
 Fit (see `?modular`):
 ```{r modular_fit}
 ## helpful to specify a factor with the right levels:
 ## actual values are unimportant since we will specify Zt/Ztlist directly
-fake <- rep(LETTERS[seq(nm)],length.out=nobs)
-lmod <- lFormula(y~1+(1|fake))
-lmod$reTrms$Zt <- lmod$reTrms$Ztlist[[1]] <- Matrix(t(pres))
+M$fake <- rep(LETTERS[seq(nm)],length.out=nobs)
+lmod <- lFormula(y~x+(1|fake), data=M)
+lmod$reTrms$Zt <- lmod$reTrms$Ztlist[[1]] <- Matrix(t(W))
 devfun <- do.call(mkLmerDevfun, lmod)
 opt <- optimizeLmer(devfun)
 m1 <- mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr)
 ```
 
-Results look OK (correct item and residual variance estimated):
+Results look OK (correct fixed effects, item and residual variance estimated):
 
 ```{r results}
 m1
@@ -93,7 +96,120 @@ ggplot(dd,aes(x=level,y=estimate))+
     geom_point(data=truth,colour="red")
 ```
 
-See also: 
+## see also
+
+```{r findFn,eval=FALSE}
+sos::findFn("{multiple membership}") ## GPvam, R2MLwiN, RealVAMS, ...
+```
+
+- `r-sig-mixed-models` posts ([here](https://stat.ethz.ch/pipermail/r-sig-mixed-models/2012q1/017826.html), [here](https://stat.ethz.ch/pipermail/r-sig-mixed-models/2011q2/006318.html))
+- `mm()`, `mmc()` in the `brms` package
+- `mult.memb()` in the `MCMCglmm()` package
+
+## function encapsulation
+
+Suppose we have a real data frame `M` and a (sparse) weight matrix `W` (or? a list `L` of weight vectors?
+
+```{r}
+##' @param formula mixed model formula
+##' @param data data frame (possibly but not necessarily containing factors
+##' @param memb_mat list of weights matrices  with which to replace Zt components
+lmer_multimemb <- function(formula,data,memb_mat=list(),...) {
+  ## FIXME: pass ... through appropriately
+  ## FIXME: test dimensions
+  mnms <- names(memb_mat)
+  fb <- findbars(formula)
+  gvars <- vapply(fb, function(x) deparse(x[[3]]), character(1))
+  Ztlist <- list()
+  for (i in seq_along(fb)) {
+    fbnm <- deparse(fb[[i]])
+    ## find corresponding random-effects term
+    w <- which(mnms==gvars[i])
+    if (length(w)>0) {
+      M <- Matrix::Matrix(memb_mat[[w]])
+      ## extract LHS (effect)
+      form <- as.formula(substitute(~z,list(z=fb[[i]][[2]])))
+      ## construct model matrix & compute Khatri-Rao product 
+      X <- model.matrix(form,data=data)
+      Zt <- Matrix::KhatriRao(t(M),t(X),make.dimnames=TRUE)
+      ## FIXME: mess with names?
+      Ztlist[[fbnm]] <- Zt
+      ## if necessary, add factor to data
+      if (!m %in% names(data)) {
+        ## if the factor has non-trivial ordering, it should be included
+        ## in the data.  Do we have to worry about ordering of Z? test!
+        data[[gvars[i]]] <- factor(colnames(memb_mat[[w]]))
+      }
+    } ## if  (length(w)>0)
+  } ## for i in seq(fb)
+  ## call lFormula  (FIXME: allow glFormula)
+  lmod <- lFormula(formula,data=data)
+  ## substitute new Ztlist elements
+  for (m in names(Ztlist)) {
+    lmod$reTrms$Ztlist[[m]] <- Ztlist[[m]]
+  }
+  lmod$reTrms$Zt <- do.call(rbind,lmod$reTrms$Ztlist)
+  ## finish fitting
+  devfun <- do.call(mkLmerDevfun, lmod)
+  opt <- optimizeLmer(devfun)
+  m1 <- mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr)
+  return(m1)
+}
+```
+
+This seems to work ...
+
+```{r test}
+lmer_multimemb(formula=y ~ x + (1|team),
+               data=M,
+               memb_mat=list(team=W))
+```
+
+## Data formats
+
+We want to allow users to conveniently transform whatever data formats they have to a sparse incidence matrix.
+
+### memberships in multiple columns
+
+Maybe it's in multiple columns (as in this example from Harold Doran):
+
+```{r doran_dat}
+tmp <- data.frame(id = 1:5,
+                  tch1 = c(10,10,11,11,12),
+                  tch2 = c(77,15,NA,10,11),
+                  tch3 = c(NA, NA, 77, 12, 10),
+                  y = rnorm(5), x = rnorm(5))
+## list of teachers
+all_tch <- with(tmp,sort(unique(na.omit(c(tch1,tch2,tch3)))))
+## empty (sparse) matrix with dimnames
+W <- Matrix(0,nrow=nrow(tmp),ncol=length(all_tch),
+            dimnames=list(as.character(tmp$id),as.character(all_tch)))
+## melt all teacher columns to long/combined format
+all_prs0 <- na.omit(reshape2::melt(tmp[,1:4],id="id"))
+all_prs1 <- all_prs0[,c("id","value")]
+## convert to numeric indices
+all_prs2 <- all_prs1
+all_prs2[] <- lapply(all_prs2,function(x) as.numeric(factor(x)))
+## convert to two-column matrix
+all_prs2 <- as.matrix(all_prs2)
+W[all_prs2] <- 1 ## weights
+```
+
+## row_ID, col_ID, weight as three columns
+
+As pointed out by Robyn Wimmers, `reshape2::dcast` is handy if your data are in a three-column format (row_label, col_label, weight). It's marginally less efficient because it initially generates a dense matrix.
+
+```{r threecol}
+## convert from the format we have above
+all_prs3 <- all_prs1
+all_prs3[] <- lapply(all_prs3, factor)
+all_prs3$wts <- 1
+## now data frame -> matrix
+W0 <- reshape2::dcast(all_prs3,id~value, value.var="wts", fill=0)
+idvars <- W0$id
+W <- Matrix(as.matrix(W0[,-1])) ## drop 'id' column and sparsify
+rownames(W) <- as.character(idvars)
+```
 
 ---
 
