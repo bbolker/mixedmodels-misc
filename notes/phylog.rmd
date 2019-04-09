@@ -153,12 +153,12 @@ source("../R/tmb_setup.R")
 
 ### get data
 
-From [chapter 11](http://www.mpcm-evolution.org/practice/online-practical-material-chapter-11/chapter-11-1-simple-model-mcmcglmm) of Garamszegi (ed.): data are [here](http://mpcm-evolution.org/OPM/Chapter11_OPM/data.zip)
+From [chapter 11](http://www.mpcm-evolution.com/practice/online-practical-material-chapter-11/chapter-11-1-simple-model-mcmcglmm) of Garamszegi (ed.): data are [here](http://mpcm-evolution.com/OPM/Chapter11_OPM/data.zip)
 
 ```{r getdat}
 if (!file.exists("data/phylo.nex")) {
     dir.create("data")
-    download.file("http://mpcm-evolution.org/OPM/Chapter11_OPM/data.zip",
+    download.file("http://mpcm-evolution.com/OPM/Chapter11_OPM/data.zip",
                   dest="data/OPM_ch11_data.zip")
     setwd("data")
     untar("OPM_ch11_data.zip")
