@@ -2,9 +2,10 @@
 author: Ben Bolker and others
 title: GLMM FAQ
 bibliography: glmm.bib
-date:  "`r format(Sys.time(), '%H:%M %d %B %Y')`"
+date:  "`r format(Sys.time())`"
 output: 
-   html_document:
+  html_document:
+     code_download: true
      toc: true
 ---
 
@@ -426,8 +427,7 @@ pander(methtab,split.table=Inf)
 - center and scale continuous predictor variables (e.g. with `scale()`)
 - try all available optimizers (e.g. several different implementations of BOBYQA and Nelder-Mead, L-BFGS-B from  `optim`, `nlminb()`, ...).  While this will of course be slow for large fits, we consider it the gold standard; if all optimizers converge to values that are practically equivalent (it's up to the user to decide what "practically equivalent means for their case"), then we would consider the model fit to be good enough. For example:
 ```{r allfit,eval=FALSE}
-source(system.file("utils", "allFit.R", package="lme4"))
-modelfit.all <- allFit(model)
+modelfit.all <- lme4::allFit(model)
 ss <- summary(modelfit.all)
 ```
 
@@ -505,7 +505,11 @@ nlme::lme(Reaction~Days,random=~1|Subject,
 Most of the following error messages are relatively unusual, and happen mostly with complex/large/unstable models. There is often no simple fix; the standard suggestions for troubleshooting are (1) try rescaling and/or centering predictors; (2) see if a simpler model can be made to work; (3) look for severe lack of balance and/or complete separation in the data set.
 
 - `PIRLS step-halvings failed to reduce deviance in pwrssUpdate`
+	- this can also occur due to complete or quasi-complete separation (see [Penalization/handling complete separation](#penalizationhandling-complete-separation)
     - When using `lme4` to fit GLMMs with link functions that do not automatically constrain the response to the allowable range of the distributional family (e.g. binomial models with a log link, where the estimated probability can be >1, or inverse-Gamma models, where the estimated mean can be negative), it is not unusual to get this error.  This occurs because `lme4` doesn't do anything to constrain the predicted values, so `NaN` values pop up, which aren't handled gracefully. If possible, switch to a link function to one that constrains the response (e.g. logit link for binomial or log link for Gamma).
+	- otherwise this message often occurs when there is something else wrong with the model or data, e.g. 
+	      - [a model fitted to underdispersed data includes both a negative binomial response and observation-level random effects](https://stackoverflow.com/questions/28036334/using-glmer-nb-the-error-messagemaxstephalfit-pirls-step-halvings-failed-t)
+		  - [negative response values for a link function that doesn't allow them](https://stackoverflow.com/questions/37533825/error-maxstephalfit-pirls-step-halvings-failed-to-reduce-deviance-in-pwrssupd)
 - `Downdated VtV is not positive definite`: no specific advice, see general suggestions above
 - `convergence code 3 from bobyqa: bobyqa -- a trust region step failed to reduce q`: again no specific advice about fixing this, although there is a [useful discussion of the meaning of the error message on CrossValidated](https://stats.stackexchange.com/questions/89945/meaning-of-a-convergence-warning-in-glmer)
 
@@ -631,8 +635,8 @@ m.slope  <- update(mA, . ~ . - (1|Subject))
 exactRLRT(m0=m0,m=m.slope,mA=mA)
 ```
 
-- Parametric bootstrap: fit the reduced model, then repeatedly simulate from it and compute the differences between the deviance of the reduced and the full model for each simulated data set.  Compare this null distribution to the observed deviance difference. This procedure is implemented in the `pbkrtest` package.
-```{r pboot_vartest_comp,cache=TRUE}
+- Parametric bootstrap: fit the reduced model, then repeatedly simulate from it and compute the differences between the deviance of the reduced and the full model for each simulated data set.  Compare this null distribution to the observed deviance difference. This procedure is implemented in the `pbkrtest` package (messages and warnings suppressed).
+```{r pboot_vartest_comp,cache=TRUE, message=FALSE,warning=FALSE}
 (pb <- pbkrtest::PBmodcomp(m2,m1,seed=101))
 ```
 
