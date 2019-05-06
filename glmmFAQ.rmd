@@ -918,7 +918,13 @@ r2.corr.mer <- function(m) {
 $\Omega^2_0$ [@xu_measuring_2003], which is almost the same, is based on comparing the residual variance of the full model against the residual variance of a (fixed) intercept-only null model: 
 
 ```{r resvar,eval=FALSE}
-1-var(residuals(m))/(var(model.response(model.frame(m)))
+1-var(residuals(m))/var(model.response(model.frame(m)))
+```
+
+Another possibility is the squared correlation between the response variable and the predicted values:
+
+```{r rescorsq, eval=FALSE}
+cor(model.response(model.frame(m)),predict(m,type="response"))^2
 ```
 
 #### Sophisticated solutions
@@ -930,7 +936,7 @@ A related question is how to quantify "repeatability" (i.e., ratios of variance 
 
 The bottom line is that there are some simple recipes (and some more complex recipes that may or may not have been coded up by someone), but that '''you have to think carefully about what information you want to get out of the coefficient of determination''', because no recipe will have all of the properties of $R^2$ in the simple linear model case.
 
-**Packages/functions**: `sjstats::r2`, `MuMin::r.squaredGLMM`, `r2glmm` package, the standalone [r2MLM function](https://my.vanderbilt.edu/jasonrights/software/r2MLM), stuff in the `piecewiseSEM` package ...
+**Packages/functions**: See `sjstats::r2()`, `MuMin::r.squaredGLMM()`, the `r2glmm` package, the standalone [r2MLM function](https://my.vanderbilt.edu/jasonrights/software/r2MLM), stuff in the `piecewiseSEM` package ...
 
 ### Do I have to specify the levels of fixed effects in lmer?
 
