@@ -882,9 +882,9 @@ flexibility to do what you want.
 
 # Model summaries (goodness-of-fit, decomposition of variance, etc.)
 
-### How do I compute a coefficient of determination ($R^2$), or an analogue, for (G)LMMs?
+## How do I compute a coefficient of determination ($R^2$), or an analogue, for (G)LMMs?
 
-#### Problem
+### Problem
 
 (*This topic applies to both LMMs and GLMMs, perhaps more so to LMMs, because the issues are even harder for GLMMs.*)
 
@@ -905,7 +905,7 @@ In one of those threads, Doug Bates said:
 > corresponds to an infinite precision matrix.  I don't know, really.
 > It depends on what you are trying to characterize.
 
-#### Simple/crude solutions
+### Simple/crude solutions
 
 In one of those threads, Jarrett Byrnes contributed the following code:
 ```{r r2corr}
@@ -927,7 +927,7 @@ Another possibility is the squared correlation between the response variable and
 cor(model.response(model.frame(m)),predict(m,type="response"))^2
 ```
 
-#### Sophisticated solutions
+### Sophisticated solutions
 
 @gelman_bayesian_2006 propose/discuss Bayesian measures of $R^2$ (I don't know if anyone has created a canned implementation of these measures in R).
 @nakagawa_general_2013 and @johnson_extension_2014 have also proposed a general methodology for computing $R^2$; J. Lefcheck gives examples [here](https://jonlefcheck.net/2013/03/13/r2-for-linear-mixed-effects-models/) and [here](https://github.com/jslefche/piecewiseSEM/blob/master/README.md#get-r2-for-individual-models), based on his implementation in the `piecewiseSEM` package ([CRAN](https://cran.r-project.org/web/packages/piecewiseSEM/index.html), [Github](https://github.com/jslefche/piecewiseSEM)). See also @rights_quantifying_2018 ...
@@ -938,7 +938,17 @@ The bottom line is that there are some simple recipes (and some more complex rec
 
 **Packages/functions**: See `sjstats::r2()`, `MuMin::r.squaredGLMM()`, the `r2glmm` package, the standalone [r2MLM function](https://my.vanderbilt.edu/jasonrights/software/r2MLM), stuff in the `piecewiseSEM` package ...
 
-### Do I have to specify the levels of fixed effects in lmer?
+## Variable importance
+
+- The simplest way to get (within-study) measures of variable importance is to standardize the predictor variables (scaling by 1 SD or 2SD: @gelman_scaling_2008, @schielzeth_simple_2010)
+- The `r2glmm` package computes partial $R^2$ values for fixed effects (only for `lmer`, `lme`, and `glmmPQL` models)
+- Henrik Singmann has a detailed answer [here](https://afex.singmann.science/forums/topic/compute-effect-sizes-for-mixed-objects) on why standardized measures such as partial eta-squared are problematic:
+
+    > The fact that calculating a global measure of model fit (such as R2) is already riddled with complications and that no simple single number can be found, should be a hint that doing so for a subset of the model parameters (i.e., main-effects or interactions) is even more difficult. Given this, I would not recommend to try finding a measure of standardized effect sizes for mixed models.
+
+    He even gives suggested wording for responding to reviewers who want standardized measures!
+
+## Do I have to specify the levels of fixed effects in lmer?
 
 No. See Doug Bates reply to this question [here](http://r.789695.n4.nabble.com/lme4-and-Variable-level-detection-td881680.html)
 
