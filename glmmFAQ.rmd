@@ -936,7 +936,7 @@ A related question is how to quantify "repeatability" (i.e., ratios of variance 
 
 The bottom line is that there are some simple recipes (and some more complex recipes that may or may not have been coded up by someone), but that '''you have to think carefully about what information you want to get out of the coefficient of determination''', because no recipe will have all of the properties of $R^2$ in the simple linear model case.
 
-**Packages/functions**: See `sjstats::r2()`, `MuMin::r.squaredGLMM()`, the `r2glmm` package, the standalone [r2MLM function](https://my.vanderbilt.edu/jasonrights/software/r2MLM), stuff in the `piecewiseSEM` package ...
+**Packages/functions**: See [`performance::r2()`](https://easystats.github.io/performance/reference/r2.html), `MuMin::r.squaredGLMM()`, the `r2glmm` package, the standalone [r2MLM function](https://my.vanderbilt.edu/jasonrights/software/r2MLM), stuff in the `piecewiseSEM` package ...
 
 ## Variable importance
 
