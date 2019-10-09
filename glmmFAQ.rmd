@@ -2,7 +2,7 @@
 author: Ben Bolker and others
 title: GLMM FAQ
 bibliography: glmm.bib
-date:  "`r format(Sys.time())`"
+date:  "`r format(Sys.time(), '%d %b %Y')`"
 output: 
   html_document:
      code_download: true
@@ -41,7 +41,7 @@ The most commonly used functions for mixed modeling in R are
 
 Another quick-and-dirty way to search for mixed-model related packages on CRAN:
 
-```{r avail}
+```{r avail,cache=TRUE}
 grep("l.?m[me][^t]",rownames(available.packages()),value=TRUE)
 ```
 
@@ -122,10 +122,11 @@ pander::pander(ftab,justify="left")
 
 Modified from: http://stats.stackexchange.com/questions/13166/rs-lmer-cheat-sheet?lq=1 (Livius)
 
-Two more possibly useful links:
+More possibly useful links:
 
-- [Rense Nieuwenhuis's blogpost/lesson on lme4 model specification](http://www.rensenieuwenhuis.nl/r-sessions-16-multilevel-model-specification-lme4/)
+- Rense Nieuwenhuis's [blogpost/lesson on lme4 model specification](http://www.rensenieuwenhuis.nl/r-sessions-16-multilevel-model-specification-lme4/)
 - CrossValidated's [lmer cheat sheet](https://stats.stackexchange.com/questions/13166/rs-lmer-cheat-sheet)
+- Kristoffer Magnusson's [Using R and lme/lmer to fit different two- and three-level longitudinal models](https://rpsychologist.com/r-guide-longitudinal-lme-lmer)
 
 ## Should I treat factor xxx as fixed or random?
 
@@ -144,6 +145,8 @@ One point of particular relevance to 'modern' mixed model estimation (rather tha
 > Are there enough levels of the factor in the data on which to base an estimate of the variance of the population of effects? No, means [you should probably treat the variable as] fixed effects.
 
 Some researchers (who treat fixed vs random as a philosophical rather than a pragmatic decision) object to this approach.
+
+Also see a very thoughtful chapter in @hodges_richly_2016.
 
 Treating factors with small numbers of levels as random will in the best case  lead to very small and/or imprecise estimates of random effects; in the worst case it will lead to various numerical difficulties such as lack of convergence, zero variance estimates, etc.. (A small [simulation exercise](https:/rpubs.com/bbolker/4187) shows that at least the estimates of the standard deviation are downwardly biased in this case; it's not clear whether/how this bias would affect the point estimates of  fixed effects or their estimated confidence intervals.) In the classical method-of-moments approach these problems may not arise (because the sums of squares are always well defined as long as there are at least two units), but the underlying problems of lack of power are there nevertheless.
 

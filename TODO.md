@@ -2,3 +2,5 @@
 - better regex golfing?
 - revive Task View
 - package table
+- more on varying variance by group
+- more on `GLMMadaptive`
