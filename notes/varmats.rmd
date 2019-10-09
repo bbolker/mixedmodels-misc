@@ -71,7 +71,10 @@ opt_Diag <- nloptwrap(par=rep(1,3),wrap_Diag,lower=rep(0,3),upper=rep(Inf,3))
 VarCorr(m_Diag <- mkMerMod(environment(devfun), opt_Diag, lmod$reTrms, fr = lmod$fr))
 ```
 
-```{r}
+Checking the environment for `pd*` and `cor*` functions from `lme`, which may be useful in determining Cholesky factors ...
+
+```{r find_struct,message=FALSE}
+library(nlme)
 apropos("^pd[^f]")
 apropos("^cor[A-Z]")
 ## ?pdFactor
@@ -81,7 +84,7 @@ apropos("^cor[A-Z]")
 
 Stole some nice code from [here](https://blogs.sas.com/content/iml/2018/10/03/ar1-cholesky-root-simulation.html)
 	
-```{r}
+```{r ar1_chol}
 ## direct computation of Cholesky root for an AR(1) matrix
 ar1_chol <- function(rho,p) {
   R <- matrix(0,p,p)
@@ -136,9 +139,10 @@ VarCorr(m_AR1het <- mkMerMod(environment(devfun),
 
 This might actually be the **hardest** case. We'd like to directly compute the Cholesky factor of a compound symmetric matrix, but it doesn't seem to be very practical. I tried things like:
 
-```
+<!-- double-{{ confuses gh-pages ... -->
+<pre>
 FullSimplify[CholeskyDecomposition[{{1,rho,rho},{rho,1,rho},{rho,rho,1}}], Element[rho,Reals]]
-```
+</pre>
 
 in Wolfram Alpha.
 
@@ -219,4 +223,10 @@ VarCorr(m_CShet <- mkMerMod(environment(devfun), opt_CShet,
                             lmod$reTrms, fr = lmod$fr))
 ```
 
-## phylo examples
+## To do
+
+- compare with `lme`/`glmmTMB` fits where possible?
+- revive/redo flexLambda!
+- comment on/compare with Lambda-hacking
+- phylo examples
+- Toeplitz/Kronecker examples?
