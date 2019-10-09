@@ -139,10 +139,16 @@ VarCorr(m_AR1het <- mkMerMod(environment(devfun),
 
 This might actually be the **hardest** case. We'd like to directly compute the Cholesky factor of a compound symmetric matrix, but it doesn't seem to be very practical. I tried things like:
 
-<!-- double-{{ confuses gh-pages ... -->
+<!-- double-{{ confuses gh-pages ... 
+{% raw %}
+-->
 <pre>
 FullSimplify[CholeskyDecomposition[{{1,rho,rho},{rho,1,rho},{rho,rho,1}}], Element[rho,Reals]]
 </pre>
+<!--
+{% endraw %}
+-->
+
 
 in Wolfram Alpha.
 
