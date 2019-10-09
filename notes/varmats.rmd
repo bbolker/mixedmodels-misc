@@ -4,9 +4,11 @@ author: Ben Bolker
 date: "`r format(Sys.time(),'%d %b %Y')`"
 ---
 
-```{r pkgs}
+```{r pkgs, message=FALSE}
 library(lme4)
 ```
+
+A long-standing failing of `lme4` is that it is not possible to fit models with structured covariance terms. However, this is hackable if you know what you're doing ...
 
 Simulate data (unstructured/"pdDiag").
 
@@ -137,12 +139,18 @@ VarCorr(m_AR1het <- mkMerMod(environment(devfun),
 
 ## compound symmetry
 
-This might actually be the **hardest** case. We'd like to directly compute the Cholesky factor of a compound symmetric matrix, but it doesn't seem to be very practical. I tried things like:
+This might actually be the **hardest** case tried so far. We'd like to directly compute the Cholesky factor of a compound symmetric matrix, but it doesn't seem to be very practical. 
+
+The short version of this is that if we can map from a set of parameters to a desired covariance matrix, we can always brute-force numerically Cholesky-decompose it (this is done e.g. in the `corCAR1` and the spatial correlation structures (`corExp`, `corGaus`, etc.) in `nlme`).
+
+The other question is whether there are natural bounds on the space of positive-(semi)-definite matrices of a particular type.  In the compound-symmetric case it's easy because the variances are >0 and the correlations are in $(-1/n,1)$ where $n$ is the dimension of the matrix.
+
+To get direct/simpler versions I tried things like:
 
 <pre>
 FullSimplify[CholeskyDecomposition[((1,rho,rho),(rho,1,rho),(rho,rho,1))], Element[rho,Reals]]
 </pre>
-(note that the parens `()` in this expression should actually be brackets `{}`: this confused GitHub pages for some reason)
+	(note that the parens `()` in this expression should actually be brackets `{}`: this confused GitHub pages for some reason)
 
 in Wolfram Alpha.
 
@@ -160,9 +168,22 @@ A & = \sqrt{1-\rho^2} \\
 \end{split}
 $$
 
+```{r cs3}
+cs3_chol <- function(rho) {
+  A <- sqrt(1-rho^2)
+  matrix(c(1,rho,rho,
+           0,A,rho*(1-rho)/A,
+           0,0,
+           sqrt(-rho^2-rho^2*((rho-1)^2)/A^2+1)),
+         byrow=TRUE,nrow=3)
+}
+```
+
 but for 4 $\times$ 4 it is:
 
 ![4x4 compsymm cholesky](cho2.png)
+
+While `nlme` provides *a* matrix square-root for `pd*` objects, it never promises that they're triangular ...
 
 ```{r compsymm}
 library(nlme)
@@ -171,18 +192,6 @@ attr(x,"ncol") <- 3
 m <- matrix(nlme:::pdFactor.pdCompSymm(x),3,3)
 crossprod(m,m) ## is indeed cs
 ## but NOT lower-triangular
-```
-
-```{r}
-cc <- function(rho) {
-  A <- sqrt(1-rho^2)
-  matrix(c(1,rho,rho,
-           0,A,rho*(1-rho)/A,
-           0,0,
-           sqrt(-rho^2-rho^2*((rho-1)^2)/A^2+1)),
-         byrow=TRUE,nrow=3)
-}
-crossprod(cc(0.5),cc(0.5))
 ```
 
 ## comp symm, homogeneous variance
@@ -225,8 +234,14 @@ VarCorr(m_CShet <- mkMerMod(environment(devfun), opt_CShet,
 
 ## To do
 
+- more intro?
+- more complex examples?
+- ref `lme4ord` ?
 - compare with `lme`/`glmmTMB` fits where possible?
 - revive/redo flexLambda!
 - comment on/compare with Lambda-hacking
 - phylo examples
 - Toeplitz/Kronecker examples?
+- ref Tanaka/Hui project on mixed model syntax? 
+- ref `MCMCglmm` possibilities?
+- discuss/compare residuals vs random effects (also, Gaussian vs non-Gaussian case)
