@@ -1,5 +1,7 @@
 ---
 title: "Contrasts"
+author: "Ben Bolker"
+date: "`r format(Sys.time(),'%d %B %Y')`"
 output: tufte_handout
 bibliography: ../glmm.bib
 header-includes:
@@ -33,7 +35,7 @@ knit_hooks$set(basefig=function(before, options, envir) {
 \newcommand{\muvec}{\vec \mu}
 \newcommand{\betavec}{\vec \beta}
 
-```{r load_pkgs,echo=FALSE}
+```{r load_pkgs,echo=FALSE,message=FALSE}
 library("reshape2")
 library("MASS")
 library("ggplot2"); theme_set(theme_bw());
@@ -180,16 +182,26 @@ coral against starfish predation.
 
 There are four treatments:
 we know the amount of predation in the
-control treatment ($\mu_1$), crabs-only treatment ($\mu_2$),
-shrimp-only treatment ($\mu_3$), and crabs-plus-shrimp treatment ($\mu_4$).
+control treatment ($\mu_0$), crabs-only treatment ($\mu_C$),
+shrimp-only treatment ($\mu_S$), and crabs-plus-shrimp treatment ($\mu_{CS}$).
 Suppose we want to parameterize this model in terms of
 
-- the overall mean predation level: $(\mu_1+\mu_2+\mu_3+\mu_4)/4$
-- the average effect of symbionts, i.e. the difference between the control ($\mu_1$)
-and the average of the symbiont treatments $(\mu_2+\mu_3+\mu_4)/3$
-- the difference between crabs and shrimp, $\mu_2-\mu_3$
-- the difference between the combined-symbiont treatment, $\mu_4$,
-and the average of the single-symbiont treatments, $(\mu_2+\mu_3)/2$
+<!-- change subscripts from 1,2,3,4 to 0, C, S, CS 
+     show the matrix multiplication -->
+- the overall mean predation level: $(\mu_0+\mu_C+\mu_S+\mu_{CS})/4$
+- the average effect of symbionts, i.e. the difference between the control ($\mu_0$)
+and the average of the symbiont treatments $(\mu_C+\mu_S+\mu_{CS})/3$
+- the difference between crabs and shrimp, $\mu_C-\mu_S$
+- the difference between the combined-symbiont treatment, $\mu_{CS}$,
+and the average of the single-symbiont treatments, $(\mu_C+\mu_S)/2$
+
+Reminder about matrix-by-vector multiplication: the value of the $i^\textrm{th}$ element
+is the sum of the products of row $i$ of $\CC$ with the vector. So, for example, the first
+element (which we want to be the mean of all treatment means) is
+$\mu_0 c_{11} + \mu_C c_{12} + \mu_S c_{13} + \mu_{CS} c_{14}$.  If we want the 
+first parameter ($\beta_0$) to equal the mean of the $\mu$ values, 
+then we need to set $c_{11}=c_{12}=c_{13}=c_{14} = 1/4$.
+
 
 The signs are set up to allow for the fact that we want to quantify the
 *decrease* in predation under symbiont prediction.
@@ -203,18 +215,37 @@ cc_inv <- matrix(c(1/4,1/4,1/4,1/4,
                0,1/2,1/2,-1),
              byrow=TRUE,
              nrow=4,
-             dimnames=list(c("none","C","S","CS"),
-                 c("intercept","avg_symb","C.vs.S","twosymb")))
+             dimnames=list(
+               contrast=c("intercept","avg_symb","C.vs.S","twosymb"),
+               ttt=c("none","C","S","CS")))
 
 print(MASS::fractions(cc_inv))
 ```
 
 This is what we get for $\CC$ by inverting $\CC^{-1}$ (`solve(cc_inv)`)
 (with a little bit of cosmetic stuff):
-*Not sure why I have to transpose the result here??*
 ```{r crabshrimp2,echo=FALSE}
-MASS::fractions(ss <- t(zapsmall(solve(cc_inv))))
+MASS::fractions(cc <- zapsmall(solve(cc_inv)))
 ``` 
+
+Let's make an example: there will be only one value per treatment
+because we're lazy (and so the $R^2$ will be 1.0), but we'll see if this
+actually does what we expect. When we use the contrast matrix, we drop
+the first column (which is all ones) since R will add an intercept automatically.
+
+```{r symbiont_example}
+dd <- data.frame(
+  ttt=c("none","C","S","CS"),
+  pred=c(5,2,3,1))
+dd$ttt <- factor(dd$ttt, levels=dd$ttt) ## make sure factor is in order
+## drop first column (~ttt-1 doesn't work the way we want it to)
+lm1 <- lm(pred~ttt,contrasts=list(ttt=cc[,-1]),data=dd)
+fractions(coef(lm1))
+```
+
+This does work as expected; the values are [mean] 11/4 (=(5+2+3+1)/4),
+[symbiont effect] 3 (=5-(2+3+1)/3), [crab vs shrimp] -1 (=2-3),
+[extra symbiont effect] 3/2 = (2+3)/2-1.
 
 @Crawley2002 gives another custom-contrast example, but he pretty
 much just shows $\CC$ without much discussion of how one would derive it.
@@ -230,8 +261,6 @@ dimnames(cmat) <- list(c("none","C","S","CS"),
 cc <- cbind(mean=1,cmat)
 MASS::fractions(solve(cc))
 ``` 
-
-
 
 # Categorical predictors: contrasts
 
@@ -381,7 +410,7 @@ $\beta_4$=level 3 vs. average of levels 1,2, 4
 
 Note that we don't have a contrast directly involving level 4.
 
-```{r}
+```{r contr_sum}
 cfun("contr.sum")
 ```
 
@@ -395,7 +424,7 @@ When we specify a formula with `-1` or `+0`
 an identity matrix for the contrasts:
 each level has its own parameter.
 
-```{r}
+```{r no_intercept}
 pr(update(lm1,.~.-1))
 ```
 
@@ -419,7 +448,7 @@ emmeans(lm1,spec=~place)
 ```
 
 Forward difference contrasts:
-```{r}
+```{r fdiff}
 (cc <- cbind(mean=1,MASS::contr.sdif(4)))
 MASS::fractions(solve(cc))
 ## not orthogonal at all
@@ -435,7 +464,7 @@ Interactions as *differences in differences*
 Interpretation problems/marginality principle
 [@venables_exegeses_1998,schielzeth_simple_2010]
 
-```{r}
+```{r inter1}
 head(d <- expand.grid(F=LETTERS[1:3],f=letters[1:3]))
 m0 <- model.matrix(~F*f,d)
 ff <- solve(m0)
@@ -444,7 +473,7 @@ ff["FB",] ## contrast between (A,a) and (B,a)
 ff["fb",] ## contrast between (A,a) and (A,b)
 ``` 
 
-```{r}
+```{r inter2}
 old.opts <- options(contrasts=c("contr.sum","contr.poly"))
 m <- model.matrix(~F*f,d)
 ff <- solve(m)*9
@@ -599,7 +628,7 @@ try `with(lizards,table(light,time))`)
 
 What if we want the equivalent of coding a binary response as (-0.5,0.5) (so the effects sum to zero, but the difference is
 
-```{r}
+```{r effects_contr}
 coef(lm(grahami~light, data=lizards))
 coef(lm(grahami~light, data=lizards, contrasts=list(light=contr.sum)))
 coef(lm(grahami~light, data=lizards,
