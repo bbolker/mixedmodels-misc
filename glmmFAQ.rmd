@@ -24,7 +24,7 @@ library(knitr)
 library(pander)
 ```
 
-```{r pkgs, eval=FALSE}
+```{r pkgs, eval=FALSE,echo=FALSE}
 pkgs <- c("lme4","glmmADMB","sos","blme","RLRsim","ggplot2", "MEMSS")
 i1 <- installed.packages()
 pkgs <- setdiff(pkgs, rownames(i1))
@@ -558,11 +558,7 @@ From worst to best:
 - Wald chi-square tests (e.g. `car::Anova`)
 - Likelihood ratio test (via `anova` or `drop1`)
 - **For balanced, nested LMMs** where df can be computed: conditional F-tests 
-- **For LMMs**: conditional F-tests with df correction (e.g. Kenward-Roger in `pbkrtest` package). (@stroup_rethinking_2014 states (referencing @stroup_non-normal_2013) that K-R actually works reasonably well for GLMMs:
-
-    > Notice the non-integer values of the denominator df. They, and the $F$ and $p$ values, reflect the procedure developed by Kenward and Roger (2009) to account for the effect of the covariance  structure on degrees of freedom and standard errors. Although the Kenward–Roger adjustment was derived for the LMM with normally distributed data and is an ad hoc procedure for GLMMs with non-normal data, informal simulation studies consistently have suggested that the adjustment is accurate. The Kenward-Roger adjustment requires that the SAS GLIMMIX default computing algorithm, pseudo-likelihood, be used rather than the Laplace algorithm used to obtain AICC statistics. Stroup (2013b) found that for binomial and Poisson GLMMs, pseudo-likelihood with the Kenward–Roger adjustment yields better Type I error control than Laplace while preserving the GLMM’s advantage with respect to power and accuracy in estimating treatment means.
-	
-However, K-R is not implemented in R for GLMMs; Stroup suggests that a pseudo-likelihood [@wolfinger_generalized_1993] approach is necessary in order to implement K-R for GLMMs.
+- **For LMMs**: conditional F-tests with df correction (e.g. Kenward-Roger in `pbkrtest` package: see notes on K-R etc [below](#ddf). 
 - MCMC or parametric, or nonparametric, bootstrap comparisons (nonparametric bootstrapping must be implemented carefully to account for grouping factors)
 
 ### Is the likelihood ratio test reliable for mixed models?
@@ -571,6 +567,7 @@ However, K-R is not implemented in R for GLMMs; Stroup suggests that a pseudo-li
 - Not for fixed effects in finite-size cases (see @pinheiro_mixed-effects_2000): may depend on 'denominator degrees of freedom' (number of groups) and/or total number of samples - total number of parameters
 - Conditional F-tests are preferred for LMMs, **if** denominator degrees of freedom are known
 
+<a id="ddf"></a>
 ### Why doesn't `lme4` display denominator degrees of freedom/p values?  What other options do I have?
 
 There is an [R FAQ entry](http://cran.r-project.org/doc/FAQ/R-FAQ.html#Why-are-p_002dvalues-not-displayed-when-using-lmer_0028_0029_003f) on this topic, which links to a [mailing list post](https://stat.ethz.ch/pipermail/r-help/2006-May/094765.html) by Doug Bates (there is also a voluminous [mailing list thread](http://rwiki.sciviews.org/doku.php?id=guides:lmer-tests) reproduced on the R wiki). The bottom line is 
@@ -578,9 +575,14 @@ There is an [R FAQ entry](http://cran.r-project.org/doc/FAQ/R-FAQ.html#Why-are-p
 - For special cases that correspond to classical experimental designs (i.e. balanced designs that are nested, split-plot, randomized block, etc.) ... we can show that the null distributions of particular ratios of sums of squares follow an $F$ distribution with known numerator and denominator degrees of freedom (and hence the sampling distributions of particular contrasts are t-distributed with known df). In more complicated situations (unbalanced, GLMMs, crossed random effects, models with temporal or spatial correlation, etc.) it is not in general clear that the null distribution of the computed ratio of sums of squares is really an F distribution, for *any* choice of denominator degrees of freedom.
 - For each simple degrees-of-freedom recipe that has been suggested (trace of the hat matrix, etc.) there seems to be at least one fairly simple counterexample where the recipe fails badly (e.g. see [this r-help thread from September 2006](https://stat.ethz.ch/pipermail/r-help/2006-September/112495.html)).
 - When the responses are normally distributed and the design is balanced, nested etc. (i.e. the classical LMM situation), the scaled deviances and differences in deviances are exactly $F$-distributed and looking at the experimental design (i.e., which treatments vary/are replicated at which levels) tells us what the relevant degrees of freedom are (see "df alternatives" below)
-- Two approaches to approximating df (Satterthwaite and Kenward-Roger) have been implemented in R, Satterthwaite in `lmerTest` and Kenward-Roger in `pbkrtest` (as `KRmodcomp`): although it was derived for LMMs, @stroup_rethinking_2014 states on the basis of (unpresented) simulation results that it actually works reasonably well for GLMMs.  However, at present the code in `KRmodcomp` only handles LMMs. (Kenward-Roger is probably the most reliable option [@schaalje_adequacy_2002], although it may be prohibitively computationally expensive for large data sets.)
-- Note that there are several different issues at play in finite-size (small-sample) adjustments, which apply slightly differently to LMMs and GLMMs.
-     -  When the data are not classical (crossed, unbalanced, R-side effects), we might still guess that the deviances etc. are approximately F-distributed but that we don't know the real degrees of freedom -- this is what the Satterthwaite, Kenward-Roger, Fai-Cornelius, etc. approximations are supposed to do.  
+- Two approaches to approximating df (Satterthwaite and Kenward-Roger) have been implemented in R, Satterthwaite in `lmerTest` and Kenward-Roger in `pbkrtest` (as `KRmodcomp`) (various packages such as `lmerTest`, `emmeans`, `car`, etc., import `pbkrtest::get_Lb_ddf`).
+    - K-R is probably the most reliable option [@schaalje_adequacy_2002], although it may be prohibitively computationally expensive for large data sets.
+    - K-R was derived for LMMs (and for REML?) in particular, it isn't clear how it would apply to GLMMs. @stroup_rethinking_2014 states (referencing @stroup_non-normal_2013) that K-R actually works reasonably well for GLMMs (K-R is not implemented in R for GLMMs; Stroup suggests that a pseudo-likelihood [@wolfinger_generalized_1993] approach is necessary in order to implement K-R for GLMMs):
+
+        > Notice the non-integer values of the denominator df. They, and the $F$ and $p$ values, reflect the procedure developed by Kenward and Roger (2009) to account for the effect of the covariance  structure on degrees of freedom and standard errors. Although the Kenward–Roger adjustment was derived for the LMM with normally distributed data and is an ad hoc procedure for GLMMs with non-normal data, informal simulation studies consistently have suggested that the adjustment is accurate. The Kenward-Roger adjustment requires that the SAS GLIMMIX default computing algorithm, pseudo-likelihood, be used rather than the Laplace algorithm used to obtain AICC statistics. Stroup (2013b) found that for binomial and Poisson GLMMs, pseudo-likelihood with the Kenward–Roger adjustment yields better Type I error control than Laplace while preserving the GLMM’s advantage with respect to power and accuracy in estimating treatment means.
+	
+- There are several different issues at play in finite-size (small-sample) adjustments, which apply slightly differently to LMMs and GLMMs.
+     -  When the data don't fit into the classical framework (crossed, unbalanced, R-side effects), we might still guess that the deviances etc. are approximately F-distributed but that we don't know the real degrees of freedom -- this is what the Satterthwaite, Kenward-Roger, Fai-Cornelius, etc. approximations are supposed to do.
      - When the responses are not normally distributed (as in GLMs and GLMMs), and when the scale parameter is not estimated (as in standard Poisson- and binomial-response models), then the deviance differences are only asymptotically F- or chi-square-distributed (i.e. not for our real, finite-size samples).  In standard GLM practice, we usually ignore this problem; there is some literature on finite-size corrections for GLMs under the rubrics of "Bartlett corrections" and "higher order asymptotics" (see @McCullaghNelder1989, @cordeiro_improved_1994, @cordeiro_note_1998 and the `cond` package ([on CRAN](https://cran.r-project.org/web/packages/cond/index.html)) [which works with GLMs, not GLMMs]), but it's rarely used.  (The bias correction/Firth approach implemented in the `brglm` package attempts to address the problem of finite-size bias, not finite-size non-chi-squaredness of the deviance differences.)
     - When the scale parameter in a GLM is estimated rather than fixed (as in Gamma or quasi-likelihood models), it is sometimes recommended to use an $F$ test to account for the uncertainty of the scale parameter (e.g. @venables_modern_2002 recommend `anova(...,test="F")` for quasi-likelihood models)
     - Combining these issues, one has to look pretty hard for information on small-sample or finite-size corrections for GLMMs: @feng_small_2004 and @bell_small_2010 look like good starting points, but it's not at all trivial.
