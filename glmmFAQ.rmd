@@ -24,6 +24,16 @@ library(knitr)
 library(pander)
 ```
 
+```{r pkgs, eval=FALSE}
+pkgs <- c("lme4","glmmADMB","sos","blme","RLRsim","ggplot2", "MEMSS")
+i1 <- installed.packages()
+pkgs <- setdiff(pkgs, rownames(i1))
+repos <- c("http://glmmadmb.r-forge.r-project.org/repos",
+            getOption("repos"))
+if (length(pkgs)>0) 
+    install.packages(pkgs,repos=repos, type="source")
+```
+
 # Introduction
 
 This is an informal FAQ list for the `r-sig-mixed-models` mailing list.
@@ -549,7 +559,9 @@ From worst to best:
 - Likelihood ratio test (via `anova` or `drop1`)
 - **For balanced, nested LMMs** where df can be computed: conditional F-tests 
 - **For LMMs**: conditional F-tests with df correction (e.g. Kenward-Roger in `pbkrtest` package). (@stroup_rethinking_2014 states (referencing @stroup_non-normal_2013) that K-R actually works reasonably well for GLMMs:
-> Notice the non-integer values of the denominator df. They, and the $F$ and $p$ values, reflect the procedure developed by Kenward and Roger (2009) to account for the effect of the covariance  structure on degrees of freedom and standard errors. Although the Kenward–Roger adjustment was derived for the LMM with normally distributed data and is an ad hoc procedure for GLMMs with non-normal data, informal simulation studies consistently have suggested that the adjustment is accurate. The Kenward-Roger adjustment requires that the SAS GLIMMIX default computing algorithm, pseudo-likelihood, be used rather than the Laplace algorithm used to obtain AICC statistics. Stroup (2013b) found that for binomial and Poisson GLMMs, pseudo-likelihood with the Kenward–Roger adjustment yields better Type I error control than Laplace while preserving the GLMM’s advantage with respect to power and accuracy in estimating treatment means.
+
+    > Notice the non-integer values of the denominator df. They, and the $F$ and $p$ values, reflect the procedure developed by Kenward and Roger (2009) to account for the effect of the covariance  structure on degrees of freedom and standard errors. Although the Kenward–Roger adjustment was derived for the LMM with normally distributed data and is an ad hoc procedure for GLMMs with non-normal data, informal simulation studies consistently have suggested that the adjustment is accurate. The Kenward-Roger adjustment requires that the SAS GLIMMIX default computing algorithm, pseudo-likelihood, be used rather than the Laplace algorithm used to obtain AICC statistics. Stroup (2013b) found that for binomial and Poisson GLMMs, pseudo-likelihood with the Kenward–Roger adjustment yields better Type I error control than Laplace while preserving the GLMM’s advantage with respect to power and accuracy in estimating treatment means.
+	
 However, K-R is not implemented in R for GLMMs; Stroup suggests that a pseudo-likelihood [@wolfinger_generalized_1993] approach is necessary in order to implement K-R for GLMMs.
 - MCMC or parametric, or nonparametric, bootstrap comparisons (nonparametric bootstrapping must be implemented carefully to account for grouping factors)
 
