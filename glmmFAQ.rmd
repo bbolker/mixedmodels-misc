@@ -568,6 +568,7 @@ From worst to best:
 - Conditional F-tests are preferred for LMMs, **if** denominator degrees of freedom are known
 
 <a id="ddf"></a>
+
 ### Why doesn't `lme4` display denominator degrees of freedom/p values?  What other options do I have?
 
 There is an [R FAQ entry](http://cran.r-project.org/doc/FAQ/R-FAQ.html#Why-are-p_002dvalues-not-displayed-when-using-lmer_0028_0029_003f) on this topic, which links to a [mailing list post](https://stat.ethz.ch/pipermail/r-help/2006-May/094765.html) by Doug Bates (there is also a voluminous [mailing list thread](http://rwiki.sciviews.org/doku.php?id=guides:lmer-tests) reproduced on the R wiki). The bottom line is 
