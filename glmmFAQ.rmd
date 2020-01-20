@@ -642,15 +642,22 @@ Keep in mind that LRT-based null hypothesis tests are conservative when the null
 
 - Consider *not* testing the significance of random effects. If the random effect is part of the experimental design, this procedure may be considered 'sacrificial pseudoreplication' [@Hurlbert1984]. Using stepwise approaches to eliminate non-significant terms in order to squeeze more significance out of the remaining terms is dangerous in any case.
 - consider using the `RLRsim` package, which has a fast implementation of simulation-based tests of null hypotheses about zero variances, for simple tests. (However, it only applies to `lmer` models, and is a bit tricky to use for more complex models.)
+
+```{r RLRsim_check,echo=FALSE}
+if (packageVersion("RLRsim")<"3.1-6") {
+  stop("need recent version of RLRsim: consider",
+       "'remotes::install_github(\"fabian-s/RLRsim\")'")
+}
+```
 ```{r RLRsim,message=FALSE}
 library(RLRsim)
 ## compare m0 and m1
 exactLRT(m1,m0)
 ## compare m1 and m2
 mA <- update(m2,REML=TRUE)
-m0 <- update(mA, . ~ . - (0 + Days|Subject))
+m0B <- update(mA, . ~ . - (0 + Days|Subject))
 m.slope  <- update(mA, . ~ . - (1|Subject))
-exactRLRT(m0=m0,m=m.slope,mA=mA)
+exactRLRT(m0=m0B,m=m.slope,mA=mA)
 ```
 
 - Parametric bootstrap: fit the reduced model, then repeatedly simulate from it and compute the differences between the deviance of the reduced and the full model for each simulated data set.  Compare this null distribution to the observed deviance difference. This procedure is implemented in the `pbkrtest` package (messages and warnings suppressed).
@@ -954,7 +961,7 @@ A related question is how to quantify "repeatability" (i.e., ratios of variance 
 
 The bottom line is that there are some simple recipes (and some more complex recipes that may or may not have been coded up by someone), but that '''you have to think carefully about what information you want to get out of the coefficient of determination''', because no recipe will have all of the properties of $R^2$ in the simple linear model case.
 
-**Packages/functions**: See [`performance::r2()`](https://easystats.github.io/performance/reference/r2.html), `MuMin::r.squaredGLMM()`, the `r2glmm` package, the standalone [r2MLM function](https://my.vanderbilt.edu/jasonrights/software/r2MLM), stuff in the `piecewiseSEM` package ...
+**Packages/functions**: See [`performance::r2()`](https://easystats.github.io/performance/reference/r2.html), `MuMin::r.squaredGLMM()`, the `r2glmm` package, the standalone [r2MLM function](https://my.vanderbilt.edu/jasonrights/software/r2MLM), stuff in the `piecewiseSEM` package, [`psycho::R2_nakagawa`](http://finzi.psych.upenn.edu/R/library/psycho/html/R2_nakagawa.html), ... (try e.g. `sos::findFn("Nakagawa Schielzeth")` for an up-to-date list ...)
 
 ## Variable importance
 
