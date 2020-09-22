@@ -1,0 +1,11 @@
+test_jglmm.html: test_jglmm.Rmd OH_batch_sum.rda
+	Rscript -e 'rmarkdown::render("test_jglmm.Rmd")'
+
+OH_batch_sum.rda: julia_disagg.csv julia_agg.csv OH_batch_sum.R OH_batch.RData
+	R CMD BATCH --vanilla OH_batch_sum.R
+
+julia_disagg.csv: OH_julia.jl
+	julia OH_julia.jl > oh_jl.out
+
+OH_batch.RData: OH_batch.R
+	R CD BATCH --vanilla OH_batch.R

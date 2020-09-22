@@ -14,3 +14,6 @@ clean:
 	rm -f *.log *.aux *.md *.out texput.log
 
 
+MixedModels.html: MixedModels.ctv
+	Rscript -e "ctv::ctv2html('MixedModels.ctv')"
+

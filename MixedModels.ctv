@@ -177,6 +177,7 @@ fits
 	  <li><a href="http://www.mrc-bsu.cam.ac.uk/software/bugs/">BUGS</a></li>
 	  <li><a href="http://mc-stan.org/">STAN</a></li>
 	</ul>
+      </li>
     </ul>
   </links>
 </CRANTaskView>

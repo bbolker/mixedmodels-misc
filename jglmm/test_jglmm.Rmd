@@ -1,0 +1,236 @@
+---
+title: "comparing R mixed model platforms on the CBPP example"
+author: "Ben Bolker"
+date: "`r format(Sys.time(),'%d %b %Y')`"
+---
+
+<!-- remake if necessary via: make -f Makefile_jglmm test_jglmm.html -->
+
+**tl;dr** testing a range of R packages, and an R-to-Julia interface, on some binomial examples shows that they agree very closely on point estimates but that in a few cases the estimates of standard errors of parameters are quite different. Why? 
+
+This document started out as an effort to explore an R-to-Julia pipeline package, `jglmm`. This package is developed by Mika Braginsky, using the `JuliaCall` R package to integrate with Doug Bates's `MixedModels.jl` Julia library; I've forked it to play around with it, so you should install it from `remotes::install_github("bbolker/jglmm")` if you want to run this code. (You'll also need to have a working installation of Julia with (at least) the `MixedModels` library installed ...) For those interested in this sort of thing, Philip Alday's [jlme package](https://github.com/palday/jlme), which uses a slightly different approach, is also worth looking at (I also have a [fork](https://github.com/bbolker/jlme) of this one that may be worth using instead).
+
+The particular analysis here was inspired by a [StackOverflow question](https://stackoverflow.com/questions/63332943/glmer-converges-with-one-factor-level-as-baseline-but-fails-to-converge-when). In discussion, we realized that `glmer` apparently gives incorrect parameter standard errors for one case: specifically, fitting the data to a large data set with disaggregated [Bernoulli] responses gives different parameter standard errors than when using the aggregated [binomial] responses. Some of these results are shown below, although the analysis is not fully reproducible since it depends on non-public data.
+
+
+
+```{r pkgs, message=FALSE}
+library(tidyverse)
+library(colorspace)
+theme_set(theme_bw())
+scale_colour_discrete <- scale_colour_discrete_qualitative
+library(broom.mixed)
+library(jglmm)
+library(glmmTMB)
+library(lme4)
+library(GLMMadaptive)
+library(ggstance) ## position_dodgev
+```
+
+`jglmm` requires some setup.
+
+```{r setup}
+system.time(jglmm_setup(run_glmm_model=TRUE))
+```
+
+```{r mod,echo=FALSE}
+## add proportion to CBPP data
+cbpp2 <- (cbpp
+    %>% mutate(prop=incidence/size)
+)
+## convert Julia term names to R style
+fix_terms <- function(x)  {
+    return(x
+           %>% mutate(term=str_remove_all(term,"(: | )"),
+                      term=str_replace(term,"&",":"))
+           )
+}
+```
+
+Fit all of the models:
+
+```{r fit_all}
+mod_list <- list(
+    glmer=glmer(prop ~ period + (1 | herd), weights=size, data = cbpp2, family = binomial),
+    jglmm=jglmm(prop ~ period + (1 | herd), weights=cbpp2$size, data = cbpp2, family = "binomial"),
+    glmmTMB=glmmTMB(prop ~ period + (1 | herd), weights=size, data = cbpp2, family = "binomial"),
+    Ga_Laplace= mixed_model(
+        cbind(incidence, size - incidence) ~ period,
+        random = ~ 1 | herd,
+        data = cbpp,
+        family = binomial,
+        control = list(nAGQ=1)  ## Laplace
+    ),
+    Ga_AGQ= mixed_model(
+        cbind(incidence, size - incidence) ~ period,
+        random = ~ 1 | herd,
+        data = cbpp,
+        family = binomial)
+)
+```
+
+### Notes
+
+Most of these models can be run with very similar model specifications.
+
+- `jglmm`
+    - at present the `weights` argument needs to be specified as a variable, not e.g. as a column name from `data`
+	- family needs to be specified as a string
+- `GLMMadaptive`
+    - the `weights` argument does not have the same meaning as in other R GLM packages, so I used the `cbind(n_success,n_failure) ~ ...` formulation
+	- this package specifies random and fixed effects separately (à la `nlme`).
+	- since `GLMMadaptive` is primarily intended for computing adaptive Gauss-Hermite quadrature solutions, the default (unlike the other packages) is *not* Laplace approximation (`nAGQ=1`). I tried both a Laplace example and a GHQ example (default `nAGQ=11`)
+	- The package name is abbreviated to `Ga` in the plots below
+
+```{r modsum, echo=FALSE} 
+mod_sum <- map_dfr(mod_list,tidy, effects="fixed", .id="pkg", conf.int=TRUE)
+```
+
+### Results
+
+All the packages agree pretty well, *except* 
+
+- `GLMMadaptive/Laplace` gets a quite different intercept estimate. This is weird, but people will probably rarely be running `GLMMadaptive` with the Laplace approximation ...
+- `jglmm` gets slightly larger standard errors/confidence intervals (the figure shows Wald CIs) than the other models.
+
+```{r ex_plot1, fig.width=8, echo=FALSE}
+print(gg1 <- ggplot(mod_sum,
+       aes(estimate,pkg,xmin=conf.low,xmax=conf.high))
+      + geom_pointrange(position=position_dodgev(height=0.3))
+      + facet_wrap(~term,scale="free")
+      + labs(y="")
+      + theme(legend.position="none")
+      )
+```
+
+To zoom in, let's plot the means and standard errors separately (leaving out the `GLMMadaptive/Laplace` case):
+
+
+```{r ex_plot2, fig.width=12,fig.height=4, echo=FALSE}
+pv_fun <- function(x) {
+    nm <- intersect(c("pkg","term","estimate","std.error","agg"),names(x))
+    (x
+    %>% filter(pkg!="Ga_Laplace")
+    %>% select(nm)
+    %>% pivot_longer(names_to="var",c("estimate","std.error"))
+    )
+}
+mod_sum2 <- pv_fun(mod_sum)
+print(gg2 <- ggplot(mod_sum2, aes(value,pkg))
+      + geom_point(size=4)
+      + facet_wrap(~var+term,scale="free",nrow=2)
+      + theme(legend.position="none")
+      + labs(y="")
+      )
+```
+
+### Results continued 
+
+- the differences in estimates are too small to worry about (note x-axis scales)
+- for standard errors `glmer`, `glmmTMB`, `GLMMadaptive/AGQ` give very similar answers (we wouldn't necessarily expect AGQ to give precisely the same answers as Laplace in any case ...), but the `jglmm` standard errors are consistently about 10% larger ??? I thought this might have something to do with the way weights are defined, but (1) the mean estimates are very similar and (2) see below ...
+
+## other data
+
+The second set of examples is from the original motivating example, which compared a disaggregated model with Bernoulli responses (1.18M observations) vs. aggregated binomial responses (355 observations).  Colours distinguish models fitted to aggregated and disaggregated responses. In this example I used `MixedModels.jl` directly in `Julia`, rather than `jglmm` (because of difficulties with the R-to-Julia connection: for some reason the larger model fit simply failed when run via `jglmm`) [however, the parameters etc. are still labelled `jglmm_` below).
+
+I didn't use `GLMMadaptive` on this example ...
+
+```{r oh1, echo=FALSE}
+L <- load("OH_batch_sum.rda")
+oh_mod_sum2 <- (oh_mod_sum
+    %>% filter(!grepl("par",pkg))
+    %>% mutate(agg=grepl("_agg",pkg))
+    %>% group_by(term)
+    %>% mutate(sderr_cons=mean(std.error,trim=0.5))
+)
+print(gg3 <- gg1 %+% oh_mod_sum2 + aes(colour=agg))
+```
+
+**fixme**: organize consensus mean and std error calculations
+
+`jglmm` gets *very* different standard error estimates for the aggregated versions. We can filter it out to compare the other results:
+
+```{r oh2, echo=FALSE}
+print(gg3 %+% dplyr::filter(oh_mod_sum2,pkg!="jglmm_agg"))
+```
+
+`glmer` gets a different standard error for the intercept and `SexMale` effect for aggregated data (only).
+
+Means and standard errors:
+
+```{r oh3, fig.width=12,fig.height=4, echo=FALSE}
+print(gg4 <- gg2 %+% pv_fun(oh_mod_sum2) + aes(colour=agg))
+```
+
+And without `jglmm` included:
+
+```{r oh4, fig.width=12,fig.height=4, echo=FALSE}
+print(gg4 %+% pv_fun(dplyr::filter(oh_mod_sum2,pkg!="jglmm_agg")))
+```
+
+Timings (`glmmTMB_disagg` uses 8 cores; `_disagg_par2` uses 2 cores; `_disagg_nopar` uses 1 core), split by whether aggregated data was used or not:
+
+```{r times,echo=FALSE}
+tt <- (oh_mod_times
+    %>% mutate(pkg=reorder(factor(pkg),time),
+               agg=grepl("_agg",pkg))
+)
+print(ggplot(tt,aes(time,pkg))
+      + geom_point(size=4)
+      + scale_x_log10()
+      + labs(y="",x="elapsed time (seconds)")
+      + facet_wrap(~agg,ncol=1, scale="free")
+      )
+```
+    
+```{r allfit}
+aa_sum <- readRDS("OH_allfit_batch_sum.rds")
+(ggplot(aa_sum,
+        aes(estimate,optimizer,xmin=conf.low,xmax=conf.high))
+    + geom_pointrange()
+    + facet_wrap(~term,scale="free")
+    + labs(y="")
+      + theme(legend.position="none")
+)
+```
+
+```{r}
+aa_sum <- mutate(aa_sum,
+                 optimizer=reorder(factor(optimizer),std.error))
+(ggplot(aa_sum,
+        aes(std.error,optimizer))
+    + geom_point()
+    + facet_wrap(~term,scale="free")
+    + labs(y="")
+      + theme(legend.position="none")
+)
+```
+
+- Did re-starting give a different answer? (include tidy info from original)
+- Which ones give convergence warnings? (`summary(aa)$msgs`: bobyqa, nlminbwrap, L-BFGS-B,  nloptr BOBYQA)  Is this correlated with matching the consensus std errors?
+
+## notes on std error calculations
+
+- under the hood, the covariance matrix is estimated via:
+
+- `vcov.merMod()`
+- `sigm^2*object@pp$unsc()` (`sigm` is `sigma(object)`, which is exactly 1 for binomial models); `unsc` is the unscaled covariance matrix
+- `.Call(merPredDunsc, ptr())`
+- `wrap(XPtr<merPredD>(ptr)->unsc())` (`external.cpp`:775)
+
+which is equal to 
+```{r eval=FALSE}
+MatrixXd(MatrixXd(d_p, d_p).setZero().
+                        selfadjointView<Eigen::Lower>().
+                        rankUpdate(RXi()))
+```
+
+Steve Walker has kindly provided the R translation, which is `tcrossprod(RXi)`. This can further be translated (from the `lmer` paper, `vignette("lmer", package="lme")`) as
+
+$$
+\mathbf R_X^{-1} \left(\mathbf R_X^{-1}\right)^\top
+$$
+
+where $\mathbf R_X$ is the ``fixed-effects Cholesky factor"; this matrix is updated at every step of the fitting process.
+
+The standard errors in `MixedModels.jl` are calculated in essentially the same way.
