@@ -23,14 +23,25 @@ plot(igraph::graph_from_data_frame(dd))  ## too many!
 a1 <- available.packages()
 ## grep("lmm",rownames(a1),value=TRUE,ignore.case=TRUE)
 ## lm followed by ("m or e") followed by (a character not "t" or the end of the string)
-focal_pkgs <- grep("lm(m|e([^t]|$))",rownames(a1),value=TRUE,ignore.case=TRUE)
+regexps <- c("lm(m|e([^t]|$))")  ## was using "mixed" but ... ? should check,
+find_pkgs <- function(x) grep(x,rownames(a1),value=TRUE,ignore.case=TRUE)
+focal_pkgs <- character(0)
+for (r in regexps) {
+    focal_pkgs <- union(focal_pkgs, find_pkgs(r))
+}
 ## false pos
 fpos <- "palmerpenguins"
 ## false negatives: some known-interesting pkgs
-fneg <- c("pbkrtest","broom.mixed","emmeans","SASmixed","mgcv","gamm4",
-          "brms","rstanarm")
-focal_pkgs <- focal_pkgs %>% setdiff(fpos) %>% append(fneg)
-length(focal_pkgs) ## 71
+## (check MixedModels.ctv for some more)
+fneg <- c("SASmixed","broom.mixed",
+          "pbkrtest","emmeans","mgcv","gamm4",
+          "brms","rstanarm","pez","merDeriv","repeated","hglm",
+          "geesmv","geepack","influence.ME","cAIC4","HLMdiag","lmmfit","iccbeta",
+          "DHARMa","effects","rockchalk","arm","performance","car",
+          "ez","afex","RVAideMemoire","geoRglm","GLMMarp","spaMM",
+          "polytomous","ordinal","longpower")
+focal_pkgs <- focal_pkgs %>% setdiff(fpos) %>% union(fneg)
+length(focal_pkgs) ## 112
 
 ## now extract
 pkg_rd <- (expand_grid(name=focal_pkgs, type=rd))
@@ -40,8 +51,9 @@ pb <- txtProgressBar(max=nrow(pkg_rd),style=3)
 i <- 0
 ff <- function(name,type) {
     ## cat(".")
+    cat(name,"\n")
     i <<- i+1
-    setTxtProgressBar(pb,i)
+    ## setTxtProgressBar(pb,i)
     tibble(focal=name,type,dep_pkg=get_dep(name,type))
 }
 
@@ -116,6 +128,9 @@ a3 <- (full_join(pp2, a2, by="focal")
 a3
 View(a3)
 ## add descriptions??
+
+write_csv(a3,"glmm_packages.csv")
+
 
 
 
