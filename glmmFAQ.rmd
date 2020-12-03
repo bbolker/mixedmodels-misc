@@ -57,6 +57,8 @@ Another quick-and-dirty way to search for mixed-model related packages on CRAN:
 grep("l.?m[me][^t]",rownames(available.packages()),value=TRUE)
 ```
 
+There are some false positives here (e.g. `palmerpenguins`); see [here](https://xkcd.com/1313/) if you're interested in "regex golf".
+
 ## Other sources of help
 
 - the mailing list is `r-sig-mixed-models@r-project.org`
@@ -133,6 +135,16 @@ pander::pander(ftab,justify="left")
 ```
 
 Modified from: http://stats.stackexchange.com/questions/13166/rs-lmer-cheat-sheet?lq=1 (Livius)
+
+
+The **magic** development version of the [equatiomatic package](https://github.com/datalorax/equatiomatic) can handle mixed models (`remotes::install_github("datalorax/equatiomatic")`), e.g.
+
+```{r equatiomatic, message=FALSE, results="asis"}
+library(lme4)
+library(equatiomatic)
+fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
+equatiomatic::extract_eq(fm1)
+```
 
 More possibly useful links:
 
@@ -282,7 +294,7 @@ In this case using quasi-likelihood doesn't make much difference, since the data
     - Poisson-lognormal model for counts or binomial-logit-Normal model for proportions (see above, "observation-level random effects")
     - negative binomial for counts or beta-binomial for proportions
          - `lme4::glmer.nb()` should fit a negative binomial, although it is somewhat slow and fragile compared to some of the other methods suggested here. `lme4` cannot fit beta-binomial models (these cannot be formulated as a part of the exponential family of distributions)
-	     - [glmmADMB](http://github.com/bbolker/glmmADMB/) and [glmmTMB](https://github.com/glmmtmb/glmmTMB/) (both on GitHub) will fit two parameterizations of the negative binomial: `family="nbinom"` (or `family="nbinom2"` in `glmmTMB`) gives the classic parameterization with $\sigma^2=\mu(1+mu/k)$ ("NB2" in Hardin and Hilbe's terminology) while `family="nbinom1"` gives a parameterization with $\sigma^2=\phi \mu$, $\phi>1$ ("NB1" to Hardin and Hilbe). The latter might also be called a "quasi-Poisson" parameterization because it matches the mean-variance relationship assumed by quasi-Poisson models, i.e. the variance is strictly proportional to the mean (although the proportionality constant must be >1, a limitation that does not apply to quasi-likelihood approaches).
+	     - [glmmTMB](https://github.com/glmmtmb/glmmTMB/) will fit two parameterizations of the negative binomial: `family="nbinom2"` gives the classic parameterization with $\sigma^2=\mu(1+mu/k)$ ("NB2" in Hardin and Hilbe's terminology) while `family="nbinom1"` gives a parameterization with $\sigma^2=\phi \mu$, $\phi>1$ ("NB1" to Hardin and Hilbe). The latter might also be called a "quasi-Poisson" parameterization because it matches the mean-variance relationship assumed by quasi-Poisson models, i.e. the variance is strictly proportional to the mean (although the proportionality constant must be >1, a limitation that does not apply to quasi-likelihood approaches). ([glmmADMB](http://github.com/bbolker/glmmADMB/) will also fit these models, with `family="nbinom"` for NB2, but is deprecated in favour of glmmTMB.)
 	   - `glmmTMB` allows beta-binomial models ([@harrison_comparison_2015] suggests comparing beta-binomial with OLRE models to assess reliability)
 	   - the `brms` package has a `negbinomial` family (no beta-binomial, but it does have a wide range of other families)
 - other packages/approaches (less widely used, or requiring a bit more effort)
@@ -828,14 +840,14 @@ g0 + geom_pointrange(aes(ymin = tlo, ymax = thi))+
 rm("Orthodont") ## clean up
 ```
 
-### glmmadmb
+### glmmTMB
 
-```{r glmmadmbpred,cache=TRUE}
-library(glmmADMB)
+```{r glmmTMBpred,cache=TRUE}
+library(glmmTMB)
 data(Orthodont,package="nlme")
-fm2 <- glmmadmb(distance ~ age*Sex, random = ~ 1 + age | Subject,
+fm2 <- glmmTMB(distance ~ age*Sex + (age | Subject),
                 data = Orthodont,
-                family="gaussian") 
+                family="gaussian")
 
 ## make prediction data frame
 newdat <- expand.grid(age=c(8,10,12,14), Sex=c("Female","Male"))
@@ -844,10 +856,10 @@ mm <- model.matrix(delete.response(terms(fm2)),newdat)
 ## linear predictor (for GLMMs, back-transform this with the
 ##  inverse link function (e.g. plogis() for binomial, beta;
 ##  exp() for Poisson, negative binomial
-newdat$distance <- drop(mm %*% fixef(fm2))
-predvar <- diag(mm %*% vcov(fm2) %*% t(mm))
+newdat$distance <- drop(mm %*% fixef(fm2)[["cond"]])
+predvar <- diag(mm %*% vcov(fm2)[["cond"]] %*% t(mm))
 newdat$SE <- sqrt(predvar) 
-newdat$SE2 <- sqrt(predvar+fm2$alpha^2)
+newdat$SE2 <- sqrt(predvar+sigma(fm2)^2)
 ```
 
 (Probably overly complicated) `ggplot` code:
@@ -858,13 +870,17 @@ g0 <- ggplot(Orthodont,aes(x=age,y=distance,colour=Sex))+
     stat_sum(alpha=0.2,aes(size=..n..))+
     scale_size_continuous(breaks=1:4,range=c(2,5))
 g1 <- g0+geom_line(data=newdat,position=pd)+
-      geom_point(data=newdat,shape=17,size=3,position=pd)
-g1 + geom_linerange(data=newdat,
-                    aes(ymin=distance-2*SE,ymax=distance+2*SE), position=pd)
+    geom_point(data=newdat,shape=17,size=3,position=pd)
+## confidence intervals
+g2 <- g1 + geom_linerange(data=newdat,
+                          aes(ymin=distance-2*SE,ymax=distance+2*SE),
+                          lwd=2, position=pd)
 ## prediction intervals 
-g1 + geom_linerange(data=newdat,
+g2 + geom_linerange(data=newdat,
                     aes(ymin=distance-2*SE2,ymax=distance+2*SE2), position=pd)
 ```
+
+The `effects`, `emmeans`, and `sjPlot` packages are also useful here.
 
 ## Confidence intervals on conditional means/BLUPs/random effects
 
