@@ -21,7 +21,9 @@ output:
 
 ```{r setup,message=FALSE,echo=FALSE}
 library(knitr)
+knitr::opts_chunk$set(dev.args = list(png = list(type = "cairo")))
 library(pander)
+library(Cairo)
 ```
 
 ```{r pkgs, eval=FALSE,echo=FALSE}
@@ -179,8 +181,9 @@ Also see [this thread](https://stat.ethz.ch/pipermail/r-sig-mixed-models/2010q2/
 
 ### Testing for overdispersion/computing overdispersion factor
 
-- with the usual caveats, plus a few extras -- counting degrees of freedom, etc. -- the usual procedure of calculating the sum of squared Pearson residuals and comparing it to the residual degrees of freedom should give at least a crude idea of overdispersion.  The following attempt counts each variance or covariance parameter as one model degree of freedom and presents the sum of squared Pearson residuals, the ratio of (SSQ residuals/rdf), the residual df, and the $p$-value based on the (approximately!!) appropriate $\chi^2$ distribution. **Do PLEASE note the usual, and extra, caveats noted here: this is an APPROXIMATE estimate of an overdispersion parameter**. Even in the GLM case, the expected deviance per point equaling 1 is only true as the distribution of individual deviates approaches normality, i.e. the usual $\lambda>5$ rules of thumb for Poisson values and $\textrm{min}(Np, N(1-p)) > 5$ for binomial values (e.g. see @venables_modern_2002, [p. 209](http://books.google.com/books?id=974c4vKurNkC&pg=PA209)). (And that's without the extra complexities due to GLMM, i.e. the "effective" residual df should be large enough to make the sums of squares converge on a $\chi^2$ distribution ...)
+- with the usual caveats, plus a few extras -- counting degrees of freedom, etc. -- the usual procedure of calculating the sum of squared Pearson residuals and comparing it to the residual degrees of freedom should give at least a crude idea of overdispersion.  The following attempt counts each variance or covariance parameter as one model degree of freedom and presents the sum of squared Pearson residuals, the ratio of (SSQ residuals/rdf), the residual df, and the $p$-value based on the (approximately!!) appropriate $\chi^2$ distribution. **Do PLEASE note the usual, and extra, caveats noted here: this is an APPROXIMATE estimate of an overdispersion parameter**. Even in the GLM case, the expected deviance per point equaling 1 is only true as the distribution of individual deviates approaches normality, i.e. the usual $\lambda>5$ rules of thumb for Poisson values and $\textrm{min}(Np, N(1-p)) > 5$ for binomial values (e.g. see @venables_modern_2002, [p. 208-209](http://books.google.com/books?id=974c4vKurNkC&pg=PA209)). (And that's without the extra complexities due to GLMM, i.e. the "effective" residual df should be large enough to make the sums of squares converge on a $\chi^2$ distribution ...)
 - Remember that (1) overdispersion is irrelevant for models that estimate a scale parameter (i.e. almost anything but Poisson or binomial: Gaussian, Gamma, negative binomial ...) and (2) overdispersion is not estimable (and hence practically irrelevant) for Bernoulli models (= binary data = binomial with $N=1$).
+- The recipes below may need adjustment for some of the more complex model types allowed by `glmmTMB` (e.g. zero-inflation/variable dispersion), where it's less clear what to measure to estimate overdispersion.
 
 The following function should work for a variety of model types
 (at least `glmmADMB`, `glmmTMB`, `lme4`, ...).
@@ -199,16 +202,19 @@ overdisp_fun <- function(model) {
 Example:
 ```{r lme4,message=FALSE}
 library(lme4)
+library(glmmTMB)
 ```
 
 ```{r overdisp_ex,cache=TRUE,message=FALSE}
 set.seed(101)  
-d <- data.frame(y=rpois(1000,lambda=3),x=runif(1000),
+d <- data.frame(x=runif(1000),
                 f=factor(sample(1:10,size=1000,replace=TRUE)))
+suppressMessages(d$y <- simulate(~x+(1|f), family=poisson,
+                          newdata=d,
+                          newparams=list(theta=1,beta=c(0,2)))[[1]])
 m1 <- glmer(y~x+(1|f),data=d,family=poisson)
 overdisp_fun(m1)
-library(glmmADMB)  ## 0.7.7
-m2 <- glmmadmb(y~x+(1|f),data=d,family="poisson")
+m2 <- glmmTMB(y~x+(1|f),data=d,family="poisson")
 overdisp_fun(m2)
 ```
 
@@ -232,17 +238,44 @@ standard error
 ```{r quasi}
 ## extract summary table; you may also be able to do this via
 ##  broom::tidy or broom.mixed::tidy
-cc <- coef(summary(m1))
-phi <- overdisp_fun(m1)["ratio"]
-cc <- within(as.data.frame(cc),
-{   `Std. Error` <- `Std. Error`*sqrt(phi)
-    `z value` <- Estimate/`Std. Error`
-    `Pr(>|z|)` <- 2*pnorm(abs(`z value`), lower.tail=FALSE)
-})
-printCoefmat(cc,digits=3)
+quasi_table <- function(model,ctab=coef(summary(model)),
+                           phi=overdisp_fun(model)["ratio"]) {
+    qctab <- within(as.data.frame(ctab),
+    {   `Std. Error` <- `Std. Error`*sqrt(phi)
+        `z value` <- Estimate/`Std. Error`
+        `Pr(>|z|)` <- 2*pnorm(abs(`z value`), lower.tail=FALSE)
+    })
+    return(qctab)
+}
+printCoefmat(quasi_table(m1),digits=3)
+## to use this with glmmTMB, we need to separate out the
+##  conditional component of the summary
+printCoefmat(quasi_table(m2,
+                         ctab=coef(summary(m2))[["cond"]]),
+             digits=3)
 ```
 
-(In this case it doesn't make much difference, since the data we simulated in the first place were Poisson.) Keep in mind that once you switch to quasi-likelihood you will either have to eschew inferential methods such as the likelihood ratio test, profile confidence intervals, AIC, etc., or make more heroic assumptions to compute "quasi-" analogs of all of the above (such as QAIC).
+Another version, this one tidyverse-centric:
+
+```{r tidyquasi, message=FALSE}
+library(broom.mixed)
+library(dplyr)
+tidy_quasi <- function(model, phi=overdisp_fun(model)["ratio"],
+                       conf.level=0.95) {
+    tt <- (tidy(model, effects="fixed")
+        %>% mutate(std.error=std.error*sqrt(phi),
+                   statistic=estimate/std.error,
+                   p.value=2*pnorm(abs(statistic), lower.tail=FALSE))
+    )
+    return(tt)
+}
+tidy_quasi(m1)
+tidy_quasi(m2)
+```
+
+These functions make some simplifying assumptions: (1) this overdispersion computation is approximate
+
+In this case using quasi-likelihood doesn't make much difference, since the data we simulated in the first place were Poisson.) Keep in mind that once you switch to quasi-likelihood you will either have to eschew inferential methods such as the likelihood ratio test, profile confidence intervals, AIC, etc., or make more heroic assumptions to compute "quasi-" analogs of all of the above (such as QAIC). 
 
 - observation-level random effects (OLRE: this approach should work in most packages). If you want to a citation for this approach, try @elston_analysis_2001, who cite @lawson_disease_1999; apparently there is also an example in section 10.5 of @maindonald_data_2010, and (according to an R-sig-mixed-models post) this is also discussed by @rabehesketh_multilevel_2008. Also see @browne_variance_2005 for an example in the binomial context (i.e. logit-normal-binomial rather than lognormal-Poisson). Agresti's excellent (2002) book @agresti_categorical_2002 also discusses this (section 13.5), referring back to @breslow_extrapoisson_1984 and @hinde_compound_1982. [**Notes**: (a) I haven't checked all these references myself, (b) I can't find the reference any more, but I have seen it stated that observation-level random effect estimation is probably dodgy for PQL approaches as used in Elston et al 2001] 
 - alternative distributions
