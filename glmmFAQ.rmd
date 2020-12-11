@@ -146,6 +146,8 @@ fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 equatiomatic::extract_eq(fm1)
 ```
 
+It doesn't handle GLMMs (yet), but you could fit two fake models &mdash; one LMM like your GLMM but with a Gaussian response, and one GLM with the same family/link function as your GLMM but without the random effects &mdash; and put the pieces together.
+
 More possibly useful links:
 
 - Rense Nieuwenhuis's [blogpost/lesson on lme4 model specification](http://www.rensenieuwenhuis.nl/r-sessions-16-multilevel-model-specification-lme4/)
@@ -184,6 +186,10 @@ Also see [this thread](https://stat.ethz.ch/pipermail/r-sig-mixed-models/2010q2/
 - `lme4` does handled crossed effects, efficiently; if you need to deal with crossed REs in conjunction with some of the features that `nlme` offers (e.g. heteroscedasticity of residuals via `weights`/`varStruct`, correlation of residuals via `correlation`/`corStruct`, see p. 163ff of @pinheiro_mixed-effects_2000 (section 4.2.2:  [Google books link](http://tinyurl.com/crossedRE))
 - I rarely find it useful to think of fixed effects as "nested" (although others disagree); if for example treatments A and B are only measured in block 1, and treatments C and D are only measured in block 2, one still assumes (because they are fixed effects) that each treatment would have the same effect if applied in the other block. (One might like to estimate treatment-by-block interactions, but in this case the experimental design doesn't allow it; one would have to have multiple treatments measured within each block, although not necessarily all treatments in every block.)  One would code this analysis as `response~treatment+(1|block)` in `lme4`. Also, in the case of fixed effects, crossed and nested specifications change the parameterization of the model, but not anything else (e.g. the number of parameters estimated, log-likelihood, model predictions are all identical).  That is, in R's `model.matrix` function (which implements a version of Wilkinson-Rogers notation) `a*b` and `a/b` (which expand to `1+a+b+a:b` and `1+a+a:b` respectively) give model matrices with the same number of columns.
 - Whether you explicitly specify a random effect as nested or not depends (in part) on the way the levels of the random effects are coded. If the 'lower-level' random effect is coded with unique levels, then the two syntaxes `(1|a/b)` (or `(1|a)+(1|a:b)`) and `(1|a)+(1|b)` are equivalent. If the lower-level random effect has the same labels within each larger group (e.g. blocks 1, 2, 3, 4 within sites A, B, and C) then the explicit nesting `(1|a/b)` is required. It seems to be considered best practice to code the nested level uniquely (e.g. A1, A2, ..., B1, B2, ...) so that confusion between nested and crossed effects is less likely.
+
+## (When) can I include a predictor as both fixed and random?
+
+See [blog post by Thierry Onkelinx](https://www.muscardinus.be/2017/08/fixed-and-random/)
 
 # Model extensions
 
