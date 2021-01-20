@@ -76,6 +76,22 @@ There are some false positives here (e.g. `palmerpenguins`); see [here](https://
 * When SAS (or Stata, or Genstat/AS-REML or ...) and R differ in their answers, R may not be wrong. Both SAS and R may be `right' but proceeding in a different way/answering different questions/using a different philosophical approach (or both may be wrong ...)
 - The advice in this FAQ comes with **absolutely no warranty of any sort**.
 
+# References
+
+## linear mixed models
+
+### web/open
+
+- [UCLA IDRE statistical consulting](https://stats.idre.ucla.edu/other/mult-pkg/introduction-to-linear-mixed-models/)
+- @barr_learning_2020 Chapters 5-8
+
+### books (dead-tree/closed)
+
+- pinheiro_mixed-effects_2000: LMM only.
+- @zuur_mixed_2009: Focused on ecology.
+- @gelman_data_2006: LMM and GLMM; Bayesian; examples from social science. Intermediate mathematics.
+- (Rethinking)
+
 # Model definition
 
 ## Model specification
@@ -1016,7 +1032,7 @@ A related question is how to quantify "repeatability" (i.e., ratios of variance 
 
 The bottom line is that there are some simple recipes (and some more complex recipes that may or may not have been coded up by someone), but that '''you have to think carefully about what information you want to get out of the coefficient of determination''', because no recipe will have all of the properties of $R^2$ in the simple linear model case.
 
-**Packages/functions**: See [`performance::r2()`](https://easystats.github.io/performance/reference/r2.html), `MuMIn::r.squaredGLMM()`, the `r2glmm` package, the standalone [r2MLM function](https://my.vanderbilt.edu/jasonrights/software/r2MLM), stuff in the `piecewiseSEM` package, [`psycho::R2_nakagawa`](http://finzi.psych.upenn.edu/R/library/psycho/html/R2_nakagawa.html), ... (try e.g. `sos::findFn("Nakagawa Schielzeth")` for an up-to-date list ...)
+**Packages/functions**: See [`performance::r2()`](https://easystats.github.io/performance/reference/r2.html), `MuMIn::r.squaredGLMM()`, the `r2glmm` package, the standalone [r2MLM function](https://my.vanderbilt.edu/jasonrights/software/r2MLM), stuff in the `piecewiseSEM` package, [`psycho::R2_nakagawa`](http://finzi.psych.upenn.edu/R/library/psycho/html/R2_nakagawa.html), [partR2](https://github.com/mastoffel/partR2) package ... (try e.g. `sos::findFn("Nakagawa Schielzeth")` for an up-to-date list ...)
 
 ## Variable importance
 
