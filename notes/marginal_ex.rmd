@@ -1,0 +1,133 @@
+---
+title: "marginal predictions"
+---
+
+Exploring marginal predictions/bias correction for GLMMs.
+The basic problem is Jensen's inequality; if we have among-group
+variation around a mean on the linear predictor scale, using the
+inverse-link function to transform it back to the response scale
+will give a biased estimate of the mean
+
+GLMMadaptive has marginal_coefs() to deal with this
+emmeans has a delta-method approximation to deal with this
+
+```{r pkgs}
+library(lme4)
+library(GLMMadaptive)
+library(emmeans)
+```
+
+```{r opts,include=FALSE}
+library("knitr")
+knitr::opts_chunk$set(eval=TRUE)
+library("reticulate")
+use_python("/usr/bin/python3")
+while (!py_module_available("sympy")) {
+    py_install("sympy")
+}
+```
+
+simulated example: binomial, low probability, large variance
+(should lead to large bias)
+
+```{r sim1,message=FALSE}
+dd <- data.frame(grp=factor(rep(1:20,each=20)))
+dd$y <- simulate(~1+(1|grp),
+                 seed=101,
+                 weights=rep(1,nrow(dd)),
+                 family=binomial,
+                 newdata=dd,
+                 newparam=list(beta=-2,theta=2))[[1]]
+```
+
+Probability of original data is `r mean(dd$y)`.
+
+
+Fit lme4, GLMMadaptive models (nAGQ>1 is necessary; setting
+it to 11 matches GLMMadaptive default value)
+	
+```{r fit1}	
+m1 <- glmer(y~1+(1|grp), data=dd, family=binomial, nAGQ=11)
+m2 <- mixed_model(y~1, random=~1|grp, data=dd, family=binomial)
+```
+
+Very similar results for fixed effect coef (intercept only) and among-group variance:
+
+```{r cmp}
+all.equal(fixef(m1),fixef(m2), tolerance=2e-3)
+all.equal(c(VarCorr(m1)[[1]]),c(m2$D), tolerance=0.01)
+```
+
+Hack prediction slightly (there are no non-trivial predictors but we still need one row in the data frame):
+
+```{r}
+plogis(predict(m1,newdata=data.frame(x=1),re.form=NA))
+## equivalently
+plogis(fixef(m1))
+## these are biased by ~50% (0.108 vs 0.205)
+```
+
+Brute-force simulation of back-transforming Normal variation:
+
+```{r}
+mean(plogis(rnorm(10000,mean=fixef(m1),sd=getME(m1,"theta"))))  ## 0.1994 vs 0.205
+
+## or:
+sv <- sapply(simulate(m1,1000),mean)
+## simulating results gives approx correct means
+summary(sv)
+hist(sv,main="",breaks=100)
+```
+
+GLMMadaptive also does this by Monte Carlo sim
+
+```{r}
+marginal_coefs(m2)  ## on link scale
+plogis(marginal_coefs(m2)$betas)  ## back-transform
+```
+
+## delta-method approaches
+
+```{r emmeans}
+summary(emmeans(m1, specs=~1), type = "response", bias.adj = TRUE)
+```
+
+Use Python so we can simplify (brute force `D()`/`deriv()` from R would probably work fine??)
+```{python derivs}
+from sympy import *
+x = symbols('x')
+d1 = simplify(diff(1/(1+exp(-x)), x))
+d2 = simplify(diff(1/(1+exp(-x)), x, x))
+d3 = simplify(diff(1/(1+exp(-x)), x, x, x))
+d4 = simplify(diff(1/(1+exp(-x)), x, x, x, x))
+print([d1, d2, d3, d4])
+```
+
+```{r}
+d2 <- function(x) {
+    ex <- exp(x)
+    (1 - ex)*ex/(ex + 1)**3
+}
+d4 <- function(x) {
+    ex <- exp(x)
+    (-1*(ex + 1)^3 + 14*(ex + 1)^2 - 36*ex - 12)*ex/(ex + 1)^5
+}
+```
+
+Check:
+
+```{r}
+all.equal(d2(2.5), eval(D(D(expression(1/(1+exp(-x))),"x"),"x"), list(x=2.5)))
+## ugh
+all.equal(d4(2.5), eval(D(D(D(D(expression(1/(1+exp(-x))),"x"),"x"),"x"),"x"),list(x=2.5)))
+```
+
+```{r}
+b <- fixef(m1)
+## second-order Taylor exp. (matches emmeans)
+(delta_2 <- plogis(b) + sigma(m1)^2*d2(b)/2)
+## attempt to extend Taylor expansion (skew==0, so take 4th deriv * kurtosis??)
+delta_2 + (3*sigma(m1)^4)*d4(b)/factorial(4)
+## doesn't help, don't know what's wrong here ...
+##  calculation error? thinko?
+```
