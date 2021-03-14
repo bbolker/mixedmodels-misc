@@ -16,3 +16,4 @@ gh-pages
 *.vrb
 *.out
 notes/*.html
+bib2xhtml

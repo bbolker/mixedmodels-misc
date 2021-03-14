@@ -1,4 +1,7 @@
-cd bib2xhtml-v3.0-15-gf506
-./bib2xhtml -h "GLMM bibliography" -s named -u ../glmm.bib glmmbib.html
+##cd bib2xhtml-v3.0-15-gf506
+cd bib2xhtml
+## git clone https://github.com/dspinellis/bib2xhtml
+## ./gen-bst.pl
+perl bib2xhtml.pl -h "GLMM bibliography" -s named -u ../glmm.bib glmmbib.html
 mv glmmbib.html ..
 cd ..
