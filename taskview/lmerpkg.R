@@ -1,4 +1,6 @@
-library(packdep)
+while (!require(packdep)) {
+    remotes::install_github("bbolker/packdep")
+}
 
 ## hacked version of related.packages that allows
 ##  for restriction to in- or out- connections
