@@ -1,27 +1,14 @@
-while (!require(packdep)) {
-    remotes::install_github("bbolker/packdep")
-}
+## There are newer versions of packages replacing 'packdep':
+## crandep
+## pkggraph
+if (FALSE) {
+    library(dlstats)
+    library(ggplot2); theme_set(theme_bw())
+    cc <- cran_stats(c("crandep","pkggraph"))
+    ggplot(cc, aes(start,downloads,colour=package)) + geom_line()
+}    
 
-## hacked version of related.packages that allows
-##  for restriction to in- or out- connections
-newdep <- function (x, order = 1, node, mode="all", plot.it=TRUE) 
-{
-    if (!is(x, "igraph")) 
-        stop("'x' must be an object of class 'igraph'.")
-    if (is.character(node) && length(node) == 1) {
-        if (node %in% V(x)$name) 
-            target <- which(V(x)$name==node)
-        else stop("unknown package ", node)
-    }
-    else {
-        stop("'node' must be a character string , the name of a package.")
-    }
-    s = make_ego_graph(x, order, target,mode=mode)[[1]]
-    V(s)$color = "SkyBlue2"
-    V(s)[V(s)$name == node]$color = "red"
-    if (plot.it) plot(s, vertex.label = V(s)$name, layout = layout.kamada.kawai(s))
-    return(s)
-}
+library(pkggraph)
 
 ## general-purpose "apply across combinations of multiple lists"
 xapply <- function(FUN,...,FLATTEN=TRUE,MoreArgs=NULL) {
@@ -38,16 +25,18 @@ xapply <- function(FUN,...,FLATTEN=TRUE,MoreArgs=NULL) {
   retlist
 }
 
-d <- map.depends()
-## dr <- map.depends(contriburl=contrib.url("http://r-forge.r-project.org"))
+pkggraph::init(local=FALSE,repos="CRAN")
+g1 <- get_neighborhood("nlme",)
 
-gsize <- function(x) x[[1]]  ## nodes in a graph
-tmpf <- function(x,node,order) {
-    gsize(newdep(x,order=order,node=node,mode="out",plot.it=FALSE))
+tmpf <- function(repos,pkg,order) {
+    ## repos ignored: could be Bioconductor/CRAN
+    g <- make_neighborhood_graph(get_neighborhood(pkg,level=order))
+    n <- igraph::ego_size(g[[1]],match(pkg,V(g[[1]])$name),order=order,mode="in")
+    return(n)
 }
 dd <- expand.grid(repos=c("CRAN"),pkg=c("nlme","lme4"),order=1:3)
 dd$number <- unlist(xapply(tmpf,
-                           list(d),list("nlme","lme4"),as.list(1:3)))
+                           list(dd),list("nlme","lme4"),as.list(1:3)))
 
 library(ggplot2); theme_set(theme_bw())
 ggplot(dd,aes(order,number,colour=pkg,lty=repos,shape=repos))+
@@ -56,7 +45,7 @@ ggplot(dd,aes(order,number,colour=pkg,lty=repos,shape=repos))+
             scale_y_log10()
 
 png("lme4dep1.png",1200,1200)
-invisible(ss <- newdep(d,1,"lme4",mode="out"))
+gg <- make_neighborhood_graph(get_neighborhood("lme4",level=1))
 dev.off()
 ##plot(ss,layout=layout_with_sugiyama,hgap=2,vgap=2)
 ##L <- 
