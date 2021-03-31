@@ -21,6 +21,8 @@ The <a href="https://stat.ethz.ch/mailman/listinfo/r-sig-mixed-models">R-SIG-mix
 <pkg>MCMCglmm</pkg>, <pkg>rstanarm</pkg>, and <pkg>brms</pkg> fit linear mixed models in a Bayesian MCMC framework. 
     </p>
     
+<pkg>  ASReml-R </pkg> Fit linear mixed models using advanced Residual Maximum Likelihood (REML)  
+    
  <p>
    Other less commonly used packages/functions for fitting linear mixed models are <pkg> robustlmm </pkg>; <pkg> splmm </pkg>; <pkg> mlmmm</pkg>; <pkg> lmec </pkg>; <pkg> nlmm </pkg>; <pkg> tlmec </pkg>; <pkg> ARpLMEC </pkg>; <pkg> saemix </pkg>; <pkg> skewlmm </pkg> and  <pkg> plmm </pkg>. <pkg> plmm </pkg> fits partially Linear Mixed Effects Models.
     </p>
@@ -51,34 +53,50 @@ The <a href="https://stat.ethz.ch/mailman/listinfo/r-sig-mixed-models">R-SIG-mix
  Some packages for fitting functional linear mixed model are  <pkg> sparseFLMM</pkg>; <pkg> denseFLMM </pkg>. <pkg> sparseFLMM</pkg> fits FLMM for irregularly or sparsely sampled data; <pkg> denseFLMM </pkg> fits FLMM for densely sampled data. 
     
      <h3>Dataset, sampling, functions and data presentation for mixed models</h3>
-The following packages contain data sets, sampling methods for mixed model analysis:  <pkg>broom.mixed:</pkg>; <pkg> blmeco </pkg>; <pkg> nlmeU </pkg>; <pkg> lmeresampler </pkg>; <pkg> StroupGLMM </pkg>; <pkg> SASmixed</pkg>; <pkg> glmmboot </pkg>. <pkg> StroupGLMM </pkg> also contains some R codes for generalized linear mixed models
 
+The following packages contain datasets, functions and sampling methods for mixed model: 
+
+<ul> <li> <pkg> Blmeco </pkg>, <pkg> nlmeU</pkg>, <pkg> SASmixed </pkg>, <pkg> asremlPlus </pkg> and <pkg> StroupGLMM </pkg> contain datasets for mixed model analysis </li> <li> <pkg> Blmeco </pkg> and <pkg> nlmeU</pkg> also contain functions for analysing mixed models.  </li>  <li> <pkg>lmeresampler</pkg> and <pkg>glmmboot</pkg>: Implements bootstrap methods for mixed models </li> 
+<li> <pkg>StroupGLMM </pkg> also contains R Codes for Generalized Linear Mixed Models </li>  
+<li> <pkg>broom.mixed</pkg> converts object from some of the mixed model packages in R into data frames. <pkg> asremlPlus </pkg> contains functions for displaying model predictions and objects in the form of tables and graphs </li> </ul>
+
+   
+   
+   
    
     <h3>Generalized estimating equations</h3>
  The following are packages for fitting GEE: <pkg>geesmv</pkg>; <pkg>geepack</pkg>; <pkg>gee4 </pkg>; <pkg> gee</pkg>; <pkg> multgee  </pkg>; <pkg> geeglm </pkg>; <pkg> geeM </pkg>; <pkg> spind </pkg>; <pkg> wgeesel </pkg>; <pkg> aftgee </pkg>; <pkg> CRTgeeDR </pkg>; <pkg> yags </pkg>.  <pkg> geeM </pkg> and <pkg> geeglm </pkg> are both functions in <pkg> geepack </pkg> package. 
  
  
  
-    <h3>Model diagnostics and summaries</h3>
-    (See also "Inference")
-    <h4>Model diagnostics and summary statistics</h4>
-    <pkg>influence.ME</pkg>, <pkg>aods3</pkg>, <pkg>cAIC4</pkg>, <pkg>HLMdiag</pkg>, <pkg>r2glmm</pkg>: computes R squared for linear and generalized linear mixed (Multilevel) models, <pkg> HiLMM </pkg>: Estimates Heritability with confidence intervals in linear mixed models.
+    <h3>Model diagnostics and summaries statistics</h3>
+The following packages provide tools and functions for models diagnotics
+<ul> <li><pkg> HLMdiag </pkg>, <pkg> asremlPlus </pkg> and <pkg> rockchalk </pkg>  contains model diagnostics functions </li> <li>  
+<pkg>influence.ME </pkg> provides tools for identifying influential data points in mixed effect models </li>
+<li> <pkg> aods3 </pkg> is used for analysing overdispersed counts or proportions </li> <li> <pkg>  cAIC4 </pkg>: Estimates conditional Akaike information for generalized mixed-effect models </li>  <li> <pkg>r2glmm</pkg>: computes R squared for linear and generalized linear mixed effect models </li>
+<li> <pkg> iccbeta </pkg> used to compute intraclass correlation in grouped data </li>
+<li> <pkg>DHARMa </pkg>  computes scaled residuals for fitted (generalized) linear mixed models for easiness of interpretation</li> <li> <pkg> qrLMM </pkg>: implements quantile Regression for Linear Mixed-Effects Models </li> 
+<li> <pkg> HiLMM </pkg>: Estimates Heritability with confidence intervals in linear mixed models </li>
+</ul>
 
-    <pkg>lmmfit</pkg>, <pkg>iccbeta</pkg>,  <pkg>DHARMa</pkg>; <pkg> qrLMM </pkg>: Quantile Regression for Linear Mixed-Effects Models
+
+
+    (See also "Inference")
+
     
-    
-    <h4>Model presentation and prediction</h4>
-    <pkg>effects</pkg>, <pkg>rockchalk</pkg>, <pkg>arm</pkg>, <pkg>emmeans</pkg>, <pkg>dotwhisker</pkg>, <pkg>huxtable</pkg>, <pkg>sjPlots</pkg>, <pkg>car</pkg>
-    
+    <h3>Model presentation and prediction</h3>
+<ul> <li> <pkg>effects</pkg> creates graphical and tabular effect display for linear models </li>  <li>  <pkg>rockchalk</pkg> provides functions for interpreting and repesenting model results as plots and tables </li>, <li> <pkg>arm</pkg> </li>, <li> <pkg>emmeans</pkg> estimates marginal means and contrasts for mixed models</li>, <pkg>dotwhisker</pkg>, <pkg>huxtable</pkg>, <pkg>sjPlots</pkg>, <pkg>car</pkg> 
+ </ul> 
     
     <h3>Convenience wrappers</h3>
     These functions don't necessarily add new functionality, but 
     provide convenient frameworks for (typically) less experienced
     users to fit and interpret mixed models.
     <pkg>ez</pkg>, <pkg>mixlm</pkg> <pkg>afex</pkg>, <pkg>RVAideMemoire</pkg>,
-    <pkg>ZeligMultilevel</pkg>
+    <pkg>ZeligMultilevel</pkg> <pkg> cubature </pkg>
     
-    <h3>Model Selection</h3>
+    <h3>Model Selection</h3>: Simulation and Inference for SDEs and Other Stochastic Processes.
+    
     <pkg>LMERConvenienceFunctions </pkg>; <pkg> glmmLasso </pkg> A variable selection approach for generalized linear mixed models <pkg>MuMIn</pkg>
     <h3>Extensions</h3>
     <h4>Spatial/temporal models</h4>
@@ -90,7 +108,15 @@ The following packages contain data sets, sampling methods for mixed model analy
     <pkg>sphet</pkg>; <pkg>spacom</pkg>
     <pkg>georob</pkg>; <pkg>geoBayes</pkg>
     <h4>Differential equation models</h4>
-    <pkg>nlmeODE</pkg>; <pkg>insideRODE</pkg>  
+
+(See also "Differential Equations task view")
+<ul> <li> mle </li> <li> mle </li>  <li> mle </li>  </ul>
+    <pkg>nlmeODE</pkg>; <pkg>insideRODE</pkg>;  <pkg> mixedsde </pkg> used for Inference on stochastic differential equation models invovling one or two mixed effects. <pkg> sde </pkg>: companion package that comes with the book Simulation and Inference for Stochastic Differential Equations With R Examples.
+<pkg>PSM </pkg> provides functions for fitting linear and non-linear mixed-effects models using stochastic differential equations (SDEs).
+    <pkg> MsdeParEst</pkg>: Parametric estimation in stochastic differential equations with random effects in the drift, or in the diffusion or both
+    
+    <pkg> Sim.DiffProc </pkg> provides functions for simulation of Ito and Stratonovitch stochastic differential equations.
+  <pkg> yuima   </pkg> 
     <h4>Phylogenetic/pedigree-based models</h4>
     (See also "Phylogenetics task view"; genetics task view?)
     <pkg>pedigreemm</pkg>; correlation structures from <pkg>ape</pkg>;
@@ -131,6 +157,11 @@ The following are other packages that could be applied in the context of mixed m
 
 
     <h3>Inference</h3>
+
+<ul>  <li> <pkg> asremlPlus </pkg> contains functions for model testing  </li>  </ul>
+
+
+    
     <pkg>afex</pkg>, <pkg>ez</pkg>, <pkg>RLRsim</pkg>,
     <pkg>lmerTest</pkg>, <pkg>pbkrtest</pkg>, <pkg>cAIC4</pkg>, <pkg>	glmmsr </pkg>; <pkg> CLME</pkg>;  <pkg> lmeVarComp </pkg>: Testing for a Subset of Variance Components in Linear Mixed Models;
 <pkg> lmem.qtler </pkg>: Linear Mixed Effects Models for QTL Mapping for Multienvironment and Multitrait Analysis
