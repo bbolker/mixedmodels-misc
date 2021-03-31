@@ -52,24 +52,11 @@ The <a href="https://stat.ethz.ch/mailman/listinfo/r-sig-mixed-models">R-SIG-mix
      <h3> Fitting functional linear mixed models (FLMM)</h3>
  Some packages for fitting functional linear mixed model are  <pkg> sparseFLMM</pkg>; <pkg> denseFLMM </pkg>. <pkg> sparseFLMM</pkg> fits FLMM for irregularly or sparsely sampled data; <pkg> denseFLMM </pkg> fits FLMM for densely sampled data. 
     
-     <h3>Dataset, sampling, functions and data presentation for mixed models</h3>
-
-The following packages contain datasets, functions and sampling methods for mixed model: 
-
-<ul> <li> <pkg> Blmeco </pkg>, <pkg> nlmeU</pkg>, <pkg> SASmixed </pkg>, <pkg> asremlPlus </pkg> and <pkg> StroupGLMM </pkg> contain datasets for mixed model analysis </li> <li> <pkg> Blmeco </pkg> and <pkg> nlmeU</pkg> also contain functions for analysing mixed models.  </li>  <li> <pkg>lmeresampler</pkg> and <pkg>glmmboot</pkg>: Implements bootstrap methods for mixed models </li> 
-<li> <pkg>StroupGLMM </pkg> also contains R Codes for Generalized Linear Mixed Models </li>  
-<li> <pkg>broom.mixed</pkg> converts object from some of the mixed model packages in R into data frames. <pkg> asremlPlus </pkg> contains functions for displaying model predictions and objects in the form of tables and graphs </li> </ul>
-
-   
-   
-   
-   
-    <h3>Generalized estimating equations</h3>
+<h3>Generalized estimating equations</h3>
  The following are packages for fitting GEE: <pkg>geesmv</pkg>; <pkg>geepack</pkg>; <pkg>gee4 </pkg>; <pkg> gee</pkg>; <pkg> multgee  </pkg>; <pkg> geeglm </pkg>; <pkg> geeM </pkg>; <pkg> spind </pkg>; <pkg> wgeesel </pkg>; <pkg> aftgee </pkg>; <pkg> CRTgeeDR </pkg>; <pkg> yags </pkg>.  <pkg> geeM </pkg> and <pkg> geeglm </pkg> are both functions in <pkg> geepack </pkg> package. 
  
  
- 
-    <h3>Model diagnostics and summaries statistics</h3>
+<h3>Model diagnostics and summaries statistics</h3>
 The following packages provide tools and functions for models diagnotics
 <ul> <li><pkg> HLMdiag </pkg>, <pkg> asremlPlus </pkg> and <pkg> rockchalk </pkg>  contains model diagnostics functions </li> <li>  
 <pkg>influence.ME </pkg> provides tools for identifying influential data points in mixed effect models </li>
@@ -83,10 +70,17 @@ The following packages provide tools and functions for models diagnotics
 
     (See also "Inference")
 
-    
-    <h3>Model presentation and prediction</h3>
-<ul> <li> <pkg>effects</pkg> creates graphical and tabular effect display for linear models </li>  <li>  <pkg>rockchalk</pkg> provides functions for interpreting and repesenting model results as plots and tables </li>, <li> <pkg>arm</pkg> </li>, <li> <pkg>emmeans</pkg> estimates marginal means and contrasts for mixed models</li>, <pkg>dotwhisker</pkg>, <pkg>huxtable</pkg>, <pkg>sjPlots</pkg>, <pkg>car</pkg> 
+     <h3>Dataset, sampling and functions for mixed models</h3>
+
+The following packages contain datasets, functions and sampling methods for mixed model: 
+
+<ul> <li> <pkg> Blmeco </pkg>, <pkg> nlmeU</pkg>, <pkg> SASmixed </pkg>, <pkg> asremlPlus </pkg> and <pkg> StroupGLMM </pkg> contain datasets for mixed model analysis . <pkg>StroupGLMM </pkg> also contains R Codes for Generalized Linear Mixed Models </li> <li> <pkg> Blmeco </pkg> and <pkg> nlmeU</pkg> also contain functions for analysing mixed models.  </li>  <li> <pkg>lmeresampler</pkg> and <pkg>glmmboot</pkg>: Implements bootstrap methods for mixed models </li> <li> <pkg>arm</pkg> has functions for computing the balance statistics. </li> <li> <pkg>emmeans</pkg> estimates marginal means and contrasts for mixed models</li> 
+</ul>
+
+<h3>Model presentation and prediction</h3>
+<ul> <li> <pkg>effects</pkg> creates graphical and tabular effect display for linear models </li>  <li> <pkg>dotwhisker</pkg> quick and easy tool for ploting box and wiskers for model results </li> <li> <pkg>huxtable</pkg> creates tables for latex and HTML and other formats. <pkg>sjPlots</pkg>, <pkg>rockchalk</pkg> and <pkg> asremlPlus </pkg> creates  figures and tables for data visualization </li> <li> <pkg>broom.mixed</pkg> converts object from some of the mixed model packages in R into data frames </li> <li> <pkg>car</pkg> computes type-II or type-III analysis-of-variance tables </li> 
  </ul> 
+ 
     
     <h3>Convenience wrappers</h3>
     These functions don't necessarily add new functionality, but 
