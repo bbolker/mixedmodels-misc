@@ -17,7 +17,8 @@ The <a href="https://stat.ethz.ch/mailman/listinfo/r-sig-mixed-models">R-SIG-mix
       The most commonly used packages/functions for fitting linear mixed models
       (i.e., models with Normal residuals, predictors that are linear functions
       of the input variables, and Normal distributions of the random effects
-      within grouping variables) are <pkg>nlme::</pkg><code>lme</code>; <pkg>lme4::</pkg><code>lmer</code> and  <pkg>glmmTMB</pkg>.
+      within grouping variables) are <pkg>nlme::</pkg><code>lme</code>; <pkg>lme4::</pkg><code>lmer</code> and  <pkg>glmmTMB</pkg>. <pkg> Saemix</pkg> fits linear mixed models
+
 <pkg>MCMCglmm</pkg>, <pkg>rstanarm</pkg>, and <pkg>brms</pkg> fit linear mixed models in a Bayesian MCMC framework. 
     </p>
     
@@ -45,10 +46,17 @@ The <a href="https://stat.ethz.ch/mailman/listinfo/r-sig-mixed-models">R-SIG-mix
     </p> 
     
     <h3>Fitting nonlinear mixed models</h3>
-    <ul><li> </li>  <li> </li> </ul>
-    The commonly used packages for fitting non-linear mixed models and <pkg>nlme</pkg><code>::nlme</code> and 
-    <pkg>lme4</pkg><code>::nlmer</code>. Other packages/functions for fitting nonlinear mixed models are 
-    <pkg> qrNLMM </pkg> ; <pkg> saemix </pkg>;  <pkg> nlraa </pkg>; <pkg> nlmer </pkg>; <pkg> FlexParamCurve </pkg>; <pkg> nls.multstart </pkg>;<pkg>  nls </pkg> ;<pkg>  minpack.lm </pkg> ; <pkg> nlstools </pkg>;  <pkg> brms </pkg>. <pkg>  gnm </pkg> fits generailsed nonlinear models
+    <ul><li> 
+    
+    <pkg>nlme</pkg><code>::nlme</code>,  
+    <pkg>lme4</pkg><code>::nlmer</code>,<pkg> nls.multstart </pkg>, <pkg>  gnm </pkg> and <pkg> saemix</pkg> fit nonlinear mixed-effects model. <pkg>  gnm </pkg> fits generailsed nonlinear models. <pkg> nls.multstart </pkg> fits Non-linear least squares regression.  <pkg>nlme</pkg> and 
+    <pkg>lme4</pkg>  are the commonly used packages.
+    </li>  <li>     Other nonlinear model related packages are 
+    <pkg> qrNLMM </pkg> ;  <pkg> nlraa </pkg>;  <pkg> FlexParamCurve </pkg>;<pkg>  nls </pkg> ;<pkg>  minpack.lm </pkg> ; <pkg> nlstools </pkg>;  <pkg> brms </pkg>.  
+ </li>   <li> <pkg> qrNLMM </pkg> preforms Quantile regression (QR) for Nonlinear Mixed-Effects Models, <pkg> nlraa </pkg>  provides a collection of non-linear functions for fitting data mostly used in the area of agriculture,  <pkg> FlexParamCurve</pkg> provides functions to fit parametric curves to data, <pkg>brms</pkg> fit nonlinear mixed models in a Bayesian framework,
+ </li> </ul>
+
+ 
  
      <h3> Fitting functional linear mixed models (FLMM)</h3>
 The packages <pkg> sparseFLMM</pkg> and <pkg> denseFLMM </pkg> fit functional linear mixed model. <pkg> sparseFLMM</pkg> fits FLMM for irregularly or sparsely sampled data; <pkg> denseFLMM </pkg> fits FLMM for densely sampled data. 
@@ -98,7 +106,10 @@ The following packages contain datasets, functions and sampling methods for mixe
    <pkg> ASReml-R </pkg> provides information criteria for selecting terms to include in models fitted by <pkg>asreml </pkg> </li> 
    <li> <pkg>  cAIC4 </pkg>: Estimates conditional Akaike information for generalized mixed-effect models </li>
    <li> 
-    <pkg>LMERConvenienceFunctions </pkg> is used for model selection </li> <li>  <pkg> MuMIn </pkg>  Provides information criteria for model selection and carry out model averaging based on information criteria </li> <li>  <pkg> glmmLasso </pkg> is used for variable selection for generalized linear mixed models using L1-Penalization </li>  </ul>
+    <pkg>LMERConvenienceFunctions </pkg> is used for model selection </li> <li>  <pkg> MuMIn </pkg>  Provides information criteria for model selection and carry out model averaging based on information criteria </li> <li>  <pkg> glmmLasso </pkg> is used for variable selection for generalized linear mixed models using L1-Penalization. FlexParamCurve for model section.  </li> 
+<li> <code> nls_multstart </code> function in the  <pkg> Nls.multstart   </pkg>  package
+finds the best fit of non-linear model based on AIC score  </li> 
+    </ul>
     
     
     <h3>Extensions</h3>  
