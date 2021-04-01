@@ -45,22 +45,26 @@ The <a href="https://stat.ethz.ch/mailman/listinfo/r-sig-mixed-models">R-SIG-mix
     </p> 
     
     <h3>Fitting nonlinear mixed models</h3>
+    <ul><li> </li>  <li> </li> </ul>
     The commonly used packages for fitting non-linear mixed models and <pkg>nlme</pkg><code>::nlme</code> and 
     <pkg>lme4</pkg><code>::nlmer</code>. Other packages/functions for fitting nonlinear mixed models are 
     <pkg> qrNLMM </pkg> ; <pkg> saemix </pkg>;  <pkg> nlraa </pkg>; <pkg> nlmer </pkg>; <pkg> FlexParamCurve </pkg>; <pkg> nls.multstart </pkg>;<pkg>  nls </pkg> ;<pkg>  minpack.lm </pkg> ; <pkg> nlstools </pkg>;  <pkg> brms </pkg>. <pkg>  gnm </pkg> fits generailsed nonlinear models
  
      <h3> Fitting functional linear mixed models (FLMM)</h3>
- Some packages for fitting functional linear mixed model are  <pkg> sparseFLMM</pkg>; <pkg> denseFLMM </pkg>. <pkg> sparseFLMM</pkg> fits FLMM for irregularly or sparsely sampled data; <pkg> denseFLMM </pkg> fits FLMM for densely sampled data. 
+The packages <pkg> sparseFLMM</pkg> and <pkg> denseFLMM </pkg> fit functional linear mixed model. <pkg> sparseFLMM</pkg> fits FLMM for irregularly or sparsely sampled data; <pkg> denseFLMM </pkg> fits FLMM for densely sampled data. 
     
 <h3>Generalized estimating equations</h3>
- The following are packages for fitting GEE: <pkg>geesmv</pkg>; <pkg>geepack</pkg>; <pkg>gee4 </pkg>; <pkg> gee</pkg>; <pkg> multgee  </pkg>; <pkg> geeglm </pkg>; <pkg> geeM </pkg>; <pkg> spind </pkg>; <pkg> wgeesel </pkg>; <pkg> aftgee </pkg>; <pkg> CRTgeeDR </pkg>; <pkg> yags </pkg>.  <pkg> geeM </pkg> and <pkg> geeglm </pkg> are both functions in <pkg> geepack </pkg> package. 
- 
+ <ul><li> The packages  <pkg>geesmv</pkg>, <pkg>geepack</pkg>,  <pkg> gee</pkg>, <pkg> multgee  </pkg>, <pkg> geeglm </pkg> and  <pkg> geeM </pkg> fit GEE models </li>  
+<li> <pkg> wgeesel </pkg> fits Weighted Generalized estimating equations (WGEE) </li>
+<li> <pkg> spind </pkg>, <pkg> aftgee </pkg>,  <pkg> CRTgeeDR </pkg> and <pkg> yags </pkg>  are other GEE related packages
+   </li> </ul>
+
  
 <h3>Model diagnostics and summaries statistics</h3>
 The following packages provide tools and functions for models diagnotics
 <ul> <li><pkg> HLMdiag </pkg>, <pkg> asremlPlus </pkg> and <pkg> rockchalk </pkg>  contains model diagnostics functions </li> <li>  
 <pkg>influence.ME </pkg> provides tools for identifying influential data points in mixed effect models </li>
-<li> <pkg> aods3 </pkg> is used for analysing overdispersed counts or proportions </li> <li> <pkg>  cAIC4 </pkg>: Estimates conditional Akaike information for generalized mixed-effect models </li>  <li> <pkg>r2glmm</pkg>: computes R squared for linear and generalized linear mixed effect models </li>
+<li> <pkg> aods3 </pkg> is used for analysing overdispersed counts or proportions </li> <li> <pkg>r2glmm</pkg>: computes R squared for linear and generalized linear mixed effect models </li>
 <li> <pkg> iccbeta </pkg> used to compute intraclass correlation in grouped data </li>
 <li> <pkg>DHARMa </pkg>  computes scaled residuals for fitted (generalized) linear mixed models for easiness of interpretation</li> <li> <pkg> qrLMM </pkg>: implements quantile Regression for Linear Mixed-Effects Models </li> 
 <li> <pkg> HiLMM </pkg>: Estimates Heritability with confidence intervals in linear mixed models </li>
@@ -89,11 +93,17 @@ The following packages contain datasets, functions and sampling methods for mixe
     <pkg>ez</pkg>, <pkg>mixlm</pkg> <pkg>afex</pkg>, <pkg>RVAideMemoire</pkg>,
     <pkg>ZeligMultilevel</pkg> <pkg> cubature </pkg>
     
-    <h3>Model Selection</h3>: Simulation and Inference for SDEs and Other Stochastic Processes.
+    <h3>Model Selection</h3> The following packages are used for model and variable selections in mixed models
+<ul> <li>
+   <pkg> ASReml-R </pkg> provides information criteria for selecting terms to include in models fitted by <pkg>asreml </pkg> </li> 
+   <li> <pkg>  cAIC4 </pkg>: Estimates conditional Akaike information for generalized mixed-effect models </li>
+   <li> 
+    <pkg>LMERConvenienceFunctions </pkg> is used for model selection </li> <li>  <pkg> MuMIn </pkg>  Provides information criteria for model selection and carry out model averaging based on information criteria </li> <li>  <pkg> glmmLasso </pkg> is used for variable selection for generalized linear mixed models using L1-Penalization </li>  </ul>
     
-    <pkg>LMERConvenienceFunctions </pkg>; <pkg> glmmLasso </pkg> A variable selection approach for generalized linear mixed models <pkg>MuMIn</pkg>
-    <h3>Extensions</h3>
+    
+    <h3>Extensions</h3>  
     <h4>Spatial/temporal models</h4>
+    <pkg>spind </pkg>  
     Geostatistical models (i.e. explicitly incorporating a model for continuous decay of correlation
     with distance, either in residuals or on random effects/latent variables); models based on <em>a priori</em>
     weights (e.g. simultaneous, conditional autoregression models)
