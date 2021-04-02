@@ -61,235 +61,294 @@
         Fitting linear mixed models
       </h3>
       <p>
-        The most commonly used packages/functions for fitting linear mixed models
-      (i.e., models with Normal residuals, predictors that are linear functions
-      of the input variables, and Normal distributions of the random effects
+        <ul>
+          <li>
+            The most commonly used packages/functions for fitting linear mixed models
+      (i.e., models with Normal residuals, predictors that are linear functions   of the input variables, and Normal distributions of the random effects
       within grouping variables) are
-<a href="../packages/nlme::/index.html">nlme::</a>
+<a href="https://cran.r-project.org/web/packages/nlme::/index.html">nlme::</a>
 <tt>lme</tt>;
-<a href="../packages/lme4::/index.html">lme4::</a>
+<a href="https://cran.r-project.org/web/packages/lme4::/index.html">lme4::</a>
 <tt>lmer</tt>
-        and
-<a href="../packages/glmmTMB/index.html">glmmTMB</a>.
-<a href="../packages/MCMCglmm/index.html">MCMCglmm</a>,
-<a href="../packages/rstanarm/index.html">rstanarm</a>, and
-<a href="../packages/brms/index.html">brms</a>
-        fit linear mixed models in a Bayesian MCMC framework.
+            and
+<a href="https://cran.r-project.org/web/packages/glmmTMB/index.html">glmmTMB</a>. The package
+<a href="https://cran.r-project.org/web/packages/asreml/index.html">asreml</a>
+            also fits linear mixed models using advanced Residual Maximum Likelihood (REML)
+          </li>
+          <li>
+<a href="https://cran.r-project.org/web/packages/MCMCglmm/index.html">MCMCglmm</a>,
+<a href="https://cran.r-project.org/web/packages/rstanarm/index.html">rstanarm</a>, and
+<a href="https://cran.r-project.org/web/packages/brms/index.html">brms</a>
+            fit linear mixed models in a Bayesian MCMC framework.
+          </li>
+        </ul>
       </p>
-<a href="../packages/ASReml-R/index.html">ASReml-R</a>
-      Fit linear mixed models using advanced Residual Maximum Likelihood (REML)
       <p>
-        Other less commonly used packages/functions for fitting linear mixed models are
-<a href="../packages/robustlmm/index.html">robustlmm</a>;
-<a href="../packages/splmm/index.html">splmm</a>;
-<a href="../packages/mlmmm/index.html">mlmmm</a>;
-<a href="../packages/lmec/index.html">lmec</a>;
-<a href="../packages/nlmm/index.html">nlmm</a>;
-<a href="../packages/tlmec/index.html">tlmec</a>;
-<a href="../packages/ARpLMEC/index.html">ARpLMEC</a>;
-<a href="../packages/saemix/index.html">saemix</a>;
-<a href="../packages/skewlmm/index.html">skewlmm</a>
-        and
-<a href="../packages/plmm/index.html">plmm</a>.
-<a href="../packages/plmm/index.html">plmm</a>
-        fits partially Linear Mixed Effects Models.
+        <ul>
+          <li>
+            Other less commonly used packages/functions for fitting linear mixed models are
+<a href="https://cran.r-project.org/web/packages/robustlmm/index.html">robustlmm</a>;
+<a href="https://cran.r-project.org/web/packages/splmm/index.html">splmm</a>;
+<a href="https://cran.r-project.org/web/packages/mlmmm/index.html">mlmmm</a>;
+<a href="https://cran.r-project.org/web/packages/lmec/index.html">lmec</a>;
+<a href="https://cran.r-project.org/web/packages/nlmm/index.html">nlmm</a>;
+<a href="https://cran.r-project.org/web/packages/tlmec/index.html">tlmec</a>;
+<a href="https://cran.r-project.org/web/packages/ARpLMEC/index.html">ARpLMEC</a>;
+<a href="https://cran.r-project.org/web/packages/saemix/index.html">saemix</a>;
+<a href="https://cran.r-project.org/web/packages/skewlmm/index.html">skewlmm</a>
+            and
+<a href="https://cran.r-project.org/web/packages/plmm/index.html">plmm</a>.
+<a href="https://cran.r-project.org/web/packages/plmm/index.html">plmm</a>
+            fits partially Linear Mixed Effects Models,
+<a href="https://cran.r-project.org/web/packages/splmm/index.html">splmm</a>
+            fit linear mixed-effects models  for high-dimensional data,
+<a href="https://cran.r-project.org/web/packages/tlmec/index.html">tlmec</a>
+            fits a linear mixed effects model for censored data with Student-t or normal distributions,
+<a href="https://cran.r-project.org/web/packages/skewlmm/index.html">skewlmm</a>
+            fits scale mixture of skew-normal linear mixed models
+          </li>
+        </ul>
       </p>
       <h3>
         Fitting generalized linear mixed models
       </h3>
       <p>
-        The most commonly used packages/functions for fitting generalized linear mixed models
+        <ul>
+          <li>
+            The most commonly used packages/functions for fitting generalized linear mixed models
       (i.e., models with conditional distributions in the exponential family,
              e.g. Bernoulli/binomial/Poisson/Gamma, and distributions of the
       conditional modes that are Normal on the scale of the
       linear predictor)
       are
-<a href="../packages/MASS::/index.html">MASS::</a>
+<a href="https://cran.r-project.org/web/packages/MASS::/index.html">MASS::</a>
 <tt>glmmPQL</tt>;
-<a href="../packages/lme4::/index.html">lme4::</a>
+<a href="https://cran.r-project.org/web/packages/lme4::/index.html">lme4::</a>
 <tt>glmer</tt>
-        and
-<a href="../packages/glmmTMB/index.html">glmmTMB</a>.
-<a href="../packages/MCMCglmm/index.html">MCMCglmm</a>,
-<a href="../packages/rstanarm/index.html">rstanarm</a>,
-<a href="../packages/brms/index.html">brms</a>,
-<a href="../packages/robustBLME/index.html">robustBLME</a>
-        and
-<a href="../packages/glmmfields/index.html">glmmfields</a>
-        fit linear mixed models in a Bayesian MCMC framework.
+            and
+<a href="https://cran.r-project.org/web/packages/glmmTMB/index.html">glmmTMB</a>.
+          </li>
+          <li>
+<a href="https://cran.r-project.org/web/packages/MCMCglmm/index.html">MCMCglmm</a>,
+<a href="https://cran.r-project.org/web/packages/rstanarm/index.html">rstanarm</a>,
+<a href="https://cran.r-project.org/web/packages/brms/index.html">brms</a>,
+<a href="https://cran.r-project.org/web/packages/robustBLME/index.html">robustBLME</a>
+            and
+<a href="https://cran.r-project.org/web/packages/glmmfields/index.html">glmmfields</a>
+            fit linear mixed models in a Bayesian MCMC framework.
+          </li>
+        </ul>
       </p>
       <p>
-        Other, less commonly used, packages/functions for fitting GLMMs include
-<a href="../packages/glmmML/index.html">glmmML</a>;
-<a href="../packages/GLMMadaptive/index.html">GLMMadaptive</a>;
+        <ul>
+          <li>
+            Other, less commonly used, packages/functions for fitting GLMMs include
+<a href="https://cran.r-project.org/web/packages/glmmML/index.html">glmmML</a>;
+<a href="https://cran.r-project.org/web/packages/GLMMadaptive/index.html">GLMMadaptive</a>;
 <tt>glmmADMB</tt>
-        (not on CRAN);
-<a href="../packages/GLMMRR/index.html">GLMMRR</a>;
-<a href="../packages/glmmEP/index.html">glmmEP</a>;
-<a href="../packages/repeated/index.html">repeated</a>;
-<a href="../packages/biglmm/index.html">biglmm</a>;
-<a href="../packages/glmm/index.html">glmm</a>;
-<a href="../packages/hglm/index.html">hglm</a>;
-<a href="../packages/mvglmmRank/index.html">mvglmmRank</a>;
-<a href="../packages/glmertree/index.html">glmertree</a>;
-<a href="../packages/emmeans/index.html">emmeans</a>;
-<a href="../packages/lmeNB/index.html">lmeNB</a>;
-<a href="../packages/mlmm.gwas/index.html">mlmm.gwas</a>
+            (not on CRAN);
+<a href="https://cran.r-project.org/web/packages/GLMMRR/index.html">GLMMRR</a>;
+<a href="https://cran.r-project.org/web/packages/glmmEP/index.html">glmmEP</a>;
+<a href="https://cran.r-project.org/web/packages/repeated/index.html">repeated</a>;
+<a href="https://cran.r-project.org/web/packages/biglmm/index.html">biglmm</a>;
+<a href="https://cran.r-project.org/web/packages/glmm/index.html">glmm</a>;
+<a href="https://cran.r-project.org/web/packages/hglm/index.html">hglm</a>;
+<a href="https://cran.r-project.org/web/packages/mvglmmRank/index.html">mvglmmRank</a>;
+<a href="https://cran.r-project.org/web/packages/glmertree/index.html">glmertree</a>;
+<a href="https://cran.r-project.org/web/packages/emmeans/index.html">emmeans</a>;
+<a href="https://cran.r-project.org/web/packages/lmeNB/index.html">lmeNB</a>;
+<a href="https://cran.r-project.org/web/packages/mlmm.gwas/index.html">mlmm.gwas</a>
+          </li>
+        </ul>
       </p>
       <h3>
         Fitting nonlinear mixed models
       </h3>
-      The commonly used packages for fitting non-linear mixed models and
-<a href="../packages/nlme/index.html">nlme</a>
-<tt>::nlme</tt>
-      and
-<a href="../packages/lme4/index.html">lme4</a>
-<tt>::nlmer</tt>. Other packages/functions for fitting nonlinear mixed models are
-<a href="../packages/qrNLMM/index.html">qrNLMM</a>;
-<a href="../packages/saemix/index.html">saemix</a>;
-<a href="../packages/nlraa/index.html">nlraa</a>;
-<a href="../packages/nlmer/index.html">nlmer</a>;
-<a href="../packages/FlexParamCurve/index.html">FlexParamCurve</a>;
-<a href="../packages/nls.multstart/index.html">nls.multstart</a>;
-<a href="../packages/nls/index.html">nls</a>;
-<a href="../packages/minpack.lm/index.html">minpack.lm</a>;
-<a href="../packages/nlstools/index.html">nlstools</a>;
-<a href="../packages/brms/index.html">brms</a>.
-<a href="../packages/gnm/index.html">gnm</a>
-      fits generailsed nonlinear models
-      <h3>
-        Fitting functional linear mixed models (FLMM)
-      </h3>
-      Some packages for fitting functional linear mixed model are
-<a href="../packages/sparseFLMM/index.html">sparseFLMM</a>;
-<a href="../packages/denseFLMM/index.html">denseFLMM</a>.
-<a href="../packages/sparseFLMM/index.html">sparseFLMM</a>
-      fits FLMM for irregularly or sparsely sampled data;
-<a href="../packages/denseFLMM/index.html">denseFLMM</a>
-      fits FLMM for densely sampled data.
-      <h3>
-        Dataset, sampling, functions and data presentation for mixed models
-      </h3>
-      The following packages contain datasets, functions and sampling methods for mixed model:
       <ul>
         <li>
-<a href="../packages/Blmeco/index.html">Blmeco</a>,
-<a href="../packages/nlmeU/index.html">nlmeU</a>,
-<a href="../packages/SASmixed/index.html">SASmixed</a>,
-<a href="../packages/asremlPlus/index.html">asremlPlus</a>
+<a href="https://cran.r-project.org/web/packages/nlme/index.html">nlme</a>
+<tt>::nlme</tt>,
+<a href="https://cran.r-project.org/web/packages/lme4/index.html">lme4</a>
+<tt>::nlmer</tt>,
+<a href="https://cran.r-project.org/web/packages/nls.multstart/index.html">nls.multstart</a>,
+<a href="https://cran.r-project.org/web/packages/gnm/index.html">gnm</a>
           and
-<a href="../packages/StroupGLMM/index.html">StroupGLMM</a>
-          contain datasets for mixed model analysis
-        </li>
-        <li>
-<a href="../packages/Blmeco/index.html">Blmeco</a>
+<a href="https://cran.r-project.org/web/packages/saemix/index.html">saemix</a>
+          fit nonlinear mixed-effects model.
+<a href="https://cran.r-project.org/web/packages/gnm/index.html">gnm</a>
+          fits generalized nonlinear models.
+<a href="https://cran.r-project.org/web/packages/nls.multstart/index.html">nls.multstart</a>
+          fits Non-linear least squares regression.
+<a href="https://cran.r-project.org/web/packages/nlme/index.html">nlme</a>
           and
-<a href="../packages/nlmeU/index.html">nlmeU</a>
-          also contain functions for analysing mixed models.
+<a href="https://cran.r-project.org/web/packages/lme4/index.html">lme4</a>
+          are the commonly used packages.
         </li>
         <li>
-<a href="../packages/lmeresampler/index.html">lmeresampler</a>
-          and
-<a href="../packages/glmmboot/index.html">glmmboot</a>: Implements bootstrap methods for mixed models
+          Other nonlinear model related packages are
+<a href="https://cran.r-project.org/web/packages/qrNLMM/index.html">qrNLMM</a>;
+<a href="https://cran.r-project.org/web/packages/nlraa/index.html">nlraa</a>;
+<a href="https://cran.r-project.org/web/packages/FlexParamCurve/index.html">FlexParamCurve</a>;
+<a href="https://cran.r-project.org/web/packages/nls/index.html">nls</a>;
+<a href="https://cran.r-project.org/web/packages/minpack.lm/index.html">minpack.lm</a>;
+<a href="https://cran.r-project.org/web/packages/nlstools/index.html">nlstools</a>;
+<a href="https://cran.r-project.org/web/packages/brms/index.html">brms</a>.
         </li>
         <li>
-<a href="../packages/StroupGLMM/index.html">StroupGLMM</a>
-          also contains R Codes for Generalized Linear Mixed Models
-        </li>
-        <li>
-<a href="../packages/broom.mixed/index.html">broom.mixed</a>
-          converts object from some of the mixed model packages in R into data frames.
-<a href="../packages/asremlPlus/index.html">asremlPlus</a>
-          contains functions for displaying model predictions and objects in the form of tables and graphs
+<a href="https://cran.r-project.org/web/packages/qrNLMM/index.html">qrNLMM</a>
+          preforms Quantile regression (QR) for Nonlinear Mixed-Effects Models,
+<a href="https://cran.r-project.org/web/packages/nlraa/index.html">nlraa</a>
+          provides a collection of non-linear functions for fitting data mostly used in the area of agriculture,
+<a href="https://cran.r-project.org/web/packages/FlexParamCurve/index.html">FlexParamCurve</a>
+          provides functions to fit parametric curves to data,
+<a href="https://cran.r-project.org/web/packages/brms/index.html">brms</a>
+          fit nonlinear mixed models in a Bayesian framework,
         </li>
       </ul>
       <h3>
+        Fitting functional linear mixed models (FLMM)
+      </h3>
+      The packages
+<a href="https://cran.r-project.org/web/packages/sparseFLMM/index.html">sparseFLMM</a>
+      and
+<a href="https://cran.r-project.org/web/packages/denseFLMM/index.html">denseFLMM</a>
+      fit functional linear mixed model.
+<a href="https://cran.r-project.org/web/packages/sparseFLMM/index.html">sparseFLMM</a>
+      fits FLMM for irregularly or sparsely sampled data;
+<a href="https://cran.r-project.org/web/packages/denseFLMM/index.html">denseFLMM</a>
+      fits FLMM for densely sampled data.
+      <h3>
         Generalized estimating equations
       </h3>
-      The following are packages for fitting GEE:
-<a href="../packages/geesmv/index.html">geesmv</a>;
-<a href="../packages/geepack/index.html">geepack</a>;
-<a href="../packages/gee4/index.html">gee4</a>;
-<a href="../packages/gee/index.html">gee</a>;
-<a href="../packages/multgee/index.html">multgee</a>;
-<a href="../packages/geeglm/index.html">geeglm</a>;
-<a href="../packages/geeM/index.html">geeM</a>;
-<a href="../packages/spind/index.html">spind</a>;
-<a href="../packages/wgeesel/index.html">wgeesel</a>;
-<a href="../packages/aftgee/index.html">aftgee</a>;
-<a href="../packages/CRTgeeDR/index.html">CRTgeeDR</a>;
-<a href="../packages/yags/index.html">yags</a>.
-<a href="../packages/geeM/index.html">geeM</a>
-      and
-<a href="../packages/geeglm/index.html">geeglm</a>
-      are both functions in
-<a href="../packages/geepack/index.html">geepack</a>
-      package.
+      <ul>
+        <li>
+          The packages
+<a href="https://cran.r-project.org/web/packages/geesmv/index.html">geesmv</a>,
+<a href="https://cran.r-project.org/web/packages/geepack/index.html">geepack</a>,
+<a href="https://cran.r-project.org/web/packages/gee/index.html">gee</a>,
+<a href="https://cran.r-project.org/web/packages/multgee/index.html">multgee</a>,
+<a href="https://cran.r-project.org/web/packages/geeglm/index.html">geeglm</a>
+          and
+<a href="https://cran.r-project.org/web/packages/geeM/index.html">geeM</a>
+          fit GEE models
+        </li>
+        <li>
+<a href="https://cran.r-project.org/web/packages/wgeesel/index.html">wgeesel</a>
+          fits Weighted Generalized estimating equations (WGEE)
+        </li>
+        <li>
+<a href="https://cran.r-project.org/web/packages/spind/index.html">spind</a>,
+<a href="https://cran.r-project.org/web/packages/aftgee/index.html">aftgee</a>,
+<a href="https://cran.r-project.org/web/packages/CRTgeeDR/index.html">CRTgeeDR</a>
+          and
+<a href="https://cran.r-project.org/web/packages/yags/index.html">yags</a>
+          are other GEE related packages
+        </li>
+      </ul>
       <h3>
         Model diagnostics and summaries statistics
       </h3>
       The following packages provide tools and functions for models diagnotics
       <ul>
         <li>
-<a href="../packages/HLMdiag/index.html">HLMdiag</a>,
-<a href="../packages/asremlPlus/index.html">asremlPlus</a>
+<a href="https://cran.r-project.org/web/packages/HLMdiag/index.html">HLMdiag</a>,
+<a href="https://cran.r-project.org/web/packages/asremlPlus/index.html">asremlPlus</a>
           and
-<a href="../packages/rockchalk/index.html">rockchalk</a>
+<a href="https://cran.r-project.org/web/packages/rockchalk/index.html">rockchalk</a>
           contains model diagnostics functions
         </li>
         <li>
-<a href="../packages/influence.ME/index.html">influence.ME</a>
+<a href="https://cran.r-project.org/web/packages/influence.ME/index.html">influence.ME</a>
           provides tools for identifying influential data points in mixed effect models
         </li>
         <li>
-<a href="../packages/aods3/index.html">aods3</a>
+<a href="https://cran.r-project.org/web/packages/aods3/index.html">aods3</a>
           is used for analysing overdispersed counts or proportions
         </li>
         <li>
-<a href="../packages/cAIC4/index.html">cAIC4</a>: Estimates conditional Akaike information for generalized mixed-effect models
+<a href="https://cran.r-project.org/web/packages/r2glmm/index.html">r2glmm</a>: computes R squared for linear and generalized linear mixed effect models
         </li>
         <li>
-<a href="../packages/r2glmm/index.html">r2glmm</a>: computes R squared for linear and generalized linear mixed effect models
-        </li>
-        <li>
-<a href="../packages/iccbeta/index.html">iccbeta</a>
+<a href="https://cran.r-project.org/web/packages/iccbeta/index.html">iccbeta</a>
           used to compute intraclass correlation in grouped data
         </li>
         <li>
-<a href="../packages/DHARMa/index.html">DHARMa</a>
+<a href="https://cran.r-project.org/web/packages/DHARMa/index.html">DHARMa</a>
           computes scaled residuals for fitted (generalized) linear mixed models for easiness of interpretation
         </li>
         <li>
-<a href="../packages/qrLMM/index.html">qrLMM</a>: implements quantile Regression for Linear Mixed-Effects Models
+<a href="https://cran.r-project.org/web/packages/qrLMM/index.html">qrLMM</a>: implements quantile Regression for Linear Mixed-Effects Models
         </li>
         <li>
-<a href="../packages/HiLMM/index.html">HiLMM</a>: Estimates Heritability with confidence intervals in linear mixed models
+<a href="https://cran.r-project.org/web/packages/HiLMM/index.html">HiLMM</a>: Estimates Heritability with confidence intervals in linear mixed models
         </li>
       </ul>
       (See also &quot;Inference&quot;)
+      <h3>
+        Dataset, sampling and functions for mixed models
+      </h3>
+      The following packages contain datasets, functions and sampling methods for mixed model:
+      <ul>
+        <li>
+<a href="https://cran.r-project.org/web/packages/Blmeco/index.html">Blmeco</a>,
+<a href="https://cran.r-project.org/web/packages/nlmeU/index.html">nlmeU</a>,
+<a href="https://cran.r-project.org/web/packages/SASmixed/index.html">SASmixed</a>,
+<a href="https://cran.r-project.org/web/packages/asremlPlus/index.html">asremlPlus</a>
+          and
+<a href="https://cran.r-project.org/web/packages/StroupGLMM/index.html">StroupGLMM</a>
+          contain datasets for mixed model analysis .
+<a href="https://cran.r-project.org/web/packages/StroupGLMM/index.html">StroupGLMM</a>
+          also contains R Codes for Generalized Linear Mixed Models
+        </li>
+        <li>
+<a href="https://cran.r-project.org/web/packages/Blmeco/index.html">Blmeco</a>
+          and
+<a href="https://cran.r-project.org/web/packages/nlmeU/index.html">nlmeU</a>
+          also contain functions for analysing mixed models.
+        </li>
+        <li>
+<a href="https://cran.r-project.org/web/packages/lmeresampler/index.html">lmeresampler</a>
+          and
+<a href="https://cran.r-project.org/web/packages/glmmboot/index.html">glmmboot</a>: Implements bootstrap methods for mixed models
+        </li>
+        <li>
+<a href="https://cran.r-project.org/web/packages/arm/index.html">arm</a>
+          has functions for computing the balance statistics.
+        </li>
+        <li>
+<a href="https://cran.r-project.org/web/packages/emmeans/index.html">emmeans</a>
+          estimates marginal means and contrasts for mixed models
+        </li>
+      </ul>
       <h3>
         Model presentation and prediction
       </h3>
       <ul>
         <li>
-<a href="../packages/effects/index.html">effects</a>
+<a href="https://cran.r-project.org/web/packages/effects/index.html">effects</a>
           creates graphical and tabular effect display for linear models
         </li>
         <li>
-<a href="../packages/rockchalk/index.html">rockchalk</a>
-          provides functions for interpreting and repesenting model results as plots and tables
-        </li>,
+<a href="https://cran.r-project.org/web/packages/dotwhisker/index.html">dotwhisker</a>
+          quick and easy tool for ploting box and wiskers for model results
+        </li>
         <li>
-<a href="../packages/arm/index.html">arm</a>
-        </li>,
+<a href="https://cran.r-project.org/web/packages/huxtable/index.html">huxtable</a>
+          creates tables for latex and HTML and other formats.
+<a href="https://cran.r-project.org/web/packages/sjPlots/index.html">sjPlots</a>,
+<a href="https://cran.r-project.org/web/packages/rockchalk/index.html">rockchalk</a>
+          and
+<a href="https://cran.r-project.org/web/packages/asremlPlus/index.html">asremlPlus</a>
+          creates  figures and tables for data visualization
+        </li>
         <li>
-<a href="../packages/emmeans/index.html">emmeans</a>
-          estimates marginal means and contrasts for mixed models
-        </li>,
-<a href="../packages/dotwhisker/index.html">dotwhisker</a>,
-<a href="../packages/huxtable/index.html">huxtable</a>,
-<a href="../packages/sjPlots/index.html">sjPlots</a>,
-<a href="../packages/car/index.html">car</a>
+<a href="https://cran.r-project.org/web/packages/broom.mixed/index.html">broom.mixed</a>
+          converts object from some of the mixed model packages in R into data frames
+        </li>
+        <li>
+<a href="https://cran.r-project.org/web/packages/car/index.html">car</a>
+          computes type-II or type-III analysis-of-variance tables
+        </li>
       </ul>
       <h3>
         Convenience wrappers
@@ -297,44 +356,71 @@
       These functions don't necessarily add new functionality, but 
     provide convenient frameworks for (typically) less experienced
     users to fit and interpret mixed models.
-<a href="../packages/ez/index.html">ez</a>,
-<a href="../packages/mixlm/index.html">mixlm</a>
-<a href="../packages/afex/index.html">afex</a>,
-<a href="../packages/RVAideMemoire/index.html">RVAideMemoire</a>,
-<a href="../packages/ZeligMultilevel/index.html">ZeligMultilevel</a>
-<a href="../packages/cubature/index.html">cubature</a>
+<a href="https://cran.r-project.org/web/packages/ez/index.html">ez</a>,
+<a href="https://cran.r-project.org/web/packages/mixlm/index.html">mixlm</a>
+<a href="https://cran.r-project.org/web/packages/afex/index.html">afex</a>,
+<a href="https://cran.r-project.org/web/packages/RVAideMemoire/index.html">RVAideMemoire</a>,
+<a href="https://cran.r-project.org/web/packages/ZeligMultilevel/index.html">ZeligMultilevel</a>
+<a href="https://cran.r-project.org/web/packages/cubature/index.html">cubature</a>
       <h3>
         Model Selection
-      </h3>: Simulation and Inference for SDEs and Other Stochastic Processes.
-<a href="../packages/LMERConvenienceFunctions/index.html">LMERConvenienceFunctions</a>;
-<a href="../packages/glmmLasso/index.html">glmmLasso</a>
-      A variable selection approach for generalized linear mixed models
-<a href="../packages/MuMIn/index.html">MuMIn</a>
+      </h3>
+      The following packages are used for model and variable selections in mixed models
+      <ul>
+        <li>
+<a href="https://cran.r-project.org/web/packages/ASReml-R/index.html">ASReml-R</a>
+          provides information criteria for selecting terms to include in models fitted by
+<a href="https://cran.r-project.org/web/packages/asreml/index.html">asreml</a>
+        </li>
+        <li>
+<a href="https://cran.r-project.org/web/packages/cAIC4/index.html">cAIC4</a>: Estimates conditional Akaike information for generalized mixed-effect models
+        </li>
+        <li>
+<a href="https://cran.r-project.org/web/packages/LMERConvenienceFunctions/index.html">LMERConvenienceFunctions</a>
+          is used for model selection
+        </li>
+        <li>
+<a href="https://cran.r-project.org/web/packages/MuMIn/index.html">MuMIn</a>
+          Provides information criteria for model selection and carry out model averaging based on information criteria
+        </li>
+        <li>
+<a href="https://cran.r-project.org/web/packages/glmmLasso/index.html">glmmLasso</a>
+          is used for variable selection for generalized linear mixed models using L1-Penalization. FlexParamCurve for model section.
+        </li>
+        <li>
+<tt>nls_multstart</tt>
+          function in the
+<a href="https://cran.r-project.org/web/packages/nls.multstart/index.html">nls.multstart</a>
+          package
+finds the best fit of non-linear model based on AIC score
+        </li>
+      </ul>
       <h3>
         Extensions
       </h3>
       <h4>
         Spatial/temporal models
       </h4>
+<a href="https://cran.r-project.org/web/packages/spind/index.html">spind</a>
       Geostatistical models (i.e. explicitly incorporating a model for continuous decay of correlation
     with distance, either in residuals or on random effects/latent variables); models based on
       <em>
         a priori
       </em>
       weights (e.g. simultaneous, conditional autoregression models)
-<a href="../packages/geoRglm/index.html">geoRglm</a>;
-<a href="../packages/GLMMarp/index.html">GLMMarp</a>;
+<a href="https://cran.r-project.org/web/packages/geoRglm/index.html">geoRglm</a>;
+<a href="https://cran.r-project.org/web/packages/GLMMarp/index.html">GLMMarp</a>;
       <a href="http://www.r-inla.org/home">
         INLA
       </a>;
-<a href="../packages/nlme/index.html">nlme</a>
+<a href="https://cran.r-project.org/web/packages/nlme/index.html">nlme</a>
       with
 <tt>corStruct</tt>;
-<a href="../packages/spaMM/index.html">spaMM</a>;
-<a href="../packages/sphet/index.html">sphet</a>;
-<a href="../packages/spacom/index.html">spacom</a>
-<a href="../packages/georob/index.html">georob</a>;
-<a href="../packages/geoBayes/index.html">geoBayes</a>
+<a href="https://cran.r-project.org/web/packages/spaMM/index.html">spaMM</a>;
+<a href="https://cran.r-project.org/web/packages/sphet/index.html">sphet</a>;
+<a href="https://cran.r-project.org/web/packages/spacom/index.html">spacom</a>
+<a href="https://cran.r-project.org/web/packages/georob/index.html">georob</a>;
+<a href="https://cran.r-project.org/web/packages/geoBayes/index.html">geoBayes</a>
       <h4>
         Differential equation models
       </h4>
@@ -350,56 +436,56 @@
           mle
         </li>
       </ul>
-<a href="../packages/nlmeODE/index.html">nlmeODE</a>;
-<a href="../packages/insideRODE/index.html">insideRODE</a>;
-<a href="../packages/mixedsde/index.html">mixedsde</a>
+<a href="https://cran.r-project.org/web/packages/nlmeODE/index.html">nlmeODE</a>;
+<a href="https://cran.r-project.org/web/packages/insideRODE/index.html">insideRODE</a>;
+<a href="https://cran.r-project.org/web/packages/mixedsde/index.html">mixedsde</a>
       used for Inference on stochastic differential equation models invovling one or two mixed effects.
-<a href="../packages/sde/index.html">sde</a>: companion package that comes with the book Simulation and Inference for Stochastic Differential Equations With R Examples.
-<a href="../packages/PSM/index.html">PSM</a>
+<a href="https://cran.r-project.org/web/packages/sde/index.html">sde</a>: companion package that comes with the book Simulation and Inference for Stochastic Differential Equations With R Examples.
+<a href="https://cran.r-project.org/web/packages/PSM/index.html">PSM</a>
       provides functions for fitting linear and non-linear mixed-effects models using stochastic differential equations (SDEs).
-<a href="../packages/MsdeParEst/index.html">MsdeParEst</a>: Parametric estimation in stochastic differential equations with random effects in the drift, or in the diffusion or both
-<a href="../packages/Sim.DiffProc/index.html">Sim.DiffProc</a>
+<a href="https://cran.r-project.org/web/packages/MsdeParEst/index.html">MsdeParEst</a>: Parametric estimation in stochastic differential equations with random effects in the drift, or in the diffusion or both
+<a href="https://cran.r-project.org/web/packages/Sim.DiffProc/index.html">Sim.DiffProc</a>
       provides functions for simulation of Ito and Stratonovitch stochastic differential equations.
-<a href="../packages/yuima/index.html">yuima</a>
+<a href="https://cran.r-project.org/web/packages/yuima/index.html">yuima</a>
       <h4>
         Phylogenetic/pedigree-based models
       </h4>
       (See also &quot;Phylogenetics task view&quot;; genetics task view?)
-<a href="../packages/pedigreemm/index.html">pedigreemm</a>; correlation structures from
-<a href="../packages/ape/index.html">ape</a>;
-<a href="../packages/MCMCglmm/index.html">MCMCglmm</a>;
-<a href="../packages/pez/index.html">pez</a>; lmekin from
-<a href="../packages/coxme/index.html">coxme</a>
+<a href="https://cran.r-project.org/web/packages/pedigreemm/index.html">pedigreemm</a>; correlation structures from
+<a href="https://cran.r-project.org/web/packages/ape/index.html">ape</a>;
+<a href="https://cran.r-project.org/web/packages/MCMCglmm/index.html">MCMCglmm</a>;
+<a href="https://cran.r-project.org/web/packages/pez/index.html">pez</a>; lmekin from
+<a href="https://cran.r-project.org/web/packages/coxme/index.html">coxme</a>
       <h4>
         Generalized additive models, splines, and quantile regression
       </h4>
-<a href="../packages/gamm4/index.html">gamm4</a>,
-<a href="../packages/mgcv/index.html">mgcv</a>
+<a href="https://cran.r-project.org/web/packages/gamm4/index.html">gamm4</a>,
+<a href="https://cran.r-project.org/web/packages/mgcv/index.html">mgcv</a>
 <tt>::gamm</tt>
       (depends on
-<a href="../packages/nlme (≥ 3.1-64)/index.html">nlme (≥ 3.1-64)</a>),
-<a href="../packages/lqmm/index.html">lqmm</a>,
-<a href="../packages/lmms/index.html">lmms</a>,
-<a href="../packages/lmeSplines/index.html">lmeSplines</a>;
-<a href="../packages/gamlss/index.html">gamlss</a>;
-<a href="../packages/assist/index.html">assist</a>
+<a href="https://cran.r-project.org/web/packages/nlme (≥ 3.1-64)/index.html">nlme (≥ 3.1-64)</a>),
+<a href="https://cran.r-project.org/web/packages/lqmm/index.html">lqmm</a>,
+<a href="https://cran.r-project.org/web/packages/lmms/index.html">lmms</a>,
+<a href="https://cran.r-project.org/web/packages/lmeSplines/index.html">lmeSplines</a>;
+<a href="https://cran.r-project.org/web/packages/gamlss/index.html">gamlss</a>;
+<a href="https://cran.r-project.org/web/packages/assist/index.html">assist</a>
       <h4>
         Multinomial and ordinal models
       </h4>
-<a href="../packages/polytomous/index.html">polytomous</a>,
-<a href="../packages/ordinal/index.html">ordinal</a>
+<a href="https://cran.r-project.org/web/packages/polytomous/index.html">polytomous</a>,
+<a href="https://cran.r-project.org/web/packages/ordinal/index.html">ordinal</a>
       <h4>
         Bioinformatic applications
       </h4>
       (Bioconductor links?)
-<a href="../packages/MCMC.qpcr/index.html">MCMC.qpcr</a>,
-<a href="../packages/JAGUAR/index.html">JAGUAR</a>;
-<a href="../packages/GxM/index.html">GxM</a>;
-<a href="../packages/GWAF/index.html">GWAF</a>;
-<a href="../packages/dlmap/index.html">dlmap</a>;
-<a href="../packages/CpGassoc/index.html">CpGassoc</a>;
-<a href="../packages/QGglmm/index.html">QGglmm</a>: Estimate Quantitative Genetics Parameters from Generalised Linear Mixed Models
-<a href="../packages/Phxnlme/index.html">Phxnlme</a>: Run Phoenix NLME and Perform Post-Processing
+<a href="https://cran.r-project.org/web/packages/MCMC.qpcr/index.html">MCMC.qpcr</a>,
+<a href="https://cran.r-project.org/web/packages/JAGUAR/index.html">JAGUAR</a>;
+<a href="https://cran.r-project.org/web/packages/GxM/index.html">GxM</a>;
+<a href="https://cran.r-project.org/web/packages/GWAF/index.html">GWAF</a>;
+<a href="https://cran.r-project.org/web/packages/dlmap/index.html">dlmap</a>;
+<a href="https://cran.r-project.org/web/packages/CpGassoc/index.html">CpGassoc</a>;
+<a href="https://cran.r-project.org/web/packages/QGglmm/index.html">QGglmm</a>: Estimate Quantitative Genetics Parameters from Generalised Linear Mixed Models
+<a href="https://cran.r-project.org/web/packages/Phxnlme/index.html">Phxnlme</a>: Run Phoenix NLME and Perform Post-Processing
 Calls 'Phoenix NLME' (non-linear mixed effects), a population modeling and simulation software, for pharmacokinetics and pharmacodynamics analyses
       <h4>
         Zero-inflated models
@@ -411,149 +497,149 @@ Calls 'Phoenix NLME' (non-linear mixed effects), a population modeling and simul
       handles zero-inflated, hurdle, and zero-altered models (with arbitrary models for zeros) by stacking observations and constructing a multi-type model (see sections 5.3-5.5 of the
 <tt>CourseNotes</tt>
       vignette). The
-<a href="../packages/cplm/index.html">cplm</a>
+<a href="https://cran.r-project.org/web/packages/cplm/index.html">cplm</a>
       provides both frequentist and Bayesian (MCMC) tools for fitting zero-inflated compound Poisson (Tweedie) mixed models.
       <h4>
         Ecological and environmental applications
       </h4>
       (See also &quot;Environmental task view&quot;)
-<a href="../packages/IPMpack/index.html">IPMpack</a>;
-<a href="../packages/HydroME/index.html">HydroME</a>;
-<a href="../packages/dsm/index.html">dsm</a>;
-<a href="../packages/climwin/index.html">climwin</a>;
-<a href="../packages/cati/index.html">cati</a>;
-<a href="../packages/carcass/index.html">carcass</a>;
-<a href="../packages/blmeco/index.html">blmeco</a>;
-<a href="../packages/BBRecapture/index.html">BBRecapture</a>;
-<a href="../packages/secr/index.html">secr</a>;
-<a href="../packages/gllvm/index.html">gllvm</a>
+<a href="https://cran.r-project.org/web/packages/IPMpack/index.html">IPMpack</a>;
+<a href="https://cran.r-project.org/web/packages/HydroME/index.html">HydroME</a>;
+<a href="https://cran.r-project.org/web/packages/dsm/index.html">dsm</a>;
+<a href="https://cran.r-project.org/web/packages/climwin/index.html">climwin</a>;
+<a href="https://cran.r-project.org/web/packages/cati/index.html">cati</a>;
+<a href="https://cran.r-project.org/web/packages/carcass/index.html">carcass</a>;
+<a href="https://cran.r-project.org/web/packages/blmeco/index.html">blmeco</a>;
+<a href="https://cran.r-project.org/web/packages/BBRecapture/index.html">BBRecapture</a>;
+<a href="https://cran.r-project.org/web/packages/secr/index.html">secr</a>;
+<a href="https://cran.r-project.org/web/packages/gllvm/index.html">gllvm</a>
       <h4>
         Factor analytic, latent variable, and structural equation models
       </h4>
-<a href="../packages/sem/index.html">sem</a>;
-<a href="../packages/lavaan/index.html">lavaan</a>
+<a href="https://cran.r-project.org/web/packages/sem/index.html">sem</a>;
+<a href="https://cran.r-project.org/web/packages/lavaan/index.html">lavaan</a>
       l ;
-<a href="../packages/gllvm/index.html">gllvm</a>
+<a href="https://cran.r-project.org/web/packages/gllvm/index.html">gllvm</a>
       (See also &quot;Psychometrics task view&quot;)
-<a href="../packages/VetResearchLMM/index.html">VetResearchLMM</a>: Linear Mixed Models - An Introduction with Applications in Veterinary Research
+<a href="https://cran.r-project.org/web/packages/VetResearchLMM/index.html">VetResearchLMM</a>: Linear Mixed Models - An Introduction with Applications in Veterinary Research
       <h4>
         Other
       </h4>
       The following are other packages that could be applied in the context of mixed models
-<a href="../packages/blme/index.html">blme</a>;
-<a href="../packages/LMest/index.html">LMest</a>;
-<a href="../packages/lmeNBBayes/index.html">lmeNBBayes</a>;
-<a href="../packages/lmeInfo/index.html">lmeInfo</a>;
-<a href="../packages/MarginalMediation/index.html">MarginalMediation</a>;
-<a href="../packages/RPEGLMEN/index.html">RPEGLMEN</a>;
-<a href="../packages/lmmpar/index.html">lmmpar</a>;
+<a href="https://cran.r-project.org/web/packages/blme/index.html">blme</a>;
+<a href="https://cran.r-project.org/web/packages/LMest/index.html">LMest</a>;
+<a href="https://cran.r-project.org/web/packages/lmeNBBayes/index.html">lmeNBBayes</a>;
+<a href="https://cran.r-project.org/web/packages/lmeInfo/index.html">lmeInfo</a>;
+<a href="https://cran.r-project.org/web/packages/MarginalMediation/index.html">MarginalMediation</a>;
+<a href="https://cran.r-project.org/web/packages/RPEGLMEN/index.html">RPEGLMEN</a>;
+<a href="https://cran.r-project.org/web/packages/lmmpar/index.html">lmmpar</a>;
       <h3>
         Inference
       </h3>
       <ul>
         <li>
-<a href="../packages/asremlPlus/index.html">asremlPlus</a>
+<a href="https://cran.r-project.org/web/packages/asremlPlus/index.html">asremlPlus</a>
           contains functions for model testing
         </li>
       </ul>
-<a href="../packages/afex/index.html">afex</a>,
-<a href="../packages/ez/index.html">ez</a>,
-<a href="../packages/RLRsim/index.html">RLRsim</a>,
-<a href="../packages/lmerTest/index.html">lmerTest</a>,
-<a href="../packages/pbkrtest/index.html">pbkrtest</a>,
-<a href="../packages/cAIC4/index.html">cAIC4</a>,
-<a href="../packages/glmmsr/index.html">glmmsr</a>;
-<a href="../packages/CLME/index.html">CLME</a>;
-<a href="../packages/lmeVarComp/index.html">lmeVarComp</a>: Testing for a Subset of Variance Components in Linear Mixed Models;
-<a href="../packages/lmem.qtler/index.html">lmem.qtler</a>: Linear Mixed Effects Models for QTL Mapping for Multienvironment and Multitrait Analysis
+<a href="https://cran.r-project.org/web/packages/afex/index.html">afex</a>,
+<a href="https://cran.r-project.org/web/packages/ez/index.html">ez</a>,
+<a href="https://cran.r-project.org/web/packages/RLRsim/index.html">RLRsim</a>,
+<a href="https://cran.r-project.org/web/packages/lmerTest/index.html">lmerTest</a>,
+<a href="https://cran.r-project.org/web/packages/pbkrtest/index.html">pbkrtest</a>,
+<a href="https://cran.r-project.org/web/packages/cAIC4/index.html">cAIC4</a>,
+<a href="https://cran.r-project.org/web/packages/glmmsr/index.html">glmmsr</a>;
+<a href="https://cran.r-project.org/web/packages/CLME/index.html">CLME</a>;
+<a href="https://cran.r-project.org/web/packages/lmeVarComp/index.html">lmeVarComp</a>: Testing for a Subset of Variance Components in Linear Mixed Models;
+<a href="https://cran.r-project.org/web/packages/lmem.qtler/index.html">lmem.qtler</a>: Linear Mixed Effects Models for QTL Mapping for Multienvironment and Multitrait Analysis
 Performs QTL mapping analysis for balanced and for multi-environment and multi-trait analysis using mixed models;
-<a href="../packages/varTestnlme/index.html">varTestnlme</a>: Variance Components Testing for Linear and Nonlinear Mixed Effects Models
+<a href="https://cran.r-project.org/web/packages/varTestnlme/index.html">varTestnlme</a>: Variance Components Testing for Linear and Nonlinear Mixed Effects Models
       <h3>
         rank-based Estimation and testing
       </h3>
       rlme: Rank-Based Estimation and Prediction in Random Effects Nested Models;
-<a href="../packages/MM4LMM/index.html">MM4LMM</a>: Inference of Linear Mixed Models Through MM Algorithm
+<a href="https://cran.r-project.org/web/packages/MM4LMM/index.html">MM4LMM</a>: Inference of Linear Mixed Models Through MM Algorithm
       <h3>
         Nested Models
       </h3>
       <h3>
         Power analysis
       </h3>
-<a href="../packages/longpower/index.html">longpower</a>,
-<a href="../packages/clusterPower/index.html">clusterPower</a>,
-<a href="../packages/powerlmm/index.html">powerlmm</a>: Power Analysis for Longitudinal Multilevel Models;
-<a href="../packages/pass.lme/index.html">pass.lme</a>: Power and Sample Size for Linear Mixed Effect Models;
+<a href="https://cran.r-project.org/web/packages/longpower/index.html">longpower</a>,
+<a href="https://cran.r-project.org/web/packages/clusterPower/index.html">clusterPower</a>,
+<a href="https://cran.r-project.org/web/packages/powerlmm/index.html">powerlmm</a>: Power Analysis for Longitudinal Multilevel Models;
+<a href="https://cran.r-project.org/web/packages/pass.lme/index.html">pass.lme</a>: Power and Sample Size for Linear Mixed Effect Models;
     </div>
 
   <h3>CRAN packages:</h3>
   <ul>
-    <li><a href="../packages/afex/index.html">afex</a></li>
-    <li><a href="../packages/agRee/index.html">agRee</a></li>
-    <li><a href="../packages/aods3/index.html">aods3</a></li>
-    <li><a href="../packages/ape/index.html">ape</a></li>
-    <li><a href="../packages/ArfimaMLM/index.html">ArfimaMLM</a></li>
-    <li><a href="../packages/arm/index.html">arm</a></li>
-    <li><a href="../packages/ARTool/index.html">ARTool</a></li>
-    <li><a href="../packages/Bayesthresh/index.html">Bayesthresh</a></li>
-    <li><a href="../packages/BBRecapture/index.html">BBRecapture</a></li>
-    <li><a href="../packages/blme/index.html">blme</a></li>
-    <li><a href="../packages/blmeco/index.html">blmeco</a></li>
-    <li><a href="../packages/boss/index.html">boss</a></li>
-    <li><a href="../packages/BradleyTerry2/index.html">BradleyTerry2</a></li>
-    <li><a href="../packages/cAIC4/index.html">cAIC4</a></li>
-    <li><a href="../packages/carcass/index.html">carcass</a></li>
-    <li><a href="../packages/climwin/index.html">climwin</a></li>
-    <li><a href="../packages/CLME/index.html">CLME</a></li>
-    <li><a href="../packages/clusterPower/index.html">clusterPower</a></li>
-    <li><a href="../packages/difR/index.html">difR</a></li>
-    <li><a href="../packages/effects/index.html">effects</a></li>
-    <li><a href="../packages/ez/index.html">ez</a></li>
-    <li><a href="../packages/gamm4/index.html">gamm4</a></li>
-    <li><a href="../packages/GWAF/index.html">GWAF</a></li>
-    <li><a href="../packages/HLMdiag/index.html">HLMdiag</a></li>
-    <li><a href="../packages/iccbeta/index.html">iccbeta</a></li>
-    <li><a href="../packages/inferference/index.html">inferference</a></li>
-    <li><a href="../packages/influence.ME/index.html">influence.ME</a></li>
-    <li><a href="../packages/JAGUAR/index.html">JAGUAR</a></li>
-    <li><a href="../packages/lme4/index.html">lme4</a> (core)</li>
-    <li><a href="../packages/LMERConvenienceFunctions/index.html">LMERConvenienceFunctions</a></li>
-    <li><a href="../packages/lmerTest/index.html">lmerTest</a></li>
-    <li><a href="../packages/lmSupport/index.html">lmSupport</a></li>
-    <li><a href="../packages/longpower/index.html">longpower</a></li>
-    <li><a href="../packages/marked/index.html">marked</a></li>
-    <li><a href="../packages/mbest/index.html">mbest</a></li>
-    <li><a href="../packages/MCMCglmm/index.html">MCMCglmm</a> (core)</li>
-    <li><a href="../packages/MEMSS/index.html">MEMSS</a></li>
-    <li><a href="../packages/metaplus/index.html">metaplus</a></li>
-    <li><a href="../packages/Metatron/index.html">Metatron</a></li>
-    <li><a href="../packages/mi/index.html">mi</a></li>
-    <li><a href="../packages/miceadds/index.html">miceadds</a></li>
-    <li><a href="../packages/mixAK/index.html">mixAK</a></li>
-    <li><a href="../packages/mixlm/index.html">mixlm</a></li>
-    <li><a href="../packages/MixMAP/index.html">MixMAP</a></li>
-    <li><a href="../packages/mlmRev/index.html">mlmRev</a></li>
-    <li><a href="../packages/multiDimBio/index.html">multiDimBio</a></li>
-    <li><a href="../packages/nlme/index.html">nlme</a> (core)</li>
-    <li><a href="../packages/nonrandom/index.html">nonrandom</a></li>
-    <li><a href="../packages/pamm/index.html">pamm</a></li>
-    <li><a href="../packages/PBImisc/index.html">PBImisc</a></li>
-    <li><a href="../packages/pbkrtest/index.html">pbkrtest</a> (core)</li>
-    <li><a href="../packages/pedigreemm/index.html">pedigreemm</a></li>
-    <li><a href="../packages/polytomous/index.html">polytomous</a></li>
-    <li><a href="../packages/predictmeans/index.html">predictmeans</a></li>
-    <li><a href="../packages/prLogistic/index.html">prLogistic</a></li>
-    <li><a href="../packages/R2STATS/index.html">R2STATS</a></li>
-    <li><a href="../packages/refund/index.html">refund</a></li>
-    <li><a href="../packages/robustlmm/index.html">robustlmm</a></li>
-    <li><a href="../packages/rockchalk/index.html">rockchalk</a></li>
-    <li><a href="../packages/RVAideMemoire/index.html">RVAideMemoire</a></li>
-    <li><a href="../packages/RVFam/index.html">RVFam</a></li>
-    <li><a href="../packages/spacom/index.html">spacom</a></li>
-    <li><a href="../packages/spaMM/index.html">spaMM</a></li>
-    <li><a href="../packages/Surrogate/index.html">Surrogate</a></li>
-    <li><a href="../packages/TcGSA/index.html">TcGSA</a></li>
-    <li><a href="../packages/xergm/index.html">xergm</a></li>
-    <li><a href="../packages/ZeligMultilevel/index.html">ZeligMultilevel</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/afex/index.html">afex</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/agRee/index.html">agRee</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/aods3/index.html">aods3</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/ape/index.html">ape</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/ArfimaMLM/index.html">ArfimaMLM</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/arm/index.html">arm</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/ARTool/index.html">ARTool</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/Bayesthresh/index.html">Bayesthresh</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/BBRecapture/index.html">BBRecapture</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/blme/index.html">blme</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/blmeco/index.html">blmeco</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/boss/index.html">boss</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/BradleyTerry2/index.html">BradleyTerry2</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/cAIC4/index.html">cAIC4</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/carcass/index.html">carcass</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/climwin/index.html">climwin</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/CLME/index.html">CLME</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/clusterPower/index.html">clusterPower</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/difR/index.html">difR</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/effects/index.html">effects</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/ez/index.html">ez</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/gamm4/index.html">gamm4</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/GWAF/index.html">GWAF</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/HLMdiag/index.html">HLMdiag</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/iccbeta/index.html">iccbeta</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/inferference/index.html">inferference</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/influence.ME/index.html">influence.ME</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/JAGUAR/index.html">JAGUAR</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/lme4/index.html">lme4</a> (core)</li>
+    <li><a href="https://cran.r-project.org/web/packages/LMERConvenienceFunctions/index.html">LMERConvenienceFunctions</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/lmerTest/index.html">lmerTest</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/lmSupport/index.html">lmSupport</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/longpower/index.html">longpower</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/marked/index.html">marked</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/mbest/index.html">mbest</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/MCMCglmm/index.html">MCMCglmm</a> (core)</li>
+    <li><a href="https://cran.r-project.org/web/packages/MEMSS/index.html">MEMSS</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/metaplus/index.html">metaplus</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/Metatron/index.html">Metatron</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/mi/index.html">mi</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/miceadds/index.html">miceadds</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/mixAK/index.html">mixAK</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/mixlm/index.html">mixlm</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/MixMAP/index.html">MixMAP</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/mlmRev/index.html">mlmRev</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/multiDimBio/index.html">multiDimBio</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/nlme/index.html">nlme</a> (core)</li>
+    <li><a href="https://cran.r-project.org/web/packages/nonrandom/index.html">nonrandom</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/pamm/index.html">pamm</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/PBImisc/index.html">PBImisc</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/pbkrtest/index.html">pbkrtest</a> (core)</li>
+    <li><a href="https://cran.r-project.org/web/packages/pedigreemm/index.html">pedigreemm</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/polytomous/index.html">polytomous</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/predictmeans/index.html">predictmeans</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/prLogistic/index.html">prLogistic</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/R2STATS/index.html">R2STATS</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/refund/index.html">refund</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/robustlmm/index.html">robustlmm</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/rockchalk/index.html">rockchalk</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/RVAideMemoire/index.html">RVAideMemoire</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/RVFam/index.html">RVFam</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/spacom/index.html">spacom</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/spaMM/index.html">spaMM</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/Surrogate/index.html">Surrogate</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/TcGSA/index.html">TcGSA</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/xergm/index.html">xergm</a></li>
+    <li><a href="https://cran.r-project.org/web/packages/ZeligMultilevel/index.html">ZeligMultilevel</a></li>
   </ul>
 
   <h3>Related links:</h3>

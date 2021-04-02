@@ -44,9 +44,9 @@ The <a href="https://stat.ethz.ch/mailman/listinfo/r-sig-mixed-models">R-SIG-mix
      </p>
     
     <p>
-  <ul>    <li>
+  <ul>   <li>
       Other, less commonly used, packages/functions for fitting GLMMs include <pkg>glmmML</pkg>; <pkg>GLMMadaptive</pkg>; <code>glmmADMB</code> (not on CRAN); <pkg> GLMMRR </pkg>; <pkg> glmmEP </pkg>;    <pkg>repeated</pkg>;  <pkg> biglmm </pkg>;
-      <pkg>glmm</pkg>; <pkg>hglm</pkg>; <pkg> mvglmmRank </pkg>; <pkg>  glmertree </pkg> ; <pkg> emmeans </pkg>; <pkg>lmeNB </pkg> ; <pkg> mlmm.gwas</pkg>  </li>  </ul> 
+      <pkg>glmm</pkg>; <pkg>hglm</pkg>; <pkg> mvglmmRank </pkg>; <pkg>  glmertree </pkg> ; <pkg> emmeans </pkg>; <pkg>lmeNB </pkg> ; <pkg> mlmm.gwas</pkg>  </li>  </ul>
       
     </p> 
     
@@ -54,7 +54,7 @@ The <a href="https://stat.ethz.ch/mailman/listinfo/r-sig-mixed-models">R-SIG-mix
     <ul><li> 
     
     <pkg>nlme</pkg><code>::nlme</code>,  
-    <pkg>lme4</pkg><code>::nlmer</code>,<pkg> nls.multstart </pkg>, <pkg>  gnm </pkg> and <pkg> saemix</pkg> fit nonlinear mixed-effects model. <pkg>  gnm </pkg> fits generailsed nonlinear models. <pkg> nls.multstart </pkg> fits Non-linear least squares regression.  <pkg>nlme</pkg> and 
+    <pkg>lme4</pkg><code>::nlmer</code>,<pkg> nls.multstart </pkg>, <pkg>  gnm </pkg> and <pkg> saemix</pkg> fit nonlinear mixed-effects model. <pkg>  gnm </pkg> fits generalized nonlinear models. <pkg> nls.multstart </pkg> fits Non-linear least squares regression.  <pkg>nlme</pkg> and 
     <pkg>lme4</pkg>  are the commonly used packages.
     </li>  <li>     Other nonlinear model related packages are 
     <pkg> qrNLMM </pkg> ;  <pkg> nlraa </pkg>;  <pkg> FlexParamCurve </pkg>;<pkg>  nls </pkg> ;<pkg>  minpack.lm </pkg> ; <pkg> nlstools </pkg>;  <pkg> brms </pkg>.  

@@ -9,6 +9,7 @@ if (FALSE) {
 }    
 
 library(pkggraph)
+library(igraph)
 
 ## general-purpose "apply across combinations of multiple lists"
 xapply <- function(FUN,...,FLATTEN=TRUE,MoreArgs=NULL) {
@@ -46,10 +47,6 @@ ggplot(dd,aes(order,number,colour=pkg,lty=repos,shape=repos))+
 
 png("lme4dep1.png",1200,1200)
 gg <- make_neighborhood_graph(get_neighborhood("lme4",level=1))
+plot(gg)
 dev.off()
-##plot(ss,layout=layout_with_sugiyama,hgap=2,vgap=2)
-##L <- 
-##coords <- with_sugiyama(hgap=2,vgap=2)
-##plot(ss,layout=coords)
-#######################
 
