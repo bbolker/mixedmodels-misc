@@ -112,7 +112,7 @@ The following packages contain datasets, functions and sampling methods for mixe
    <li> <pkg>  cAIC4 </pkg>: Estimates conditional Akaike information for generalized mixed-effect models </li>
    <li> 
     <pkg>LMERConvenienceFunctions </pkg> is used for model selection </li> <li>  <pkg> MuMIn </pkg>  Provides information criteria for model selection and carry out model averaging based on information criteria </li> <li>  <pkg> glmmLasso </pkg> is used for variable selection for generalized linear mixed models using L1-Penalization. FlexParamCurve for model section.  </li> 
-<li> <code> nls_multstart </code> function in the  <pkg> Nls.multstart   </pkg>  package
+<li> <code> nls_multstart </code> function in the  <pkg> nls.multstart   </pkg>  package
 finds the best fit of non-linear model based on AIC score  </li> 
     </ul>
     
