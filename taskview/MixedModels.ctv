@@ -14,35 +14,40 @@ The <a href="https://stat.ethz.ch/mailman/listinfo/r-sig-mixed-models">R-SIG-mix
     </p>
     <h3>Fitting linear mixed models</h3>
     <p>
-      The most commonly used packages/functions for fitting linear mixed models
-      (i.e., models with Normal residuals, predictors that are linear functions
-      of the input variables, and Normal distributions of the random effects
-      within grouping variables) are <pkg>nlme::</pkg><code>lme</code>; <pkg>lme4::</pkg><code>lmer</code> and  <pkg>glmmTMB</pkg>. <pkg> Saemix</pkg> fits linear mixed models
-
-<pkg>MCMCglmm</pkg>, <pkg>rstanarm</pkg>, and <pkg>brms</pkg> fit linear mixed models in a Bayesian MCMC framework. 
+    
+    <ul><li>The most commonly used packages/functions for fitting linear mixed models
+      (i.e., models with Normal residuals, predictors that are linear functions   of the input variables, and Normal distributions of the random effects
+      within grouping variables) are <pkg>nlme::</pkg><code>lme</code>; <pkg>lme4::</pkg><code>lmer</code> and  <pkg>glmmTMB</pkg>. The package <pkg>  asreml </pkg> also fits linear mixed models using advanced Residual Maximum Likelihood (REML)  </li> 
+      
+      <li> <pkg>MCMCglmm</pkg>, <pkg>rstanarm</pkg>, and <pkg>brms</pkg> fit linear mixed models in a Bayesian MCMC framework.  </li> </ul>
     </p>
     
-<pkg>  ASReml-R </pkg> Fit linear mixed models using advanced Residual Maximum Likelihood (REML)  
+  <p>
+  <ul>    <li>  
+ Other less commonly used packages/functions for fitting linear mixed models are <pkg> robustlmm </pkg>; <pkg> splmm </pkg>; <pkg> mlmmm</pkg>; <pkg> lmec </pkg>; <pkg> nlmm </pkg>; <pkg> tlmec </pkg>; <pkg> ARpLMEC </pkg>; <pkg> saemix </pkg>; <pkg> skewlmm </pkg> and  <pkg> plmm </pkg>. <pkg> plmm </pkg> fits partially Linear Mixed Effects Models, <pkg> splmm </pkg> fit linear mixed-effects models  for high-dimensional data, <pkg> tlmec </pkg> fits a linear mixed effects model for censored data with Student-t or normal distributions, <pkg> skewlmm </pkg> fits scale mixture of skew-normal linear mixed models </li> </ul>
+ 
+ </p>
     
- <p>
-   Other less commonly used packages/functions for fitting linear mixed models are <pkg> robustlmm </pkg>; <pkg> splmm </pkg>; <pkg> mlmmm</pkg>; <pkg> lmec </pkg>; <pkg> nlmm </pkg>; <pkg> tlmec </pkg>; <pkg> ARpLMEC </pkg>; <pkg> saemix </pkg>; <pkg> skewlmm </pkg> and  <pkg> plmm </pkg>. <pkg> plmm </pkg> fits partially Linear Mixed Effects Models.
-    </p>
     <h3>Fitting generalized linear mixed models</h3>
     <p>
-      The most commonly used packages/functions for fitting generalized linear mixed models
+    
+    <ul> <li>      The most commonly used packages/functions for fitting generalized linear mixed models
       (i.e., models with conditional distributions in the exponential family,
              e.g. Bernoulli/binomial/Poisson/Gamma, and distributions of the
       conditional modes that are Normal on the scale of the
       linear predictor)
       are <pkg>MASS::</pkg><code>glmmPQL</code>;
        <pkg>lme4::</pkg><code>glmer</code> and <pkg>glmmTMB</pkg>. 
-  
-   <pkg>MCMCglmm</pkg>,<pkg>rstanarm</pkg>, <pkg>brms</pkg>, <pkg>robustBLME</pkg> and <pkg> glmmfields </pkg> fit linear mixed models in a Bayesian MCMC framework.
+   </li> <li>   <pkg>MCMCglmm</pkg>,<pkg>rstanarm</pkg>, <pkg>brms</pkg>, <pkg>robustBLME</pkg> and <pkg> glmmfields </pkg> fit linear mixed models in a Bayesian MCMC framework. </li> </ul> 
+
+
      </p>
     
     <p>
+  <ul>    <li>
       Other, less commonly used, packages/functions for fitting GLMMs include <pkg>glmmML</pkg>; <pkg>GLMMadaptive</pkg>; <code>glmmADMB</code> (not on CRAN); <pkg> GLMMRR </pkg>; <pkg> glmmEP </pkg>;    <pkg>repeated</pkg>;  <pkg> biglmm </pkg>;
-      <pkg>glmm</pkg>; <pkg>hglm</pkg>; <pkg> mvglmmRank </pkg>; <pkg>  glmertree </pkg> ; <pkg> emmeans </pkg>; <pkg>lmeNB </pkg> ; <pkg> mlmm.gwas</pkg> 
+      <pkg>glmm</pkg>; <pkg>hglm</pkg>; <pkg> mvglmmRank </pkg>; <pkg>  glmertree </pkg> ; <pkg> emmeans </pkg>; <pkg>lmeNB </pkg> ; <pkg> mlmm.gwas</pkg>  </li>  </ul> 
+      
     </p> 
     
     <h3>Fitting nonlinear mixed models</h3>
