@@ -15,6 +15,8 @@ header-includes:
 - \usepackage[footnotesize,bf]{caption}
 ---
 
+
+
 ```{r opts,echo=FALSE,message=FALSE}
 library("knitr")
 opts_chunk$set(tidy=FALSE,fig.width=6,fig.height=4,fig.position="center",
@@ -639,10 +641,27 @@ inv_cc <- matrix(c(0.5,0.5,-0.5,0.5),nrow=2,byrow=TRUE)
 solve(inv_cc)
 ```
 
+## Ways to set contrasts
+
+There are *too many* ways to set contrasts in R
+
+- **global options**: `options(contrasts=c("contr.sum", "contr.poly"))` (the first element is for (regular) *unordered* factors, the second for *ordered* factors)
+- **on the fly in a model**, via the `contrasts` argument. `contrasts` is documented in `?model.matrix`, under `contrasts.arg`:
+> a list, whose entries are values (numeric matrices, `function`s or character strings naming functions) ...
+For example, `lm(..., contrasts=list(factorA="contr.sum",factorB="contr.treatment")` **or** `list(factorA=contr.sum, factorB=contr.treatment)` **or** `list(factorA=contr.sum(2), factorB=contr.sum(4))` (where the numeric values are the number of levels of the factors: since contrast functions return a matrix, this works too ...
+- **by setting the contrast attribute of a variable**: you can say e.g. `contrasts(dd$factor) <- cc` where `cc` is 
+> either a numeric matrix ... or the (quoted) name of a function which computes such matrices
+so something like `contrasts(dd$factorA) <- "contr.sum"` is probably best, but you could use `contr.sum(2)` instead.
+- via the `C()` function, which does more or less the same thing on the fly, e.g. using `C(factorA, "contr.sum")` in a model is the same as specifying `contrasts=list(factorA, "contr.sum")`. Once again there are **three** ways to specify the contrasts (as a function (`contr.treatment`), as a string (`"contr.treatment"`), or as a matrix (`contr.treatment(2)`).
+
+I think that makes 1 + 3 + 2 + 3 = 9 = **too many** ways.
+
 ## Other refs
 
+- @schad_how_2018
 - http://sas-and-r.blogspot.com/2010/10/example-89-contrasts.html
 - see also: `gmodels::fit.contrast`, `rms::contrast.rms` for on-the-fly contrasts
 -  http://www.ats.ucla.edu/stat/r/library/contrast_coding.htm
+
 
 ## References
