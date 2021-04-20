@@ -282,7 +282,7 @@ Set contrasts in general via `options()` or per-factor
 via `contrasts()`, or within the model statement, e.g.
 
 ```{r contrset1}
-d <- data.frame(f=c("a","a","a","b","b","b"),y=c(1,1,1,3,3,3))
+d <- data.frame(f=factor(rep(c("a","b"), each=3)), y=c(1,1,1,3,3,3))
 coef(lm(y~f,data=d))
 coef(lm(y~f,data=d,contrasts=list(f="contr.sum")))
 ```
@@ -490,16 +490,16 @@ where the first, not the last, level is aliased/dropped?
 Things get slightly more interesting/complicated when we have more than two levels of a categorical variable.  I'll look at some data on lizard perching behaviour, from the `brglm} package (and before that from @McCullaghNelder1989, ultimately from @schoener_nonsynchronous_1970.  I'm going to ignore the fact that these data might best be fitted with generalized linear models.
 
 ```{r echo=FALSE,message=FALSE}
-if (!file.exists("lizards.csv")) {
-   require("brglm")
+if (!file.exists("lizards.rds")) {
+   require("brglm2")
    data(lizards)
    lizards <- transform(lizards,N=grahami+opalinus,
-                     gfrac=grahami/(grahami+opalinus))
-   write.csv(lizards,file="lizards.csv")
+                        gfrac=grahami/(grahami+opalinus))
+   saveRDS(lizards, file="lizards.rds")
 }
 ```
 ```{r fakelizards,echo=FALSE}
-lizards <- read.csv("lizards.csv")
+lizards <- readRDS("lizards.rds")
 ```
 A quick look at the data: response is number of *Anolis grahami* lizards found on perches in particular conditions.
 
@@ -557,7 +557,7 @@ cc <- as.list(plyr::rename(coef(lmTL1),c(`(Intercept)`="int")))
 labelpos <- with(cc,
   list(x=c(1,2,3,1),xend=c(1,2,3,1),
       y=c(int,int,int,int),
-      yend=c(int,int+timemidday,int+timelate,int+lightsunny)))
+      yend=c(int,int+timemidday,int+timelate,int+lightshady)))
 xpos <- -0.1
 ggplot(pp,aes(x=time,y=grahami,colour=light))+geom_point()+
   geom_line(aes(group=light))+
@@ -585,18 +585,18 @@ gg_color_hue <- function(n) {
 pp2 <- pp
 pp2$grahami <- predict(lmTL2,newdata=pp)
 cc <- as.list(plyr::rename(coef(lmTL2),c(`(Intercept)`="int",
-        `timemidday:lightsunny`="midsunny",`timelate:lightsunny`="latesunny")))
+        `timemidday:lightshady`="midshady",`timelate:lightshady`="lateshady")))
 labelpos <- with(cc,
   list(x=c(1,2,3,1,2,3),xend=c(1,2,3,1,2,3),
-      y=c(int,int,int,int,int+lightsunny+timemidday,int+lightsunny+timelate),
-      yend=c(int,int+timemidday,int+timelate,int+lightsunny,
-             int+timemidday+lightsunny+midsunny,int+timelate+lightsunny+latesunny)))
+      y=c(int,int,int,int,int+lightshady+timemidday,int+lightshady+timelate),
+      yend=c(int,int+timemidday,int+timelate,int+lightshady,
+             int+timemidday+lightshady+midshady,int+timelate+lightshady+lateshady)))
 xpos <- -0.1
 ggplot(pp2,aes(x=time,y=grahami,colour=light))+geom_point()+
   geom_line(aes(group=light))+
   annotate("segment",x=1:2,xend=2:3,
-           y=with(cc,c(int+lightsunny,int+timemidday+lightsunny)),
-           yend=with(cc,c(int+timemidday+lightsunny,int+timelate+lightsunny)),
+           y=with(cc,c(int+lightshady,int+timemidday+lightshady)),
+           yend=with(cc,c(int+timemidday+lightshady,int+timelate+lightshady)),
            colour=gg_color_hue(2)[2],lty=2)+
   annotate("segment",x=labelpos$x,xend=labelpos$xend,y=labelpos$y,
            yend=labelpos$yend,alpha=0.5) +
@@ -609,7 +609,7 @@ label=paste0("beta[",1:6,"]"),parse=TRUE)+
                      yend=labelpos$yend[c(1,4)],alpha=0.3,lty=2)
 ```
 Parameters $\beta_1$ to $\beta_4$ have the same meanings as before.
-Now we also have $\beta_5$ and $\beta_6$, labelled "timemidday:lightsunny" and "timelate:lightsunny", which describe the difference between the expected mean value of these treatment combinations based on the additive model (which are $\beta_1 + \beta_2 + \beta_4$ and $\beta_1 + \beta_3 + \beta_4$ respectively) and their actual values.
+Now we also have $\beta_5$ and $\beta_6$, labelled "timemidday:lightshady" and "timelate:lightshady", which describe the difference between the expected mean value of these treatment combinations based on the additive model (which are $\beta_1 + \beta_2 + \beta_4$ and $\beta_1 + \beta_3 + \beta_4$ respectively) and their actual values.
 
 
 Now re-do this for sum-to-zero contrasts ... the fits are easy:
@@ -647,18 +647,24 @@ There are *too many* ways to set contrasts in R
 
 - **global options**: `options(contrasts=c("contr.sum", "contr.poly"))` (the first element is for (regular) *unordered* factors, the second for *ordered* factors)
 - **on the fly in a model**, via the `contrasts` argument. `contrasts` is documented in `?model.matrix`, under `contrasts.arg`:
+
 > a list, whose entries are values (numeric matrices, `function`s or character strings naming functions) ...
+
 For example, `lm(..., contrasts=list(factorA="contr.sum",factorB="contr.treatment")` **or** `list(factorA=contr.sum, factorB=contr.treatment)` **or** `list(factorA=contr.sum(2), factorB=contr.sum(4))` (where the numeric values are the number of levels of the factors: since contrast functions return a matrix, this works too ...
+
 - **by setting the contrast attribute of a variable**: you can say e.g. `contrasts(dd$factor) <- cc` where `cc` is 
+
 > either a numeric matrix ... or the (quoted) name of a function which computes such matrices
+
 so something like `contrasts(dd$factorA) <- "contr.sum"` is probably best, but you could use `contr.sum(2)` instead.
+
 - via the `C()` function, which does more or less the same thing on the fly, e.g. using `C(factorA, "contr.sum")` in a model is the same as specifying `contrasts=list(factorA, "contr.sum")`. Once again there are **three** ways to specify the contrasts (as a function (`contr.treatment`), as a string (`"contr.treatment"`), or as a matrix (`contr.treatment(2)`).
 
 I think that makes 1 + 3 + 2 + 3 = 9 = **too many** ways.
 
 ## Other refs
 
-- @schad_how_2018
+- @schad_how_2018; @gelman_scaling_2008
 - http://sas-and-r.blogspot.com/2010/10/example-89-contrasts.html
 - see also: `gmodels::fit.contrast`, `rms::contrast.rms` for on-the-fly contrasts
 -  http://www.ats.ucla.edu/stat/r/library/contrast_coding.htm
