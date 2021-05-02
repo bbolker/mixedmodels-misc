@@ -5,7 +5,7 @@
   <version>2018-08-27</version>
 
   <info>
-    <p>
+    <p> 
       <em>Mixed models</em> are a broad class of statistical models used to analyze data where observations can be assigned to discrete groups, and where the parameters describing the differences are treated as <em>random variables</em>. They are also variously described as <em>multilevel</em>, <em>hierarchical</em>, or <em>repeated measures</em>.  They can be fitted in either frequentist or Bayesian frameworks.
     </p>
 
