@@ -9,7 +9,7 @@
       <em>Mixed models</em> are a broad class of statistical models used to analyze data where observations can be assigned to discrete groups, and where the parameters describing the differences are treated as <em>random variables</em>. They are also variously described as <em>multilevel</em>, <em>hierarchical</em>, or <em>repeated measures</em>.  They can be fitted in either frequentist or Bayesian frameworks.
     </p>
 
-    <p> .
+    <p> 
 The <a href="https://stat.ethz.ch/mailman/listinfo/r-sig-mixed-models">R-SIG-mixed-models mailing list</a> is an active forum for discussion of mixed-model-related questions, course announcements, etc.. <a href="http://stackoverflow.com/questions/tagged/r+mixed-models">Stack Overflow</a> and <a href="http://stats.stackexchange.com">Cross Validated</a> also host relevant discussions.
     </p>
     <h3>Fitting linear mixed models</h3>
