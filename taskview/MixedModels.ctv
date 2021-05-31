@@ -7,7 +7,7 @@
   <info>
     <p> 
       <em>Mixed models</em> are a broad class of statistical models used to analyze data where observations can be assigned to discrete groups, and where the parameters describing the differences are treated as <em>random variables</em>. They are also variously described as <em>multilevel</em>, <em>hierarchical</em>, or <em>repeated measures</em> models; <em>longitudinal</em> data are often analyzed in this framework.  Mixed models can be fitted in either frequentist or Bayesian frameworks.
-      <bmb>Refer to broader frameworks (state-space, latent-variable models)? </bmb>
+ <p>     <bmb>Refer to broader frameworks (state-space, latent-variable models)? </bmb>     </p>
     </p>
 
     <p> 
@@ -15,279 +15,422 @@ The <a href="https://stat.ethz.ch/mailman/listinfo/r-sig-mixed-models">R-SIG-mix
     </p>
     <h3>Fitting linear mixed models</h3>
     <p>
+LMMs are models with Normal residuals, responses that are linear combinations of the predictor variables, and Normal distributions of the random effects/latent variables. The most commonly used packages/functions for fitting linear mixed models are <pkg>nlme::</pkg><code>lme</code> and <pkg>lme4::</pkg><code>lmer</code>.  <pkg>lme4::</pkg><code>lmer</code> fits linear mixed models using Restricted Maximum Likelihood (REML) or Maximum Likelihood Estimation. <pkg>nlme::</pkg><code>lme</code> allows fitting models with nested random effects and also allows for correlated and/or unequal variance in within-group errors.   
+
+</p>
+<p><pkg> glmmTMB</pkg>, <pkg>hglm</pkg>, <pkg> saemix</pkg> and <pkg> plmm </pkg> are less commonly used for fitting LMMs.  <pkg> glmmTMB</pkg>  fits LMMs using maximum likelihood estimation.  
+<pkg> saemix</pkg>  implements stochastic approximation EM algorithm for fitting LMMs. <pkg>hglm</pkg> has a variety of links and distributions for both the reponses and the random effects. <pkg> plmm </pkg> fits partially Linear Mixed Effects Models using kernel regression, without distributional assumptions for the random terms.</p>
+
+ <p>
+<pkg>rstanarm</pkg> and <pkg>brms</pkg>  fit linear mixed models in a Bayesian MCMC framework. 
     
-    <ul><li>The most commonly used packages/functions for fitting linear mixed models
-      (LMMs: i.e., models with Normal residuals, responses that are linear combinations of the predictor variables, and Normal distributions of the random effects/latent variables) are <pkg>nlme::</pkg><code>lme</code> and <pkg>lme4::</pkg><code>lmer</code>
-      </li>
-      <li> <pkg>MCMCglmm</pkg>, <pkg>rstanarm</pkg>, and <pkg>brms</pkg> can fit linear mixed models in a Bayesian MCMC framework.</li> </ul>
-    </p>
-    
-  <p>
-  <ul>    <li>  
- Other less commonly used packages for fitting linear mixed models are <pkg> robustlmm </pkg> (robust estimation of LMMs); <pkg> splmm </pkg> (high-dimensional data); <pkg> mlmmm</pkg>; <pkg> lmec </pkg>; <pkg> nlmm </pkg>; <pkg> tlmec </pkg>; <pkg> ARpLMEC </pkg>; <pkg> saemix </pkg>; <pkg> skewlmm </pkg> and  <pkg> plmm </pkg>. <pkg> plmm </pkg> fits partially Linear Mixed Effects Models, <pkg> splmm </pkg> fit linear mixed-effects models  for high-dimensional data, <pkg> tlmec </pkg> fits a linear mixed effects model for censored data with Student-t or normal distributions, <pkg> skewlmm </pkg> fits scale mixture of skew-normal linear mixed models </li> </ul>
- <bmb>every package should have at least a brief [few-word] description. Consider whether there is a specialized category that these fit into: for example, penalized models (splmm) might have its own category, if there are at least a few other packages that also handle Lasso/ridge/related methods. nlmm might belong in a category for alternative latent variable distributions. etc.</bmb>
- </p>
-    
+<pkg>brms</pkg> supports a wide range of distributions and link functions and can fit among others,   linear, robust linear, count data, survival, response times, ordinal, zero-inflated, hurdle, and self-defined mixture models. 
+
+<pkg>rstanarm</pkg> fits LMMs using Markov Chain Monte Carlo, variational approximations to the posterior distribution, or optimization.
+
+</p>
+
+  
+  
     <h3>Fitting generalized linear mixed models</h3>
     <p>
-
-      <ul> <li> Generalized linear mixed models
-	  (GLMMs) are multilevel
-	  extensions of generalized linear models (GLMs, i.e. models with conditional distributions in the exponential family,
-          e.g. Bernoulli/binomial/Poisson/Gamma); distributions of the
-	  conditional modes are typically assumed to be Normal on the scale of the
+Generalized linear mixed models (GLMMs) are multilevel extensions of generalized linear models (GLMs, i.e. models with conditional distributions in the exponential family, e.g. Bernoulli/binomial/Poisson/Gamma); distributions of the	  conditional modes are typically assumed to be Normal on the scale of the
 	  linear predictor.   The most commonly used packages/functions for fitting 
-      are <pkg>MASS::</pkg><code>glmmPQL</code>;
-       <pkg>lme4::</pkg><code>glmer</code> and <pkg>glmmTMB</pkg>. 
-   </li> <li>   <pkg>MCMCglmm</pkg>,<pkg>rstanarm</pkg>, <pkg>brms</pkg>, <pkg>robustBLME</pkg> and <pkg> glmmfields </pkg> fit linear mixed models in a Bayesian MCMC framework. </li> </ul> 
-      <bmb> does glmmfields belong in a spatial category? robustBLME in a robust category?</bmb>
+  GLMMs    are <pkg>MASS::</pkg><code>glmmPQL</code> and
+       <pkg>lme4::</pkg><code>glmer</code>. <pkg>MASS::</pkg><code>glmmPQL</code> fits GLMMs with multivariate normal random effects, using Penalized Quasi-Likelihood. <pkg>lme4::</pkg><code>glmer</code> fits a GLMMs using  maximum likelihood  estimation.  
+  </p>
+  
+ <p>  
+<pkg> glmmTMB</pkg>, <pkg>GLMMadaptive</pkg> and <pkg>hglm</pkg> are other less commonoly used packages for fitting GLMMs.   <pkg> glmmTMB</pkg> fits GLMMs using maximum likelihood estimation. <pkg>GLMMadaptive</pkg> fits GLMMs using adaptive Gaussian Quadrature.  <pkg>hglm</pkg> has a variety of links functions and distributions for both the outcomes and the random effects. 
+  </p>
+  
+<p>       
+<pkg>MCMCglmm</pkg>,<pkg>rstanarm</pkg>, <pkg>brms</pkg> and <pkg>glmm</pkg>  fit GLMMs in a Bayesian MCMC framework. <pkg>MCMCglmm</pkg>  fits GLMMs using Markov chain Monte Carlo techniques. <pkg>rstanarm</pkg> fits GLMMs using Markov Chain Monte Carlo, variational approximations to the posterior distribution, or optimization. <pkg>brms</pkg> supports a wide range of distributions and link functions for fitting GLMMs. <pkg>glmm</pkg> fits GLMMs using Monte Carlo Likelihood Approximation. 
+</p>
 
-     </p>
-    
-    <p>
-  <ul>   <li>
-      Other, less commonly used, packages/functions for fitting GLMMs include <pkg>glmmML</pkg>; <pkg>GLMMadaptive</pkg>; <code>glmmADMB</code> (not on CRAN); <pkg> GLMMRR </pkg>; <pkg> glmmEP </pkg>;    <pkg>repeated</pkg>;  <pkg> biglmm </pkg>;
-      <pkg>glmm</pkg>; <pkg>hglm</pkg>; <pkg> mvglmmRank </pkg>; <pkg>  glmertree </pkg> ; <pkg> emmeans </pkg>; <pkg>lmeNB </pkg> ; <pkg> mlmm.gwas</pkg>  </li>  </ul>
-  <bmb>descriptions!  emmeans does not fit models. We can probably take out glmmADMB. biglmm might belong in a separate "big data" category?</bmb>
-      
-    </p> 
-    
-    <h3>Fitting nonlinear mixed models</h3>
-    <ul><li> 
-    <bmb>Need a description.</bmb>    
-    <pkg>nlme</pkg><code>::nlme</code>,  
-    <pkg>lme4</pkg><code>::nlmer</code>,<pkg> nls.multstart </pkg>, <pkg>  gnm </pkg> and <pkg> saemix</pkg> fit nonlinear mixed-effects model. <pkg>  gnm </pkg> fits generalized nonlinear models. <pkg> nls.multstart </pkg> fits Non-linear least squares regression.  <pkg>nlme</pkg> and 
-    <pkg>lme4</pkg>  are the commonly used packages.
-    <bmb>I don't think nls.multstart does NLMMs?</bmb>
-    
-    </li>  <li>     Other nonlinear model related packages are 
-    <pkg> qrNLMM </pkg> ;  <pkg> nlraa </pkg>;  <pkg> FlexParamCurve </pkg>;<pkg>  nls </pkg> ;<pkg>  minpack.lm </pkg> ; <pkg> nlstools </pkg>;  <pkg> brms </pkg>.  
- </li>   <li> <pkg> qrNLMM </pkg> performs Quantile regression (QR) for Nonlinear Mixed-Effects Models, <pkg> nlraa </pkg>  provides a collection of non-linear functions for fitting data mostly used in the area of agriculture,  <pkg> FlexParamCurve</pkg> provides functions to fit parametric curves to data, <pkg>brms</pkg> fit nonlinear mixed models in a Bayesian framework,
-    </li> </ul>
-    <bmb> maybe a separate category for mixed quantile regression?</bmb>
+ <h3>Fitting GLMM to binary response data</h3>
+ These packages are used for fitting reponse data involving two outcomes: <pkg> glmmEP </pkg> and <pkg> GLMMRR </pkg>. <pkg> glmmEP </pkg> fits GLMMs using Expectation Propagation and supports only probit mixed models (mixed models with binary response) with one level of nesting. <pkg> GLMMRR </pkg> fits GLMMs for Binary Randomized Response Data
+
+<p>
+      <bmb> does glmmfields belong in a spatial category? robustBLME in a robust category?</bmb> <mag> done </mag> 
+
+</p>
+
+     <h3>Fitting nonlinear mixed models (NLMM)</h3> NLMMs are extentions of LMMs where the response variables are nonlinear functions of the fixed effect and/or random effect variables. <pkg>nlme</pkg><code>::nlme</code>, 
+ <pkg>lme4</pkg><code>::nlmer</code>, <pkg>brms</pkg>, <pkg> saemix</pkg> and <pkg>repeated</pkg> fit NLMMs. <pkg>nlme</pkg> and 
+<pkg>lme4</pkg> are the commonly used packages for fitting NLMMs.
+
+ <p>
+<pkg>nlme</pkg><code>::nlme</code> allows fitting NLMM involving nested random effects, <pkg>lme4</pkg><code>::nlmer</code> fits NLMMs using maximum likelihood and <pkg> saemix</pkg>  implements stochastic approximation EM algorithm for fitting  of NLMMs. 
+ 
+ <pkg>repeated</pkg> fits generalised NLMMs for non-normal repeated measurements and <pkg>brms</pkg> fits nonlinear mixed models in a Bayesian framework. 
+ 
+  </p>
+     
+
+   
+   <p>
+    <bmb> maybe a separate category for mixed quantile regression?</bmb> <MAG> A section has now been created for mixed quantile regression </MAG>
+
+  </p>
+
+<h3>Robust estimation of Mixed models</h3>
+The following packages fit various types of mixed models in a robust manner. 
+<pkg> robustlmm </pkg> implements a robust estimation method for LMMs. <pkg>robustBLME</pkg>  implements a bayesian robust fit for linear mixed models through weighted likelihood equations and approximate Bayesian computation.
+<pkg> CRTgeeDR </pkg> implements a doubly robust method for solving GEEs. It combines Inverse probability weighting (IPW) for handing missing data and augmentation (AUG) for imbalance in covariates.
+ 
+  
+
+
+<h3>Fitting penalized mixed models</h3>
+The following packages fit penalized mixed models (mixed models involving panalty terms on the fixed effect or/and the random effect). <pkg> splmm </pkg> fits LMMs for high-dimensional data by imposing penalty on both the fixed effects and random effects for variable selection.
+
+<h3>Generalized estimating equations</h3>   
+GEEs are extensions of GLMs that fit longitudinal categorical responses data that are correlated. GEEs can also be applied in fit longitudinal continuous measurements. <pkg> wgeesel </pkg>,  <pkg>geesmv</pkg>, <pkg>geepack</pkg>, <pkg> gee</pkg>, <pkg> multgee </pkg>  and <pkg> geeM </pkg> fit GEEs.   <pkg> wgeesel </pkg> fits weighted generalized estimating equations (WGEE). 
+
+<pkg>geesmv</pkg> fits GEEs with more recent modified variance estimators for improving the finite small-sample performance.
+
+<pkg>geepack</pkg> estimates parameters of the mean, scale and correlation structures of GEEs and can handle clustered categorical responses.
+
+<pkg> gee </pkg> fits GEEs to data. User needs to specify any offsets in the model formula. 
+
+
+<pkg> multgee </pkg> solves GEEs for correlated nominal or ordinal multinomial responses. <pkg> geeM </pkg> estimates GEEs parameters in mean structures with possible correlation between the outcomes.
+
+
+<h3>Fitting Mixed Models involving missing values</h3>
+The following packages are used for fitting mixed models to  data with missing values: <pkg> mlmmm</pkg> and <pkg> CRTgeeDR </pkg>. <pkg> mlmmm</pkg> fits  multivariate linear mixed
+models involving  missing values using the EM-algorithm. <pkg> CRTgeeDR </pkg> implements a semi-parametric method for solving GEEs and accounts for missing data using Inverse-probability weighting (IPW) and for imbalances in covariates using augmentation (AUG). 
 
  
+<h3>Fitting mixed models to censored data</h3>
+In modeling, one is sometimes faced with censored data (data with values that are partially known or unquantifiable either because values are below or above a certain threshold). Working with censored data poses a number of difficults just as in the case of a data with missing values. 
+  
  
-    <h3> Fitting functional linear mixed models (FLMM)</h3>
-    <bmb>Description!</bmb>
-The packages <pkg> sparseFLMM</pkg> and <pkg> denseFLMM </pkg> fit functional linear mixed model. <pkg> sparseFLMM</pkg> fits FLMM for irregularly or sparsely sampled data; <pkg> denseFLMM </pkg> fits FLMM for densely sampled data. 
-    
-    <h3>Generalized estimating equations</h3>
-    <bmb>Description!</bmb>
- <ul><li> The packages  <pkg>geesmv</pkg>, <pkg>geepack</pkg>,  <pkg> gee</pkg>, <pkg> multgee  </pkg>, <pkg> geeglm </pkg> and  <pkg> geeM </pkg> fit GEE models </li>  
-<li> <pkg> wgeesel </pkg> fits Weighted Generalized estimating equations (WGEE) </li>
-<li> <pkg> spind </pkg>, <pkg> aftgee </pkg>,  <pkg> CRTgeeDR </pkg> and <pkg> yags </pkg>  are other GEE related packages
-   </li> </ul>
+<p>
+<pkg> lmec </pkg>, <pkg> ARpLMEC </pkg> and <pkg> tlmec </pkg> are useful packages for mixed effect modeling involving censored data. <pkg> lmec </pkg>  fits LMMs allowing for censored normal responses and assummes thats the within group errors independent and identically distributed.
+<pkg> tlmec </pkg> fits LMMs for censored data with Student-t or normal distributions and assumes errors are independent and identically distributed.
 
+<pkg> ARpLMEC </pkg> fits left, right or intervalar censored mixed-effects linear model with autoregressive errors using the EM algorithm. 
+ </p>
  
+  <p> <bmb>every package should have at least a brief [few-word] description. Consider whether there is a specialized category that these fit into: for example, penalized models (splmm) might have its own category, if there are at least a few other packages that also handle Lasso/ridge/related methods. nlmm might belong in a category for alternative latent variable distributions. etc.</bmb>
+  </p>
+  
 <h3>Model diagnostics and summaries statistics</h3>
 The following packages provide tools and functions for models diagnotics
-<ul> <li><pkg> HLMdiag </pkg>, <pkg> asremlPlus </pkg> and <pkg> rockchalk </pkg>  contains model diagnostics functions </li> <li>  
+<ul> <li><pkg> HLMdiag </pkg>, <pkg> asremlPlus </pkg> and <pkg> rockchalk </pkg> contains model diagnostics functions </li> <li> 
 <pkg>influence.ME </pkg> provides tools for identifying influential data points in mixed effect models </li>
 <li> <pkg> aods3 </pkg> is used for analysing overdispersed counts or proportions </li> <li> <pkg>r2glmm</pkg>: computes R squared for linear and generalized linear mixed effect models </li>
 <li> <pkg> iccbeta </pkg> used to compute intraclass correlation in grouped data </li>
-<li> <pkg>DHARMa </pkg>  computes scaled residuals for fitted (generalized) linear mixed models for easiness of interpretation</li> <li> <pkg> qrLMM </pkg>: implements quantile Regression for Linear Mixed-Effects Models </li> 
+<li> <pkg>DHARMa </pkg> computes scaled residuals for fitted (generalized) linear mixed models for easiness of interpretation</li> <li> <pkg> qrLMM </pkg>: implements quantile Regression for Linear Mixed-Effects Models </li> 
 <li> <pkg> HiLMM </pkg>: Estimates Heritability with confidence intervals in linear mixed models </li>
 </ul>
 
 
 
-    (See also "Inference")
+(See also "Inference")
+<h3>Fitting Mixed Models to large dataset</h3>
+These packages are appropriting for fitting mixed models when working with very large datasets. <pkg> splmm </pkg> fit linear mixed-effects models for high-dimensional data imposing panalty on both the random and fixed effects for varaible selection. <pkg>mgcv</pkg>::<code> bam </code> fits generalized additive model to very large data set.   
 
-     <h3>Dataset, sampling and functions for mixed models</h3>
+
+ 
+
+<h3>Dataset, sampling and functions for mixed models</h3>
 
 The following packages contain datasets, functions and sampling methods for mixed model: 
 
-<ul> <li> <pkg> Blmeco </pkg>, <pkg> nlmeU</pkg>, <pkg> SASmixed </pkg>, <pkg> asremlPlus </pkg> and <pkg> StroupGLMM </pkg> contain datasets for mixed model analysis . <pkg>StroupGLMM </pkg> also contains R Codes for Generalized Linear Mixed Models </li> <li> <pkg> Blmeco </pkg> and <pkg> nlmeU</pkg> also contain functions for analysing mixed models.  </li>  <li> <pkg>lmeresampler</pkg> and <pkg>glmmboot</pkg>: Implements bootstrap methods for mixed models </li> <li> <pkg>arm</pkg> has functions for computing the balance statistics. </li> <li> <pkg>emmeans</pkg> estimates marginal means and contrasts for mixed models</li> 
+<ul> <li> <pkg> Blmeco </pkg>, <pkg> nlmeU</pkg>, <pkg> SASmixed </pkg>, <pkg> asremlPlus </pkg> and <pkg> StroupGLMM </pkg> contain datasets for mixed model analysis . <pkg>StroupGLMM </pkg> also contains R Codes for Generalized Linear Mixed Models </li> <li> <pkg> Blmeco </pkg> and <pkg> nlmeU</pkg> also contain functions for analysing mixed models. </li> <li> <pkg>lmeresampler</pkg> and <pkg>glmmboot</pkg>: Implements bootstrap methods for mixed models </li> <li> <pkg>arm</pkg> has functions for computing the balance statistics. </li> <li> <pkg>emmeans</pkg> estimates marginal means and contrasts for mixed models</li> <li> <pkg> lsmeans</pkg> computes least square means for mixed effect models <li> <pkg> VetResearchLMM </pkg> contains Codes and Datasets for Linear Mixed Models in Veterinary Research. </li>
+</li>
 </ul>
 
 <h3>Model presentation and prediction</h3>
-<ul> <li> <pkg>effects</pkg> creates graphical and tabular effect display for linear models </li>  <li> <pkg>dotwhisker</pkg> quick and easy tool for ploting box and wiskers for model results </li> <li> <pkg>huxtable</pkg> creates tables for latex and HTML and other formats. <pkg>sjPlots</pkg>, <pkg>rockchalk</pkg> and <pkg> asremlPlus </pkg> creates  figures and tables for data visualization </li> <li> <pkg>broom.mixed</pkg> converts object from some of the mixed model packages in R into data frames </li> <li> <pkg>car</pkg> computes type-II or type-III analysis-of-variance tables </li> 
- </ul> 
+The following packages contain fuctions tabular and graphical representing of mixed model results as well as other forms. 
+
+<ul> <li> <pkg>effects</pkg> creates graphical and tabular effect display for linear models </li> <li> <pkg>dotwhisker</pkg> quick and easy tool for ploting box and wiskers for model results </li> <li> <pkg>huxtable</pkg> creates tables for latex and HTML and other formats. <pkg>sjPlots</pkg>, <pkg>rockchalk</pkg> and <pkg> asremlPlus </pkg> creates figures and tables for data visualization </li> <li> <pkg>broom.mixed</pkg> converts object from some of the mixed model packages in R into data frames </li> <li> <pkg>car</pkg> computes type-II or type-III analysis-of-variance tables </li> 
+</ul> 
  
-    
-    <h3>Convenience wrappers</h3>
-    These functions don't necessarily add new functionality, but 
-    provide convenient frameworks for (typically) less experienced
-    users to fit and interpret mixed models.
-    <pkg>ez</pkg>, <pkg>mixlm</pkg> <pkg>afex</pkg>, <pkg>RVAideMemoire</pkg>,
-    <pkg>ZeligMultilevel</pkg> <pkg> cubature </pkg>
-    
-    <h3>Model Selection</h3> The following packages are used for model and variable selections in mixed models
-<ul> <li>
-   <pkg> ASReml-R </pkg> provides information criteria for selecting terms to include in models fitted by <pkg>asreml </pkg> </li> 
-   <li> <pkg>  cAIC4 </pkg>: Estimates conditional Akaike information for generalized mixed-effect models </li>
-   <li> 
-    <pkg>LMERConvenienceFunctions </pkg> is used for model selection </li> <li>  <pkg> MuMIn </pkg>  Provides information criteria for model selection and carry out model averaging based on information criteria </li> <li>  <pkg> glmmLasso </pkg> is used for variable selection for generalized linear mixed models using L1-Penalization. FlexParamCurve for model section.  </li> 
-<li> <code> nls_multstart </code> function in the  <pkg> nls.multstart   </pkg>  package
-finds the best fit of non-linear model based on AIC score  </li> 
-    </ul>
-    
-    
-    <h3>Extensions</h3>  
-    <h4>Spatial/temporal models</h4>
-    <pkg>spind </pkg>  
-    Geostatistical models (i.e. explicitly incorporating a model for continuous decay of correlation
-    with distance, either in residuals or on random effects/latent variables); models based on <em>a priori</em>
-    weights (e.g. simultaneous, conditional autoregression models)
-    <pkg>geoRglm</pkg>; <pkg>GLMMarp</pkg>;
-    <a href="http://www.r-inla.org/home">INLA</a>; <pkg>nlme</pkg> with <code>corStruct</code>;  <pkg>spaMM</pkg>;
-    <pkg>sphet</pkg>; <pkg>spacom</pkg>
-    <pkg>georob</pkg>; <pkg>geoBayes</pkg>
-    <h4>Differential equation models</h4>
-
-(See also "Differential Equations task view")
-<ul> <li> mle </li> <li> mle </li>  <li> mle </li>  </ul>
-    <pkg>nlmeODE</pkg>; <pkg>insideRODE</pkg>;  <pkg> mixedsde </pkg> used for Inference on stochastic differential equation models invovling one or two mixed effects. <pkg> sde </pkg>: companion package that comes with the book Simulation and Inference for Stochastic Differential Equations With R Examples.
-<pkg>PSM </pkg> provides functions for fitting linear and non-linear mixed-effects models using stochastic differential equations (SDEs).
-    <pkg> MsdeParEst</pkg>: Parametric estimation in stochastic differential equations with random effects in the drift, or in the diffusion or both
-    
-    <pkg> Sim.DiffProc </pkg> provides functions for simulation of Ito and Stratonovitch stochastic differential equations.
-    <bmb> I don't think SDEs are in scope?</bmb>
-  <pkg> yuima   </pkg> 
-    <h4>Phylogenetic/pedigree-based models</h4>
-    (See also "Phylogenetics task view"; genetics task view?)
-    <pkg>pedigreemm</pkg>; correlation structures from <pkg>ape</pkg>;
-    <pkg>MCMCglmm</pkg>; <pkg>pez</pkg>; lmekin from <pkg>coxme</pkg>
-    <h4>Generalized additive models, splines, and quantile regression</h4>
-    <pkg>gamm4</pkg>, <pkg>mgcv</pkg><code>::gamm</code> (depends on <pkg>nlme (≥ 3.1-64)</pkg>), <pkg>lqmm</pkg>, <pkg>lmms</pkg>, <pkg>lmeSplines</pkg>; <pkg> gamlss </pkg>;
-    <pkg>assist</pkg>
-    <h4>Multinomial and ordinal models</h4>
-    <pkg>polytomous</pkg>, <pkg>ordinal</pkg>
-    <h4>Bioinformatic applications</h4>
-    (Bioconductor links?)
-    <pkg>MCMC.qpcr</pkg>, <pkg>JAGUAR</pkg>; <pkg>GxM</pkg>; <pkg>GWAF</pkg>; <pkg>dlmap</pkg>;
-    <pkg>CpGassoc</pkg>; 
-    <pkg> QGglmm </pkg>: Estimate Quantitative Genetics Parameters from Generalised Linear Mixed Models
-
-<pkg> Phxnlme </pkg>: Run Phoenix NLME and Perform Post-Processing
-Calls 'Phoenix NLME' (non-linear mixed effects), a population modeling and simulation software, for pharmacokinetics and pharmacodynamics analyses 
-
-    <h4>Zero-inflated models</h4>
-    The <code>glmmADMB</code> package can handle simple (intercept-only) zero-inflated mixed models.  <code>MCMCglmm</code> handles zero-inflated, hurdle, and zero-altered models (with arbitrary models for zeros) by stacking observations and constructing a multi-type model (see sections 5.3-5.5 of the <code>CourseNotes</code> vignette). The <pkg>cplm</pkg> provides both frequentist and Bayesian (MCMC) tools for fitting zero-inflated compound Poisson (Tweedie) mixed models.
-    
-    <h4>Ecological and environmental applications</h4>
-    (See also "Environmental task view")
-    <pkg>IPMpack</pkg>; <pkg>HydroME</pkg>; <pkg>dsm</pkg>; <pkg>climwin</pkg>; <pkg>cati</pkg>;
-    <pkg>carcass</pkg>; <pkg>blmeco</pkg>; <pkg>BBRecapture</pkg>; <pkg>secr</pkg>; <pkg>gllvm</pkg>
-    <h4>Factor analytic, latent variable, and structural equation models</h4>
-    <pkg>sem</pkg>; <pkg>lavaan</pkg>l ; <pkg>gllvm</pkg>
-    (See also "Psychometrics task view")
-    
-    
-       <pkg> VetResearchLMM </pkg>: Linear Mixed Models - An Introduction with Applications in Veterinary Research 
-       
-    <h4>Other</h4>
-The following are other packages that could be applied in the context of mixed models <pkg> blme</pkg>; <pkg> LMest </pkg>; 
-<pkg> lmeNBBayes </pkg>; <pkg> lmeInfo </pkg>; <pkg>  MarginalMediation </pkg>;  <pkg> RPEGLMEN </pkg>; <pkg> lmmpar </pkg>; 
+ <h3>Convenience wrappers</h3>
+These functions don't necessarily add new functionality, but 
+provide convenient frameworks for (typically) less experienced
+users to fit and interpret mixed models.
+ <pkg>ez</pkg>, <pkg>mixlm</pkg> <pkg>afex</pkg>, <pkg>RVAideMemoire</pkg>,
+<pkg>ZeligMultilevel</pkg> <pkg> cubature </pkg>.  <pkg>pez</pkg> provide wrappers for common community phylogenetic indices.
 
 
+<h3>Model Selection</h3> The following packages are used for model and variable selections in mixed models
+<ul> <li> <pkg>nmle::</pkg><code>  anova.lme </code> and  <pkg>nmle::</pkg><code> anova.gls </code> functions compare the likelihoods of multple fitted models.  
+  
+ </li> <li>
+<pkg> ASReml-R </pkg> provides information criteria for selecting terms to include in models fitted by <pkg>asreml </pkg> </li> 
+<li> <pkg> cAIC4 </pkg>: Estimates conditional Akaike information for generalized mixed-effect models </li>
+<li> stepAIC in the Mass package 
+<pkg>LMERConvenienceFunctions </pkg> is used for model selection </li> <li> <pkg> MuMIn </pkg>Provides information criteria for model selection and carry out model averaging based on information criteria </li> <li> <pkg> glmmLasso </pkg> is used for variable selection for generalized linear mixed models using L1-Penalization. FlexParamCurve for model section. </li> 
+<li> <code> nls_multstart </code> function in the <pkg> nls.multstart </pkg> package
+finds the best fit of non-linear model based on AIC score </li> 
+ </ul>
+ 
+ <h3> Quantile Regression Mixed Models</h3>
+ Quantile regression models estimate the conditional median (quantiles) of the response accross the values of the covariates. The following packages are used for fitting Quantile Regression Models involving fixed and random  effects: <pkg> lqmm </pkg> and  <pkg> qrNLMM </pkg>. 
+ 
+ 
+<pkg> lqmm </pkg> fits quantile regression models for hierarchical data. 
+ <pkg> qrNLMM </pkg> preforms Quantile regression (QR) for Nonlinear Mixed-Effects Models.    
+
+<h3>Inference</h3>
+The following packages are used for statistical inferences 
+
+<ul> <li> <pkg> asremlPlus </pkg> and <pkg>pbkrtest</pkg> contains functions for model testing </li> 
+
+<li> <pkg> varTestnlme </pkg> impliments likelihood ratio Test for testing zero variances of a subset of the random effects in a mixed model.<pkg> lmeVarComp </pkg> tests zero variance components in linear mixed models and test additivity in nonparametric regression </li> 
+
+<li> <pkg>afex</pkg> and <pkg>ez</pkg> provides functions for analyzing and visualising factorial experiments.
+</li>
+<li>
+<pkg>spaMM</pkg> performs inference for mixed-effect models, including generalized linear mixed models with spatial correlations.
+</li>
+<li>
+<pkg>RLRsim</pkg> implements a rapid simulation-based exact likelihood ratio tests
+for testing the presence of variance /nonparametric terms for
+models fit with nlme::lme(),lme4::lmer(), lmeTest::lmer(), gamm4::gamm4(),
+mgcv::gamm() and SemiPar::spm(). 
+</li>
+<li> <pkg> CLME</pkg> performs inferencing for linear mixed models that have order constraints on some or all fixed effects. </li>
+
+<li> <pkg>lmerTest</pkg> provides p-values in type I, II or III anova and summary tables for lmer model fits </li>  
+
+<li> <pkg> lmem.qtler </pkg> performs QTL mapping analysis for balanced and for multi-environment and multi-trait analysis using mixed models </li> 
+
+<li>
+<pkg>rlme</pkg> contains functions for estimating rank-based fixed effects and predicts robust random effects in two- and three- level random effects nested models. </li>
+
+<li> <pkg> MM4LMM </pkg> performs inference of Linear Mixed Models Through MM Algorithm </li>
+
+</ul>
+
+ <h3>Extensions</h3> 
+ <h4>Spatial/temporal models</h4>
+
+  Geostatistical models (i.e. explicitly incorporating a model for continuous decay of correlation
+ with distance, either in residuals or on random effects/latent variables); models based on <em>a priori</em>
+ weights (e.g. simultaneous, conditional autoregression models). The following packages are used for Geostatistical models: <a href="http://www.r-inla.org/home">INLA</a>; <pkg>nlme</pkg> with <code>corStruct</code>; <pkg> CARBayesST</pkg>; <pkg> sphet </pkg>; <pkg> spind </pkg>, <pkg>spaMM</pkg> and  <pkg> glmmfields </pkg>.
+  
+ 
+ <p> 
+ <a href="http://www.r-inla.org/home">INLA</a> implements approximate Bayesian inference for Latent Gaussian Models; <pkg> CARBayesST</pkg> implements spatio-temporal generalised linear mixed models for areal unit data;  <pkg> sphet </pkg> implements Generalized Method of Moment estimation for spatial autoregressive models with and without Heteroscedasticity. <pkg> spind </pkg> has functions for spatial methods based on generalized estimating equations (GEE) and wavelet-revised methods (WRM) and  functions for spatially corrected model accuracy measures.
+
+<pkg>spaMM</pkg> performce inference for mixed-effect models, including generalized linear mixed models with spatial correlations.  <pkg> glmmfields </pkg> implements Bayesian spatial and spatiotemporal models and allows for extreme spatial deviations through time. 
+ 
+</p>   
+
+<p>
+User can specify a spatial correlation structure within the <code>corStruct</code>  argument of <pkg>nlme</pkg>. These are the available spatial correlation one can specify in <code>corStruct</code>
+<ul>
+<li>
+<code>corExp</code>: exponential spatial correlation </li> 
+<li><code>corGaus</code>: Gaussian spatial correlation </li> 
+<li> <code>corLin</code>: linear spatial correlation </li> 
+<li><code>corRatio</code>: Rational quadratics spatial correlation </li>  
+<li><code>corSpher</code>: spherical spatial correlation</li> 
+</ul>
+</p>
+ 
+
+ 
+<p>
+(See also "Handling and Analyzing Spatio-Temporal Data Task View") </p>
+
+ <h4>Differential equation models</h4>
+ The following are packages used for differential equation models with mixed effects: <pkg> mixedsde </pkg>, <pkg>nlmeODE</pkg> and <pkg>PSM </pkg>. <pkg> mixedsde </pkg> is used for Inference on stochastic differential equation models invovling one or two mixed effects. <pkg>PSM </pkg> provides functions for fitting linear and non-linear mixed-effects models using stochastic differential equations (SDEs). <pkg>nlmeODE</pkg> combines the odesolve and nlme packages for mixed-effects modelling using differential equations.     <pkg> MsdeParEst</pkg>: performs parametric estimation in stochastic differential equations with random effects in the drift, or in the diffusion or both  
+<p> 
+(See also "Differential Equations task view") </p> 
+
+<h4>Phylogenetic/pedigree-based models</h4>
+
+A phylogenetic models study relationships among biological species based on similarities and differences in their physical or genetic characteristics. Pedigree models on the other hand, study the inheritance of a trait or disease accross several generations of biological species. 
+
+<p> 
+The following packages are used for Phylogenetic/pedigree-based modeling.
+<pkg>pedigreemm</pkg>, <pkg>coxme</pkg> and <pkg>pez</pkg>  . <pkg>pedigreemm</pkg> fits LMMs or GLMMs incorporating the effects of pedigrees, <pkg>coxme</pkg> fit cox proportional hazards models containing both fixed and random effects and <pkg>pez</pkg> fits GLMMs for binary and continuous phylogenetic data. 
+</p> 
+
+<p> 
+(See also "Phylogenetics task view") </p> 
+
+<h4>Generalized additive models, splines</h4>
+Generalized additive models (GAMs) are extensions of generalized linear model where the linear response variable depends linearly on unknown smooth functions to be estimated in the model. The following packages are used for fitting GAMs to data: <pkg>gamm4</pkg> (depends on <pkg> lme4 (>= 1.0)</pkg>, <pkg> mgcv (>= 1.7-23)) </pkg>, <pkg>gam</pkg>, <pkg>mgcv</pkg><code>::gamm</code> (depends on <pkg>nlme ((>= 3.1-64)</pkg>) and <pkg> gamlss </pkg>.   
+
+ 
+
+<p> <pkg>gamm4</pkg>  is based on from package <pkg> mgcv </pkg>::<code> gamm </code> and fits GAMs to data using fitting functions from <pkg>lme4 </pkg>.  Selection of the Smoothness function is done by  Restricted Maximum Likelihood (REML) in the Gaussian additive case and (Laplace approximate) Maximum Likelihood otherwise. 
+
+<pkg>mgcv</pkg>::<code> gam </code> fits GAMs with integrated smoothness estimation and implements  Generalized Cross Validation  for choosing the degree of freedom of the smoothing functions.
+<pkg>mgcv</pkg>::<code> bam </code> fits generalized additive model to very large data set. 
 
 
-    <h3>Inference</h3>
 
-<ul>  <li> <pkg> asremlPlus </pkg> contains functions for model testing  </li>  </ul>
+<pkg>lmeSplines</pkg> fits smoothing spline terms in Gaussian linear and nonlinear mixed-effects models; the <code> slm </code> and <code> snm </code> functions in the <pkg> assist </pkg> package fit semiparametric linear mixed-effects models and semiparametric nonlinear mixed-effects models respectively.  
+</p>
 
 
-    
-    <pkg>afex</pkg>, <pkg>ez</pkg>, <pkg>RLRsim</pkg>,
-    <pkg>lmerTest</pkg>, <pkg>pbkrtest</pkg>, <pkg>cAIC4</pkg>, <pkg>	glmmsr </pkg>; <pkg> CLME</pkg>;  <pkg> lmeVarComp </pkg>: Testing for a Subset of Variance Components in Linear Mixed Models;
-<pkg> lmem.qtler </pkg>: Linear Mixed Effects Models for QTL Mapping for Multienvironment and Multitrait Analysis
-Performs QTL mapping analysis for balanced and for multi-environment and multi-trait analysis using mixed models; 
+<h4>Bioinformatic applications</h4>
+These packages are useful mixed model packages applied in Bioinformatic: <pkg>MCMC.qpcr</pkg>,<pkg>CpGassoc</pkg>, <pkg> QGglmm </pkg> and  <pkg> Phxnlme </pkg>. 
 
- <pkg>   varTestnlme </pkg>: Variance Components Testing for Linear and Nonlinear Mixed Effects Models
+<p>  <pkg>MCMC.qpcr</pkg> analyses Quantitative RT-PCR data using GLMMs based on lognormal-Poisson error distribution, fitted using MCMC. <pkg>CpGassoc</pkg> can handle mixed effects models with chip or batch entering the model as a random intercept.
 
-<h3> rank-based Estimation and testing</h3>
-rlme: Rank-Based Estimation and Prediction in Random Effects Nested Models; <pkg>MM4LMM </pkg>: Inference of Linear Mixed Models Through MM Algorithm
+<pkg> QGglmm </pkg> estimates Quantitative Genetics Parameters from Generalised Linear Mixed Models. <pkg> Phxnlme </pkg> runs Phoenix NLME and Perform Post-Processing
+Calls 'Phoenix NLME' (non-linear mixed effects), a population modeling and simulation software, for pharmacokinetics and pharmacodynamics analyses. 
+</p>
 
-    <h3>Nested Models</h3>
-    
-    
-    <h3>Power analysis</h3>
-    <pkg>longpower</pkg>, <pkg>clusterPower</pkg>,  <pkg> powerlmm </pkg>: Power Analysis for Longitudinal Multilevel Models; <pkg> pass.lme</pkg>: Power and Sample Size for Linear Mixed Effect Models;
-    
-  </info>
+<url> https://cran.r-project.org/web/packages/BiocManager/vignettes/BiocManager.html </url>
 
-  <packagelist>
-    <pkg>afex</pkg>            
-    <pkg>agRee</pkg>
-    <pkg>aods3</pkg>
-    <pkg>ape</pkg>
-    <pkg>ArfimaMLM</pkg>
-    <pkg>arm</pkg> 
-    <pkg>ARTool</pkg>
-    <pkg>Bayesthresh</pkg>     
-    <pkg>BBRecapture</pkg>     
-    <pkg>blme</pkg>            
-    <pkg>blmeco</pkg>          
-    <pkg>boss</pkg>            
-    <pkg>BradleyTerry2</pkg>   
-    <pkg>cAIC4</pkg>           
-    <pkg>carcass</pkg>         
-    <pkg>climwin</pkg>         
-    <pkg>CLME</pkg>            
-    <pkg>clusterPower</pkg>    
-    <pkg>difR</pkg>            
-    <pkg>effects</pkg>         
-    <pkg>ez</pkg>              
-    <pkg>gamm4</pkg>           
-    <pkg>GWAF</pkg>            
-    <pkg>HLMdiag</pkg>         
-    <pkg>iccbeta</pkg>         
-    <pkg>inferference</pkg>    
-    <pkg>influence.ME</pkg>    
-    <pkg>JAGUAR</pkg>          
-    <pkg priority="core">lme4</pkg>
-    <pkg>LMERConvenienceFunctions</pkg>
-    <pkg>lmerTest</pkg>        
-    <pkg>lmSupport</pkg>       
-    <pkg>longpower</pkg>       
-    <pkg>marked</pkg>          
-    <pkg>mbest</pkg>
-    <pkg priority="core">MCMCglmm</pkg>           
-    <pkg>MEMSS</pkg>           
-    <pkg>metaplus</pkg>        
-    <pkg>Metatron</pkg>        
-    <pkg>mi</pkg>              
-    <pkg>miceadds</pkg>        
-    <pkg>mixAK</pkg>           
-    <pkg>mixlm</pkg>           
-    <pkg>MixMAP</pkg>          
-    <pkg>mlmRev</pkg>          
-    <pkg>multiDimBio</pkg>
-    <pkg priority="core">nlme</pkg>
-    <pkg>nonrandom</pkg>       
-    <pkg>pamm</pkg>            
-    <pkg>PBImisc</pkg>         
-    <pkg priority="core">pbkrtest</pkg>        
-    <pkg>pedigreemm</pkg>      
-    <pkg>polytomous</pkg>      
-    <pkg>predictmeans</pkg>    
-    <pkg>prLogistic</pkg>      
-    <pkg>R2STATS</pkg>         
-    <pkg>refund</pkg>          
-    <pkg>robustlmm</pkg>       
-    <pkg>rockchalk</pkg>       
-    <pkg>RVAideMemoire</pkg>   
-    <pkg>RVFam</pkg>           
-    <pkg>spacom</pkg>
-    <pkg>spaMM</pkg>
-    <pkg>Surrogate</pkg>       
-    <pkg>TcGSA</pkg>           
-    <pkg>xergm</pkg>           
-    <pkg>ZeligMultilevel</pkg> 
-  </packagelist>
+ <h4>Zero-inflated models</h4>
+The following packages are used for zero-inflated models (models with  probability distributions that allows for frequent zero-valued observations): <a href="https://glmmadmb.r-forge.r-project.org/">glmmADMB</a>, <pkg>MCMCglmm</pkg> and <pkg>cplm</pkg>.
+<p>
+The <a href="https://glmmadmb.r-forge.r-project.org/">glmmADMB</a>  package can handle simple (intercept-only) zero-inflated mixed models.<pkg>MCMCglmm</pkg> handles zero-inflated, hurdle, and zero-altered models (with arbitrary models for zeros) by stacking observations and constructing a multi-type model (see sections 5.3-5.5 of the <code>CourseNotes</code> vignette). The <pkg>cplm</pkg> package provides both frequentist and Bayesian (MCMC) tools for fitting zero-inflated compound Poisson (Tweedie) mixed models.
+</p>
 
-  <links>
-    <ul>
-      <li><a href="http://glmm.wikidot.com/faq">GLMM FAQ</a></li>
-      <li>General Monte Carlo based Bayesian analyses:
-	<ul>
-	  <li><a href="http://mcmc-jags.sourceforge.net/">JAGS</a></li>
-	  <li><a href="http://www.mrc-bsu.cam.ac.uk/software/bugs/">BUGS</a></li>
-	  <li><a href="http://mc-stan.org/">STAN</a></li>
+<h4>Ecological and environmental applications</h4>
+These packages are applied in ecological and environmental modeling
+
+ <pkg>HydroME</pkg>::<code>SSomuto</code> ; <pkg>dsm</pkg>;   
+ <pkg>carcass</pkg>::<code> search.efficiency</code>; <pkg>blmeco</pkg> and <pkg>secr</pkg>
+ 
+ <p>
+ <pkg>HydroME</pkg>::<code>SSomuto</code> fits water retention characteristics for a grouped dataset as well as with mixed-effects modelling. 
+ 
+ <pkg>carcass</pkg>::<code> search.efficiency</code>  estimates detection probabilty of the number of fatalities from carcass searches using a binomial model with vegetation density as fixed effect and person as random factor. 
+ 
+<pkg>blmeco</pkg>::<code> WAIC </code> computes Widely Applicable Information criterion (WAIC) for measuring predictive fit for mixed models.
+ 
+ 
+<pkg>dsm</pkg> fits a density surface model (DSM) to detection adjusted counts from a spatially-referenced distance sampling analysis using generalized mixed models or generalized additive models.
+
+ <pkg>secr</pkg> contains functions to estimate the density and size of a spatially distributed animal population. 
+</p>
+
+ <p>  (See also "Environmental task view") </p>
+ 
+ <h4>Factor analytic, latent variable, and structural equation models</h4>
+Factor analytic models study variabilities in observed, correlated variables using unobserved variables known as factors. Latent variable models relates a set of observable variables (called manifest/response variables) to a set of latent variables (unobserved variables that are assumed to influence the response variables). Structural equation models combine a mixture of mathematical models, computer algorithms, and statistical methods in fitting networks of constructs to data.  
+
+<p> The following packages are applied in factor analytic, latent variable, and structural equation modelling:  <pkg>lavaan</pkg>, <pkg> nlmm </pkg>,<pkg>sem</pkg>, <pkg> piecewiseSEM </pkg>, <pkg> semtree</pkg>, <pkg>semPLS</pkg> and  <pkg>blavaan</pkg> . 
+
+</p> 
+<p> 
+<pkg> lavaan</pkg> fits a variety of latent variable models, including confirmatory factor analysis, structural equation and latent growth curve models.  <pkg> nlmm </pkg> fit linear mixed models based on convolutions of the generalized Laplace (GL) distribution. 
+ 
+ <pkg>sem</pkg>  conatins functions for fitting general linear structural
+equation models with observed and latent variables. <pkg> semtree</pkg> constructs decision trees and forests to Structural Equation Models (SEM).
+
+<pkg> piecewiseSEM </pkg> implements piecewise structural equation modeling from a single list of structural equations and handles non-linear, latent, and composite variables, standardized coefficients, query-based prediction and indirect effects.  <pkg>semPLS</pkg> fits structural equation models using partial least squares (PLS).
+
+<pkg>blavaan</pkg> fits a variety of Bayesian latent variable models, including confirmatory factor analysis, structural equation models, and latent growth curve models. 
+</p>
+
+<p> (See also "Psychometrics task view") </p>
+<h4>Power analysis</h4>
+Power analysis is used to explore how large a sample size needs to be in order to get a reasonably precise parameter estimates. The following packages are used for calculating power and sample sizes: <pkg>longpower</pkg>, <pkg>clusterPower</pkg>, <pkg> powerlmm </pkg> and <pkg> pass.lme</pkg>.
+
+   <p> <pkg>longpower</pkg> computes power and sample size for LMMs and GAMs of longitudinal data, <pkg>clusterPower</pkg> computes power for cluster randomized trials (CRTs) GLMMs, <pkg> powerlmm </pkg> calculates power for effects in multilevel longitudinal studies with missing data and  <pkg> pass.lme</pkg> computes power and sample size for testing fixed effect coefficients in multilevel linear mixed effect models.    </p>
+
+<bmb>descriptions!  emmeans does not fit models. We can probably take out glmmADMB. biglmm might belong in a separate "big data" category?</bmb> <mag> done </mag>
+
+     
+<h4>Other</h4>
+The following are other packages applied in mixed models. <pkg> blme</pkg>; <pkg> LMest </pkg>; <pkg> lmeNBBayes </pkg>;<pkg> lmeInfo </pkg>; <pkg> MarginalMediation </pkg>; <pkg> lmmpar </pkg>; <pkg>ordinal</pkg>. <pkg> lmeInfo </pkg> provides analytic derivatives and information matrices for fitted linear mixed effects models; The <pkg>ordinal</pkg> package impliments cumulative link mixed models for analying ordinal (ordered categorical data) 
+
+
+   <pkg> skewlmm </pkg>  fits scale mixture of skew-normal linear mixed models using  expectation-maximization (EM) 
+
+  <p>
+<pkg> mvglmmRank </pkg> implements multivariate Generalized Linear Mixed Models for ranking sport teams ; <pkg> mlmm.gwas</pkg> implements multi-locus mixed model (MLMM) for  Genome-Wide Association Study (an area of study that detects common traits in a population and associations between genetic variants.). <pkg>  glmertree </pkg> costructs tree models using GLMM or LMM for recurssive tree splits. <pkg>lmeNB </pkg> fits longitudinal  count variables with a negative binomial mixed-effect regression model and uses maximum likelihood methods to estimate the  fixed effect parameters.
+  </p> 
+ 
+  
+
+</info>
+
+<packagelist>
+<pkg>afex</pkg>  
+<pkg>agRee</pkg>
+<pkg>aods3</pkg>
+<pkg>ape</pkg>
+<pkg>ArfimaMLM</pkg>
+<pkg>arm</pkg> 
+<pkg>ARTool</pkg>
+<pkg>Bayesthresh</pkg> 
+<pkg>BBRecapture</pkg> 
+<pkg>blme</pkg>  
+<pkg>blmeco</pkg>  
+<pkg>boss</pkg>  
+<pkg>BradleyTerry2</pkg>  
+<pkg>cAIC4</pkg>  
+<pkg>carcass</pkg>  
+<pkg>climwin</pkg>  
+<pkg>CLME</pkg>  
+<pkg>clusterPower</pkg>  
+<pkg>difR</pkg>  
+<pkg>effects</pkg>  
+<pkg>ez</pkg>  
+<pkg>gamm4</pkg>  
+<pkg>GWAF</pkg>  
+<pkg>HLMdiag</pkg>  
+<pkg>iccbeta</pkg>   
+<pkg>inferference</pkg> 
+<pkg>influence.ME</pkg> 
+<pkg>JAGUAR</pkg>  
+<pkg priority="core">lme4</pkg>
+<pkg>LMERConvenienceFunctions</pkg>
+<pkg>lmerTest</pkg>
+<pkg>lmSupport</pkg> 
+<pkg>longpower</pkg> 
+<pkg>marked</pkg>
+<pkg>mbest</pkg>
+<pkg priority="core">MCMCglmm</pkg> 
+<pkg>MEMSS</pkg>  
+<pkg>metaplus</pkg>  
+<pkg>Metatron</pkg>
+<pkg>mi</pkg> 
+<pkg>miceadds</pkg>
+<pkg>mixAK</pkg>
+<pkg>mixlm</pkg> 
+<pkg>MixMAP</pkg>
+<pkg>mlmRev</pkg>
+<pkg>multiDimBio</pkg>
+<pkg priority="core">nlme</pkg>
+<pkg>nonrandom</pkg>
+<pkg>pamm</pkg>
+<pkg>PBImisc</pkg> 
+<pkg priority="core">pbkrtest</pkg>
+<pkg>pedigreemm</pkg>
+<pkg>polytomous</pkg>
+<pkg>predictmeans</pkg>
+<pkg>prLogistic</pkg>
+<pkg>R2STATS</pkg>
+<pkg>refund</pkg>
+<pkg>robustlmm</pkg> 
+<pkg>rockchalk</pkg>  
+<pkg>RVAideMemoire</pkg>  
+<pkg>RVFam</pkg> 
+<pkg>spacom</pkg>
+<pkg>spaMM</pkg>
+<pkg>Surrogate</pkg>
+<pkg>TcGSA</pkg> 
+<pkg>xergm</pkg> 
+<pkg>ZeligMultilevel</pkg> 
+</packagelist>
+
+ <links>
+<ul>
+<li><a href="http://glmm.wikidot.com/faq">GLMM FAQ</a></li>
+<li>General Monte Carlo based Bayesian analyses:
+<ul>
+<li><a href="http://mcmc-jags.sourceforge.net/">JAGS</a></li>
+<li><a href="http://www.mrc-bsu.cam.ac.uk/software/bugs/">BUGS</a></li>
+<li><a href="http://mc-stan.org/">STAN</a></li>
 	</ul>
-      </li>
-    </ul>
-  </links>
+</li>
+</ul>
+</links>
 </CRANTaskView>
