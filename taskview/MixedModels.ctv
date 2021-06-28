@@ -48,15 +48,13 @@ Generalized linear mixed models (GLMMs) are multilevel extensions of generalized
 <pkg>MCMCglmm</pkg>,<pkg>rstanarm</pkg>, <pkg>brms</pkg> and <pkg>glmm</pkg>  fit GLMMs in a Bayesian MCMC framework. <pkg>MCMCglmm</pkg>  fits GLMMs using Markov chain Monte Carlo techniques. <pkg>rstanarm</pkg> fits GLMMs using Markov Chain Monte Carlo, variational approximations to the posterior distribution, or optimization. <pkg>brms</pkg> supports a wide range of distributions and link functions for fitting GLMMs. <pkg>glmm</pkg> fits GLMMs using Monte Carlo Likelihood Approximation. 
 </p>
 
- <h3>Fitting GLMM to binary response data</h3>
- These packages are used for fitting reponse data involving two outcomes: <pkg> glmmEP </pkg> and <pkg> GLMMRR </pkg>. <pkg> glmmEP </pkg> fits GLMMs using Expectation Propagation and supports only probit mixed models (mixed models with binary response) with one level of nesting. <pkg> GLMMRR </pkg> fits GLMMs for Binary Randomized Response Data
+<h3>Fitting GLMM to binary response data</h3>
 
 <p>
-      <bmb> does glmmfields belong in a spatial category? robustBLME in a robust category?</bmb> <mag> done </mag> 
-
+  These packages are used for fitting reponse data involving two outcomes: <pkg> glmmEP </pkg> and <pkg> GLMMRR </pkg>. <pkg> glmmEP </pkg> fits GLMMs using Expectation Propagation and supports only probit mixed models (mixed models with binary response) with one level of nesting. <pkg> GLMMRR </pkg> fits GLMMs for Binary Randomized Response Data
 </p>
 
-     <h3>Fitting nonlinear mixed models (NLMM)</h3> NLMMs are extentions of LMMs where the response variables are nonlinear functions of the fixed effect and/or random effect variables. <pkg>nlme</pkg><code>::nlme</code>, 
+<h3>Fitting nonlinear mixed models (NLMM)</h3> NLMMs are mixed models where the response variables are <strong>nonlinear</strong> functions of the fixed effects <pkg>nlme</pkg><code>::nlme</code>, 
  <pkg>lme4</pkg><code>::nlmer</code>, <pkg>brms</pkg>, <pkg> saemix</pkg> and <pkg>repeated</pkg> fit NLMMs. <pkg>nlme</pkg> and 
 <pkg>lme4</pkg> are the commonly used packages for fitting NLMMs.
 
@@ -68,20 +66,12 @@ Generalized linear mixed models (GLMMs) are multilevel extensions of generalized
   </p>
      
 
-   
-   <p>
-    <bmb> maybe a separate category for mixed quantile regression?</bmb> <MAG> A section has now been created for mixed quantile regression </MAG>
-
-  </p>
-
 <h3>Robust estimation of Mixed models</h3>
 The following packages fit various types of mixed models in a robust manner. 
 <pkg> robustlmm </pkg> implements a robust estimation method for LMMs. <pkg>robustBLME</pkg>  implements a bayesian robust fit for linear mixed models through weighted likelihood equations and approximate Bayesian computation.
 <pkg> CRTgeeDR </pkg> implements a doubly robust method for solving GEEs. It combines Inverse probability weighting (IPW) for handing missing data and augmentation (AUG) for imbalance in covariates.
  
   
-
-
 <h3>Fitting penalized mixed models</h3>
 The following packages fit penalized mixed models (mixed models involving panalty terms on the fixed effect or/and the random effect). <pkg> splmm </pkg> fits LMMs for high-dimensional data by imposing penalty on both the fixed effects and random effects for variable selection.
 

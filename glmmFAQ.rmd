@@ -200,7 +200,7 @@ Thierry Onkelinx has [a blog post](https://www.muscardinus.be/2018/09/number-ran
 > - in case $10 < n_s <20$ you should validate the model very cautious before using the output
 > - in case $n_s < 10$ it is safer to use the variable as a fixed effect.
 
-[Oberpriller et al. (2021)](10.1101/2021.05.03.442487) also performed a simulation study and found that while the estimates are similar for treating a variable with a small number of levels as fixed or random are similar, there was an impact on Type 1 and Type 2 error rates. They also found that the precise random effects structure (e.g., inclusion of random slopes) had a large impact on these properties.
+@oberpriller_fixed_2021 also performed a simulation study and found that while the estimates are similar for treating a variable with a small number of levels as fixed or random are similar, there was an impact on Type 1 and Type 2 error rates. They also found that the precise random effects structure (e.g., inclusion of random slopes) had a large impact on these properties.
 
 Also see [this thread](https://stat.ethz.ch/pipermail/r-sig-mixed-models/2010q2/003709.html) on the r-sig-mixed-models mailing list and [this question](https://stats.stackexchange.com/questions/37647/what-is-the-minimum-recommended-number-of-groups-for-a-random-effects-factor) on CrossValidated.
 
