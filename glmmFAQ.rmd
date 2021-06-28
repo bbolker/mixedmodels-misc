@@ -192,7 +192,17 @@ Also see a very thoughtful chapter in @hodges_richly_2016.
 
 Treating factors with small numbers of levels as random will in the best case  lead to very small and/or imprecise estimates of random effects; in the worst case it will lead to various numerical difficulties such as lack of convergence, zero variance estimates, etc.. (A small [simulation exercise](https:/rpubs.com/bbolker/4187) shows that at least the estimates of the standard deviation are downwardly biased in this case; it's not clear whether/how this bias would affect the point estimates of  fixed effects or their estimated confidence intervals.) In the classical method-of-moments approach these problems may not arise (because the sums of squares are always well defined as long as there are at least two units), but the underlying problems of lack of power are there nevertheless.
 
-Also see [this thread](https://stat.ethz.ch/pipermail/r-sig-mixed-models/2010q2/003709.html) on the r-sig-mixed-models mailing list.
+
+Thierry Onkelinx has [a blog post](https://www.muscardinus.be/2018/09/number-random-effect-levels/) with some simulations on the impact of the number of levels and concludes with a few recommendations for the number of levels of the grouping variable $n_s$:
+> - get $n_s > 1000$ levels when an accurate estimate of the random effect variance is crucial. E.g. when a single number will be use for power calculations.
+> - get $n_s > 100$ levels when a reasonable estimate of the random effect variance is sufficient. E.g. power calculations with sensitivity analysis of the random effect variance.
+> - get $n_s > 20$ levels for an experimental study
+> - in case $10 < n_s <20$ you should validate the model very cautious before using the output
+> - in case $n_s < 10$ it is safer to use the variable as a fixed effect.
+
+[Oberpriller et al. (2021)](10.1101/2021.05.03.442487) also performed a simulation study and found that while the estimates are similar for treating a variable with a small number of levels as fixed or random are similar, there was an impact on Type 1 and Type 2 error rates. They also found that the precise random effects structure (e.g., inclusion of random slopes) had a large impact on these properties.
+
+Also see [this thread](https://stat.ethz.ch/pipermail/r-sig-mixed-models/2010q2/003709.html) on the r-sig-mixed-models mailing list and [this question](https://stats.stackexchange.com/questions/37647/what-is-the-minimum-recommended-number-of-groups-for-a-random-effects-factor) on CrossValidated.
 
 ## Nested or crossed?
 
