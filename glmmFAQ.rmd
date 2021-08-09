@@ -342,8 +342,8 @@ Negative binomial models in `glmmTMB` and lognormal-Poisson models in `glmer` (o
 
 Underdispersion (much *less* variability than expected) is a less common problem than overdispersion.
 
-- mild overdispersion is sometimes ignored, since it tends in general to lead to conservative rather than anti-conservative results
-- quasi-likelihood (and the quasi-hack listed above) can handle under- as well as underdispersion
+- mild underdispersion is sometimes ignored, since it tends in general to lead to conservative rather than anti-conservative results
+- quasi-likelihood (and the quasi-hack listed above) can handle under- as well as overdispersion
 - some other solutions exist, but are less widely implemented
     - for distributions with a small range (e.g. litter sizes of large mammals), one can treat responses as ordinal (e.g. using the `ordinal` package, or `MCMCglmm` or `brms` for Bayesian solutions)
     - the COM-Poisson distribution and generalized Poisson distributions, implemented in `glmmTMB`, can handle underdispersion (J. Hilbe recommends the latter in [this CrossValidated answer](https://stats.stackexchange.com/questions/67385/what-is-the-appropriate-model-for-underdispersed-count-data)). (`VGAM` has a generalized Poisson distribution, but doesn't handle random effects.)
