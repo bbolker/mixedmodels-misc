@@ -1,0 +1,146 @@
+---
+title: "visualizing effects of stan covariance prior parameters"
+---
+
+[this](http://mc-stan.org/rstanarm/articles/glmer.html) is probably the best description.
+
+- `shape`, `scale`: distribution of *overall* variance ("football size" = trace = sum of eigenvalues = $J \tau^2$, where $J$ is the dimension/order of the cov matrix). The Gamma prior is on $\tau$.
+    - small → large scale: small to large overall mean *and* variance (mean=shape × scale; var = shape × scale^2)
+	- small → large shape: large coefficient of variation to small CV (var/mean^2 = CV^2 = 1/shape → shape = 1/CV^2)
+	
+- `concentration`: distribution of division of overall variance into components ("stretching along the axes").  Parameter of symmetric Dirichlet distribution. Small = very unequal distribution; 1 = 'flat' distribution; large = equal partitioning of variance across components
+- `regularization`: *something* about the rotation/orientation of the football (LKJ prior = measure on determinant of correlation matrix = measure of 'skinniness' of the football). small: identity matrix is most *unlikely* (trough); 1: 'flat' across correlation space; large: identity matrix is most likely ($\textrm{det}(\Omega)^{\zeta-1}$)
+
+I don't know, but I'm suspecting that concentration and regularization are *jointly* contributing to the non-sphericity:
+
+- A very small concentration parameter (variance tends to be concentrated in one component) combined with a large regularization parameter (independent correlation matrix) will give a shape that is elongated along some axes and shrunk along others.  
+- A very *large* concentration parameter (equal variance in all components) and a very *small* regularization parameter (correlation matrices with strong correlations) will still give a sphere (if the variance is equal, it doesn't really matter how we rotate it)
+- Maybe regularization is really only about rotation? (Although there's still something I don't understand - a strong (±1) correlation is skinny even if the original variances are equal?)
+
+Need to draw some pictures.
+
+Strategy: use `stan_lmer` with `prior_PD=TRUE` to generate prior samples from the prior distribution of covariance matrices. Draw them.  We probably only need a small number of iterations. (How do we do it without getting warnings? Do we care? `warmup=1000, iter = 1025` ?)
+
+```{r pkgs}
+library(rstanarm)
+library(tidyverse)
+theme_set(theme_bw())
+library(ellipse)
+library(cowplot)
+data("sleepstudy", package = "lme4")
+```
+
+Basic example using `sleepstudy` data (I think the data don't really matter for the application here, just the dimension of the random effect - and maybe the variance etc. of the terms? Don't know whether any autoscaling is done for the random effects terms ...)
+
+```{r run_stan,cache=TRUE}
+s1 <- stan_lmer(Reaction ~ 1 + (Days|Subject), data=sleepstudy,
+                prior_PD =TRUE,
+                prior_covariance = decov(shape=1, scale=1, regularization=1, concentration=1),
+                refresh=0  ## silent
+                )
+```
+
+```{r proc_stan}
+dd <- (s1$stanfit
+    %>% as.data.frame()
+    %>% as_tibble()
+    %>% select(starts_with("Sigma", ignore.case = FALSE))
+)
+```
+
+Compute covariance matrices → ellipses etc. → plot for this example
+
+```{r trans}
+mk_covmat <- function(v) {
+    n <- (sqrt(8*length(v)+1)-1)/2   ## matrix dim given lower-triangle (w/ diag) vector
+    m <- matrix(NA, n, n)
+    m[lower.tri(m, diag=TRUE)] <- v  ## set lower triangle
+    m[upper.tri(m)] <- t(m)[upper.tri(m)] ## symmetrize
+    return(m)
+}
+m <- mk_covmat(as.numeric(dd[1,]))
+e <- ellipse(m)
+nsamp <- 50
+res <- setNames(vector("list", nsamp), 1:nsamp)
+for (i in 1:nsamp) {
+    res[[i]] <- as_tibble(ellipse(mk_covmat(as.numeric(dd[i,]))))
+}
+res <- bind_rows(res, .id="row")
+ggplot(res, aes(x,y, group = row)) + geom_path(alpha=0.5)
+```
+
+```{r plotfun}
+#' @param ... arguments to decov()
+#' @param nsamp number of samples to save
+#' @param seed random-number seed for Stan sampling
+mk_covprior_2d <- function(..., nsamp = 50, seed = 101) {
+    ## set up dummy data set for model
+    d0 <- data.frame(y = 1:100, x1 = 1:100, x2 = 1:100,
+                     g = factor(rep(1:10, 10)))
+    ## run model (the only thing that should matter here is
+    ##  the dimensionality of the random effect ... ?
+    s1 <- stan_lmer(y ~ 1 + (1+x1|g), data=d0,
+                    prior_PD =TRUE,
+                    prior_covariance = decov(...),
+                    seed = seed,
+                    refresh=0  ## silent
+                    )
+    ## extract covariance parameters
+    dd <- (s1$stanfit
+        %>% as.data.frame()
+        %>% as_tibble()
+        %>% select(starts_with("Sigma", ignore.case = FALSE))
+    )
+    ## compute cov matrices and ellipses
+    cc <- ee <- setNames(vector("list", nsamp), 1:nsamp)
+    for (i in 1:nsamp) {
+        cc[[i]] <- mk_covmat(as.numeric(dd[i,]))
+        ee[[i]] <- as_tibble(ellipse(cc[[i]]))
+
+    }
+    ee <- bind_rows(ee, .id="row")
+    res <- list(fit = s1$stanfit,
+                samples = dd,
+                covmats = cc,
+                ellipses = ee,
+                gg = ggplot(ee, aes(x,y, group = row)) + geom_path(alpha=0.5))
+    class(res) <- c("covprior_sample", class(res))
+    return(res)
+}
+
+## return trace distribution; could also return determinant distribution?
+summary.covprior_sample <- function(x) {
+    eigs <- t(sapply(x$covmats,
+                     function(x) eigen(x, only.values = TRUE)$values))
+    ## compute trace, SD of eigenvalues, determinant?
+    tracevec <- rowSums(eigs)
+    list(trace = summary(tracevec))
+}
+```
+
+```{r examples, cache=TRUE}
+bigval <- 1e3
+p_basic <-   mk_covprior_2d()
+p_testscale <-   mk_covprior_2d(shape= bigval, scale = 1)
+p_fixvar <-  mk_covprior_2d(shape = bigval, scale = 1/bigval)
+p_fixvar2 <- mk_covprior_2d(shape = bigval, scale = 1/bigval, concentration = bigval)
+p_round <-   mk_covprior_2d(shape = bigval, scale = 1/bigval, concentration = bigval,
+                            regularization = bigval)
+p_list <- tibble::lst(p_basic, p_fixvar, p_fixvar2, p_round)
+```
+
+```{r plot_grid}
+plot_grid(plotlist=lapply(p_list, "[[", "gg"))
+```
+
+```{r summaries}
+print(do.call(rbind,sapply(p_list, summary)), digits=3)
+```
+
+## to do
+
+- figure out what's going on with shape/scale: why doesn't setting shape large, shape*scale = 1 fix the variance as expected ???  If $\tau \sim \textrm{Gamma}(\textrm{shape}, \textrm{scale})$ and we set `shape` large and `scale`=`1/shape` (so that the mean is 1 and the CV is small), we should get trace = sum of eigenvalues = $J\tau^2$ = 2. Instead we get
+
+```{r p_fixvar_sum}
+summary(p_fixvar)
+```

@@ -1,0 +1,209 @@
+---
+title: "Random Effects Plotting for Mixed Effects Models Fitted with glmmTMB"
+author: "Isabella Ghement"
+date: "24/07/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**note**: at present this requires the `ignore_stuff` branch of `glmmTMB` (`remotes::install_github("glmmTMB/glmmTMB/glmmTMB@ignore_stuff")`)
+
+```{r pkgs, message=FALSE}
+## general manipulation
+library(dplyr)
+## graphics
+library(ggplot2); theme_set(theme_bw())
+library(qqplotr) ## for bands on Normal probability plots
+## fitting packages
+library(glmmTMB)
+library(nlme)
+library(lme4)
+library(MCMCglmm)
+## extraction
+library(broom.mixed)
+
+```
+
+## Fit Mixed Effects Model
+To illustrate plotting the predicted values of the random effects (and corresponding 95% uncertainty intervals) obtained from a mixed effects model fitted with `glmmTMB`, we consider the following model:
+
+```{r model, warning = FALSE}
+
+data(Orthodont,package="nlme")
+## glmmTMB hiccups unless age is centered (scaling is harmless)
+oo <- transform(Orthodont, c_age = drop(scale(age)))
+form <- distance ~ c_age*Sex + (c_age | Subject)
+fit_list <- list(
+    lmer = lmer(form, data = oo),
+    glmmTMB = glmmTMB(form, data = oo),
+    lme = lme(distance ~ c_age*Sex, random = ~c_age|Subject, data = oo),
+    MCMCglmm = MCMCglmm(distance ~ c_age*Sex, random = ~us(1 + c_age):Subject,
+                        verbose = FALSE, data = oo, pr = TRUE,
+                        prior = list(G=list(Subject=list(V=diag(2), nu =0.1))))
+)
+tt <- purrr::map_dfr(fit_list, tidy, effect = "ran_vals", .id = "pkg")
+```
+
+```{r}
+t_glmmTMB <- dplyr::filter(tt, pkg == "glmmTMB")
+gg0 <- ggplot(t_glmmTMB, aes(x=estimate, y=level)) +
+    geom_pointrange(aes(xmin= estimate-2*std.error, xmax = estimate + 2*std.error)) +
+    facet_wrap(~term, scale="free_x")
+print(gg0)
+```
+
+```{r}
+caterpillar_levels <- function(x, order_term = "(Intercept)") {
+    lev_order <- (x
+        %>% filter(term==order_term)
+        %>% group_by(level)
+        %>% summarise(across(estimate, mean, na.rm = TRUE))
+        %>% arrange(estimate)
+        %>% pull(level)
+    )
+    x <- dplyr::mutate(x, across(level, factor, levels = lev_order))
+    return(x)
+}
+gg0 %+% caterpillar_levels(t_glmmTMB)
+```
+
+We can *almost*  
+
+```{r grp1, eval = FALSE}
+gg0 %+% caterpillar_levels(tt) + aes(colour=pkg, shape=pkg)
+```
+
+```{r grp2}
+pd <- position_dodge(width =0.5)
+gg1 <- ggplot(caterpillar_levels(tt), aes(x=estimate, y=level,
+                                          colour = pkg, shape = pkg)) +
+    geom_point(position = pd) +
+    geom_linerange(aes(xmin= estimate-2*std.error, xmax = estimate + 2*std.error),
+               position = pd) +
+    facet_wrap(~term, scale="free_x")
+print(gg1)
+```
+
+## Compute Random Effects 
+
+Once we fit the mixed effects model using the `glmmTMB` package, we can extract the 
+predicted random effects using the `ranef()` function from this package. Because the 
+fitted model included random intercepts and random slopes for age, `ranef()` will return
+predicted values for these quantities in two columns contained in the Subject component 
+of the object re_fm2. The two columns are titled (Intercept) and age, respectively. 
+
+```{r effects1}
+fm2 <- fit_list$glmmTMB
+re_fm2 <- glmmTMB::ranef(fm2, condVar = TRUE)
+str(re_fm2)
+```
+
+Even though we applied the `ranef()` function to the fitted model fm2 using the option
+`condVar = TRUE`, the conditional standard deviations associated with the predicted 
+random effects are hidden in the belly of the `re_fm2` object.  These conditional 
+standard deviations - also known as the "posterior standard deviations" - can be accessed by transforming the `re_fm2` object to a data frame with the as.data.frame() command. 
+The *NaNs produced* warning produced by R after executing the `ranef()` command stems from its inability to compute conditional standard deviations associated with the random slopes of 
+age due to the fact that there isn't much variation among these random slopes. 
+
+As noted by @bmwiernik on Twitter:
+
+>"glmmTMB estimates its models with (restricted) maximum likelihood, which by definition is looking for the mode of the distribution. A core assumption of (RE)ML (like w/ Laplace approx) is normality of parameters."
+
+
+```{r effects2}
+dfre_fm2 <- as.data.frame(x = re_fm2)
+dfre_fm2 
+```
+
+The data frame version of the object `re_fm2`, titled `re_fm2`, contains several columns, as follows.
+
+The **component** column specifies the model component to which the predicted random effects 
+and their associated conditional standard deviations refer to. For the current model, this
+**component** column contains the value *cond* throughout - shortcut for the conditional mean 
+component of the model, which is modelled on the scale given by the specified link function. 
+(The current model fm2 uses a gaussian family and the default identity link function.)
+Mixed effects models with both a conditional mean component and a zero inflation component will contain the values *cond* and *zi* in the **component** column if both of these model components include random effects in their specification. 
+
+The **grp** column specifies the random grouping variable(s) included in the model. The current model, fm2, includes a single grouping variable - Subject - which is used to populate the entire 
+**grp** column. 
+
+The **term** column specifies the random intercepts and the random slope(s) allowed for in the model component(s) corresponding to the fitted model. The random intercepts are labeled as (Intercept) and the random slope(s) are labelled by the corresponding predictor variable - in this case, age.  
+
+The **grp** column lists the actual levels of the random grouping variable(s) present in the data. 
+Since the current model, fm2, only includes Subject as a random grouping variable, the **grp** lists the subject IDs. Each subject gets their own predicted value for the random intercept and random slope of age.  
+
+The **condval** column lists the predicted values of the random intercepts and random slopes of age 
+corresponding to the subjects included in the model. The **condsd** colum lists the associated conditional standard deviations.  These two pieces of information can be used to construct 95% uncertainty intervals for the random intercept and random slope corresponding to a subject via the formula:  **condval ± 2 condsd**.  
+
+
+## Caterpillar and Dot Plots of Predicted Random Effects 
+
+The predicted random effects and their associated 95% uncertainty intervals can be plotted using the R code below. 
+
+For the random intercepts, where conditional standard deviations are available based on 
+the fitted model fm2, 95% uncertainty intervals can be added using the geom_errorbarh() function in the ggplot2 package.  The resulting plot is a *caterpillar plot* which shows the levels of the 
+random grouping factor Subject on its vertical axis and the predicted values of the 
+random intercepts (along with corresponding 95% uncertainty intervals) on its horizontal 
+axis. In this plot, the levels of Subject are ordered according to increasing values of the 
+predicted random intercepts. The plot can be used, for example, to detect subjects with extreme 
+values of the predicted random effects.  
+
+For the random slopes, where conditional standard deviations are not available based on 
+the fitted model fm2, 95% uncertainty intervals cannot be added. 
+The resulting plot is a *dot plot*.
+
+```{r plot, echo=TRUE, warning = FALSE, message = FALSE}
+plot_re <- dfre_fm2 %>% 
+    ## filter(component %in% "cond", grpvar %in% "Subject") %>% 
+    ggplot(aes(y=grp, x = condval)) +
+    geom_point(aes(y = grp, colour = grp), size=3) + 
+    geom_errorbarh(aes(xmin = condval - 2*condsd,
+                       xmax = condval + 2*condsd,
+                       colour = grp), 
+                   height = 0, size = 0.7) + 
+    facet_wrap(~ term, ncol = 2) + 
+    ylab("Subject\n") + 
+    xlab("\nConditional Mode ± 2 * Conditional Standard Deviation") + 
+    ggtitle("Predicted Random Intercept and Slope of age Effects Associated with Subject") + 
+    geom_vline(xintercept = 0, linetype = 2, colour="grey", size = 0.7) + 
+    theme(legend.position = "none")
+plot_re
+```
+
+
+## Normal Probability Plots of Predicted Random Effects 
+
+To assess the normality of the random intercepts and random slopes, we can construct 
+normal probability plots using R code such as the one below. This code relies on the 
+R package `qqplotr` to add a normal confidence band to the normal probability plot. 
+For details on `qqplotr`, see: 
+
+<https://cran.r-project.org/web/packages/qqplotr/vignettes/introduction.html>.  
+
+```{r qqplot, echo=TRUE, warning = FALSE, message = FALSE}
+library(qqplotr)
+
+dfre_fm2 %>% 
+ filter(component %in% "cond", 
+        grpvar %in% "Subject") %>% 
+ ggplot(aes(sample = condval)) +
+    stat_qq_band(colour = "lightblue", fill = "lightblue", alpha = 0.5) +
+    stat_qq_line() +
+    stat_qq_point() +
+    facet_wrap(~ term, scale = "free") + 
+    labs(x = "Theoretical Quantiles", y = "Sample Quantiles of Predicted Random Effects")    
+
+```
+
+Or with the tidied data:
+
+```{r qqplot2}
+ggplot(t_glmmTMB, aes(sample = estimate)) +
+    stat_qq_band(colour = "lightblue", fill = "lightblue", alpha = 0.5) +
+    stat_qq_line() +
+    stat_qq_point() +
+    facet_wrap(~ term, scale = "free")
+```
