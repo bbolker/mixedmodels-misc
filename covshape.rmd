@@ -21,7 +21,7 @@ Need to draw some pictures.
 
 Strategy: use `stan_lmer` with `prior_PD=TRUE` to generate prior samples from the prior distribution of covariance matrices. Draw them.  We probably only need a small number of iterations. (How do we do it without getting warnings? Do we care? `warmup=1000, iter = 1025` ?)
 
-```{r pkgs}
+```{r pkgs, message=FALSE}
 library(rstanarm)
 library(tidyverse)
 theme_set(theme_bw())
@@ -73,7 +73,8 @@ ggplot(res, aes(x,y, group = row)) + geom_path(alpha=0.5)
 #' @param ... arguments to decov()
 #' @param nsamp number of samples to save
 #' @param seed random-number seed for Stan sampling
-mk_covprior_2d <- function(..., nsamp = 50, seed = 101) {
+#' @param title_width width of plot title (NA to suppress plot title)
+mk_covprior_2d <- function(..., nsamp = 50, seed = 101, title_width = 25) {
     ## set up dummy data set for model
     d0 <- data.frame(y = 1:100, x1 = 1:100, x2 = 1:100,
                      g = factor(rep(1:10, 10)))
@@ -103,7 +104,22 @@ mk_covprior_2d <- function(..., nsamp = 50, seed = 101) {
                 samples = dd,
                 covmats = cc,
                 ellipses = ee,
-                gg = ggplot(ee, aes(x,y, group = row)) + geom_path(alpha=0.5))
+                gg = (ggplot(ee, aes(x,y, group = row))
+                    + geom_path(alpha=0.5)
+                    + coord_equal()
+                    + labs(x="", y="")
+                )
+                )
+    if (!is.na(title_width)) {
+        args <- list(...)
+        dca <- formals(rstanarm::decov)
+        for (n in names(args)) {
+            dca[[n]] <- args[[n]]
+        }
+        t_str <- paste(names(dca), dca, sep="=", collapse=", ")
+        t_str <- paste(strwrap(t_str, title_width), collapse = "\n")
+        res$gg <- res$gg+ ggtitle(t_str)
+    }
     class(res) <- c("covprior_sample", class(res))
     return(res)
 }
@@ -118,7 +134,8 @@ summary.covprior_sample <- function(x) {
 }
 ```
 
-```{r examples, cache=TRUE}
+```{r examples}
+## cache = TRUE, depends.on = "plotfun"} 
 bigval <- 1e3
 p_basic <-   mk_covprior_2d()
 p_testscale <-   mk_covprior_2d(shape= bigval, scale = 1)
@@ -126,11 +143,16 @@ p_fixvar <-  mk_covprior_2d(shape = bigval, scale = 1/bigval)
 p_fixvar2 <- mk_covprior_2d(shape = bigval, scale = 1/bigval, concentration = bigval)
 p_round <-   mk_covprior_2d(shape = bigval, scale = 1/bigval, concentration = bigval,
                             regularization = bigval)
-p_list <- tibble::lst(p_basic, p_fixvar, p_fixvar2, p_round)
+p_reg <- mk_covprior_2d(shape = bigval, scale = 1/bigval,
+                     regularization = bigval)
+p_list <- tibble::lst(p_basic, p_fixvar, p_fixvar2, p_round, p_reg)
 ```
 
-```{r plot_grid}
-plot_grid(plotlist=lapply(p_list, "[[", "gg"))
+```{r plot_grid, fig.width=8, fig.height=8}
+plot_list <- lapply(p_list,
+                    function(x) x$gg + expand_limits(x=c(-400,400),
+                                                     y=c(-400,400)))
+plot_grid(plotlist = plot_list)
 ```
 
 ```{r summaries}
@@ -144,3 +166,4 @@ print(do.call(rbind,sapply(p_list, summary)), digits=3)
 ```{r p_fixvar_sum}
 summary(p_fixvar)
 ```
+
