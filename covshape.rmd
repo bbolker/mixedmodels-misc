@@ -137,6 +137,7 @@ summary.covprior_sample <- function(x) {
 ```{r examples}
 ## cache = TRUE, depends.on = "plotfun"} 
 bigval <- 1e3
+v_bigval <- 1e4
 p_basic <-   mk_covprior_2d()
 p_testscale <-   mk_covprior_2d(shape= bigval, scale = 1)
 p_fixvar <-  mk_covprior_2d(shape = bigval, scale = 1/bigval)
@@ -145,13 +146,19 @@ p_round <-   mk_covprior_2d(shape = bigval, scale = 1/bigval, concentration = bi
                             regularization = bigval)
 p_reg <- mk_covprior_2d(shape = bigval, scale = 1/bigval,
                      regularization = bigval)
-p_list <- tibble::lst(p_basic, p_fixvar, p_fixvar2, p_round, p_reg)
+p_small <-   mk_covprior_2d(shape = bigval, scale = 1/(v_bigval),
+                            concentration = bigval,
+                            regularization = bigval)
 ```
 
-```{r plot_grid, fig.width=8, fig.height=8}
+```{r plot_grid, fig.width=10, fig.height=8}
+p_list <- tibble::lst(p_basic, p_fixvar, p_fixvar2, p_round, p_reg, p_small)
+
+maxval <- max(purrr:::map_dbl(p_list,
+                          ~ max(abs(.$ellipses$x), abs(.$ellipses$y))))
 plot_list <- lapply(p_list,
-                    function(x) x$gg + expand_limits(x=c(-400,400),
-                                                     y=c(-400,400)))
+                    function(x) x$gg + expand_limits(x=c(-maxval, maxval),
+                                                     y=c(-maxval, maxval)))
 plot_grid(plotlist = plot_list)
 ```
 
