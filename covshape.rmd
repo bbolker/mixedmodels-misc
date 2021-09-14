@@ -136,8 +136,8 @@ summary.covprior_sample <- function(x) {
 
 ```{r examples}
 ## cache = TRUE, depends.on = "plotfun"} 
-bigval <- 1e3
-v_bigval <- 1e4
+bigval <- 1e4
+v_bigval <- 5e4
 p_basic <-   mk_covprior_2d()
 p_testscale <-   mk_covprior_2d(shape= bigval, scale = 1)
 p_fixvar <-  mk_covprior_2d(shape = bigval, scale = 1/bigval)
