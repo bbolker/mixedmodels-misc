@@ -464,9 +464,9 @@ In particular, binomial `glmer()` models with complete separation can lead to
 
 - `summary(g1 <- glm(fixed_form, family=binomial, data=...))` will show one or more of the following symptoms:
      - warnings that `glm.fit: fitted probabilities numerically 0 or 1 occurred`
-     - parameter estimates of large magnitude (e.g. `any(abs(g1)>8)`, assuming that predictors are either categorical or scaled to have standard deviations of $\approx 1$)
+     - parameter estimates of large magnitude (e.g. `any(abs(g1$coefficients)>8)`, assuming that predictors are either categorical or scaled to have standard deviations of $\approx 1$)
 	 - extremely large Wald standard errors, and large p-values (*Hauck-Donner effect*)
-	 - the `brglm2` package has a method for detecting complete separation: `library("brglm2"); glm(fixed_form, data = ..., family = binomial, method="detect_separation")`. This should say whether complete separation occurs, and in which (combinations of) variables, e.g.
+	 - the `detectseparation` package has a method for detecting complete separation: `library("detectseparation"); update(g1,method="detect_separation")`. This should say whether complete separation occurs, and in which (combinations of) variables, e.g.
 
 ```
 Separation: TRUE 
