@@ -53,7 +53,7 @@ NLMMs incorporate arbitrary nonlinear responses that cannot be accommodated in t
 
 ### Generalized estimating equations (GEEs)
 
-GEEs represent an alternative approach to fitting clustered, longitudinal, or otherwise correlated data; GEE fits produce estimates of the *marginal* effects (averaged across the group-level variation) rather than *conditional* effects (conditioned on group-level information) `r pkg(" wgeesel")`, `r pkg("geesmv")`, `r pkg("geepack", priority = "core")`, `r pkg("gee")`, `r pkg("multgee ")`  and `r pkg("geeM")`
+GEEs represent an alternative approach to fitting clustered, longitudinal, or otherwise correlated data; GEE fits produce estimates of the *marginal* effects (averaged across the group-level variation) rather than *conditional* effects (conditioned on group-level information) `r pkg(" wgeesel")`, `r pkg("geesmv")`, `r pkg("geepack", priority = "core")`, `r pkg("gee")`, `r pkg("multgee")`  and `r pkg("geeM")`
 
 ## Specialized models
 
@@ -63,10 +63,10 @@ GEEs represent an alternative approach to fitting clustered, longitudinal, or ot
 - **Censored data** (responses : `r pkg("brms")` (general), `r pkg("lmec")` (censored Gaussian), `r pkg("ARpLMEC")` (censored Gaussian, autoregressive errors) and `r pkg("tlmec")` (censored Gaussian and t)
 - **Ordinal-valued responses**: `r pkg("ordinal")`, `r pkg("cplm")`
 - **Zero-inflated models**: (frequentist) `r pkg("glmmTMB")`, `r pkg("cplm")`; (Bayesian): `r pkg("MCMCglmm")`, `r pkg("brms")`.
-- **Quantile regression**: `r pkg("lqmm ")`, `r pkg("qrLM")`,`r pkg("qrNLMM")`
+- **Quantile regression**: `r pkg("lqmm")`, `r pkg("qrLM")`,`r pkg("qrNLMM")`
 - **Phylogenetic/pedigree-based models**: `r pkg("pedigreemm")`, `r pkg("coxme")`, `r pkg("pez")`, `r pkg("kinship2")`
 - **Survival analysis** (random effects are often referred to *frailty terms* in survival-analysis contexts): `r pkg("coxme")`
-- **Spatial models**: [INLA](http://www.r-inla.org/home), `r pkg("nlme")` (with `corStruct` functions), `r pkg("CARBayesST")`, `r pkg("sphet ")`, `r pkg("spind")`, `r pkg("spaMM")`, `r pkg("glmmfields")`, `r pkg("glmmTMB")` (brms?) (See also "Handling and Analyzing Spatio-Temporal Data Task View") 
+- **Spatial models**: [INLA](http://www.r-inla.org/home), `r pkg("nlme")` (with `corStruct` functions), `r pkg("CARBayesST")`, `r pkg("sphet")`, `r pkg("spind")`, `r pkg("spaMM")`, `r pkg("glmmfields")`, `r pkg("glmmTMB")` (brms?) (See also "Handling and Analyzing Spatio-Temporal Data Task View") 
 - **Differential equations**: `r pkg("mixedsde")`, `r pkg("nlmeODE")` `r pkg("PSM")`
 - **Large data sets**: `r pkg("mgcv")` (`bam()`)
 - **Multinomial responses**: FIXME
@@ -77,11 +77,11 @@ GEEs represent an alternative approach to fitting clustered, longitudinal, or ot
 
 ### Model diagnostics
 
-`r pkg("HLMdiag ")`, `r pkg("rockchalk")`, `r pkg("influence.ME")`, `r pkg("aods3")` (overdispersion), `r pkg("DHARMa")`, `r pkg("performance")` 
+`r pkg("HLMdiag")`, `r pkg("rockchalk")`, `r pkg("influence.ME")`, `r pkg("aods3")` (overdispersion), `r pkg("DHARMa")`, `r pkg("performance")` 
 
 ### Summary statistics
 
-`r pkg("iccbeta ")` (intraclass correlation), `r pkg("r2glmm")` (R^2 and partial R^2),
+`r pkg("iccbeta")` (intraclass correlation), `r pkg("r2glmm")` (R^2 and partial R^2),
 `r pkg("HiLMM")` (heritability), `r pkg("cAIC4")` (conditional AIC) , `r pkg("blmeco")` (WAIC)
 
 ### Derivatives
@@ -92,7 +92,7 @@ GEEs represent an alternative approach to fitting clustered, longitudinal, or ot
 
 ## Datasets
 
-`r pkg("mlmRev")`, `r pkg("lme4")`, `r pkg("nlme")`, `r pkg("SASmixed")`, `r pkg("StroupGLMM")`, `r pkg("blmeco")`, `r pkg("nlmeU")`, `r pkg("VetResearchLMM ")` 
+`r pkg("mlmRev")`, `r pkg("lme4")`, `r pkg("nlme")`, `r pkg("SASmixed")`, `r pkg("StroupGLMM")`, `r pkg("blmeco")`, `r pkg("nlmeU")`, `r pkg("VetResearchLMM")` 
 
 
 ## Model presentation and prediction
@@ -117,7 +117,7 @@ provide convenient frameworks for less experienced users to fit and interpret mi
 
 ## Inference
 
-`r pkg("pbkrtest")`, `r pkg("afex")` `r pkg("varTestnlme ")`, `r pkg("lmeVarComp ")`, `r pkg("RLRLsim")`, `r pkg("car")` (`Anova()`), `r pkg("CLME")`, `r pkg("lmertest")`
+`r pkg("pbkrtest")`, `r pkg("afex")` `r pkg("varTestnlme")`, `r pkg("lmeVarComp")`, `r pkg("RLRLsim")`, `r pkg("car")` (`Anova()`), `r pkg("CLME")`, `r pkg("lmertest")`
 
 ## Bootstrapping
 
@@ -132,27 +132,25 @@ provide convenient frameworks for less experienced users to fit and interpret mi
 
 ### Bioinformatic applications
 
-These packages are useful mixed model packages applied in Bioinformatic: `r pkg("MCMC.qpcr")`,`r pkg("CpGassoc")`, `r pkg("QGglmm ")` and  `r pkg("Phxnlme ")`. 
+(FIXME: refer to/check bioconductor?)
 
-  `r pkg("MCMC.qpcr")` analyses Quantitative RT-PCR data using GLMMs based on lognormal-Poisson error distribution, fitted using MCMC. `r pkg("CpGassoc")` can handle mixed effects models with chip or batch entering the model as a random intercept.
+`r pkg("MCMC.qpcr")`,`r pkg("CpGassoc")`, `r pkg("QGglmm")`, `r pkg("Phxnlme")`, `r pkg("mlmm.gwas")`
 
-`r pkg("QGglmm ")` estimates Quantitative Genetics Parameters from Generalised Linear Mixed Models. `r pkg("Phxnlme ")` runs Phoenix NLME and Perform Post-Processing
-Calls 'Phoenix NLME' (non-linear mixed effects), a population modeling and simulation software, for pharmacokinetics and pharmacodynamics analyses. 
 
 ### Factor analytic, latent variable, and structural equation models
 
 Factor analytic models study variabilities in observed, correlated variables using unobserved variables known as factors. Latent variable models relates a set of observable variables (called manifest/response variables) to a set of latent variables (unobserved variables that are assumed to influence the response variables). Structural equation models combine a mixture of mathematical models, computer algorithms, and statistical methods in fitting networks of constructs to data.  
 
- The following packages are applied in factor analytic, latent variable, and structural equation modelling:  `r pkg("lavaan")`, `r pkg("nlmm ")`,`r pkg("sem")`, `r pkg("piecewiseSEM ")`, `r pkg("semtree")`, `r pkg("semPLS")` and  `r pkg("blavaan")` . 
+ The following packages are applied in factor analytic, latent variable, and structural equation modelling:  `r pkg("lavaan")`, `r pkg("nlmm")`,`r pkg("sem")`, `r pkg("piecewiseSEM")`, `r pkg("semtree")`, `r pkg("semPLS")` and  `r pkg("blavaan")` . 
 
  
  
-`r pkg("lavaan")` fits a variety of latent variable models, including confirmatory factor analysis, structural equation and latent growth curve models.  `r pkg("nlmm ")` fit linear mixed models based on convolutions of the generalized Laplace (GL) distribution. 
+`r pkg("lavaan")` fits a variety of latent variable models, including confirmatory factor analysis, structural equation and latent growth curve models.  `r pkg("nlmm")` fit linear mixed models based on convolutions of the generalized Laplace (GL) distribution. 
  
- `r pkg("sem")`  conatins functions for fitting general linear structural
+ `r pkg("sem")`  contains functions for fitting general linear structural
 equation models with observed and latent variables. `r pkg("semtree")` constructs decision trees and forests to Structural Equation Models (SEM).
 
-`r pkg("piecewiseSEM ")` implements piecewise structural equation modeling from a single list of structural equations and handles non-linear, latent, and composite variables, standardized coefficients, query-based prediction and indirect effects.  `r pkg("semPLS")` fits structural equation models using partial least squares (PLS).
+`r pkg("piecewiseSEM")` implements piecewise structural equation modelling from a single list of structural equations and handles non-linear, latent, and composite variables, standardized coefficients, query-based prediction and indirect effects.  `r pkg("semPLS")` fits structural equation models using partial least squares (PLS).
 
 `r pkg("blavaan")` fits a variety of Bayesian latent variable models, including confirmatory factor analysis, structural equation models, and latent growth curve models. 
 
@@ -165,9 +163,9 @@ equation models with observed and latent variables. `r pkg("semtree")` construct
      
 #### Other
 
-The following are other packages applied in mixed models. `r pkg("LMest")`; `r pkg("lmeNBBayes ")` `r pkg("MarginalMediation")`
-`r pkg("skewlmm ")`  fits scale mixture of skew-normal linear mixed models using  expectation-maximization (EM) 
-`r pkg("mvglmmRank ")` implements multivariate Generalized Linear Mixed Models for ranking sport teams ; `r pkg("mlmm.gwas")` implements multi-locus mixed model (MLMM) for  Genome-Wide Association Study (an area of study that detects common traits in a population and associations between genetic variants.). `r pkg(" glmertree ")` costructs tree models using GLMM or LMM for recursive tree splits. `r pkg("lmeNB")` fits longitudinal  count variables with a negative binomial mixed-effect regression model and uses maximum likelihood methods to estimate the  fixed effect parameters.
+The following are other packages applied in mixed models. `r pkg("LMest")`; `r pkg("lmeNBBayes")` `r pkg("MarginalMediation")`
+`r pkg("skewlmm")`  fits scale mixture of skew-normal linear mixed models using  expectation-maximization (EM) 
+`r pkg("mvglmmRank")` implements multivariate Generalized Linear Mixed Models for ranking sport teams ;  implements multi-locus mixed model (MLMM) for  Genome-Wide Association Study (an area of study that detects common traits in a population and associations between genetic variants.). `r pkg(" glmertree")` constructs tree models using GLMM or LMM for recursive tree splits. `r pkg("lmeNB")` fits longitudinal  count variables with a negative binomial mixed-effect regression model and uses maximum likelihood methods to estimate the  fixed effect parameters.
    
 ## Links
 
