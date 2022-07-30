@@ -7,7 +7,11 @@ version: 2022-07-29
 source: https://github.com/bbolker/mixedmodels-misc/blob/master/taskview/MixedModels.md
 ---
 
+**Authors**: Ben Bolker, Michael Agronah, ??
+
 *Mixed models* are a broad class of statistical models used to analyze data where observations can be assigned to discrete groups, and where the parameters describing the differences are treated as *random variables*. They are also variously described as *multilevel*, *hierarchical*, or *repeated measures* models; *longitudinal* data are often analyzed in this framework as well.  Mixed models can be fitted in either frequentist or Bayesian frameworks.
+
+**Scope**: only including models that incorporate *continuous* (usually although not always Gaussian) latent variables; this excludes packages that handle hidden Markov Models, finite (discrete) mixture models, latent Markov models, etc..
 
 ## Basic model fitting
 
@@ -66,14 +70,15 @@ GEEs represent an alternative approach to fitting clustered, longitudinal, or ot
 - **Quantile regression**: `r pkg("lqmm")`, `r pkg("qrLM")`,`r pkg("qrNLMM")`
 - **Phylogenetic/pedigree-based models**: `r pkg("pedigreemm")`, `r pkg("coxme")`, `r pkg("pez")`, `r pkg("kinship2")`
 - **Survival analysis** (random effects are often referred to *frailty terms* in survival-analysis contexts): `r pkg("coxme")`
-- **Spatial models**: [INLA](http://www.r-inla.org/home), `r pkg("nlme")` (with `corStruct` functions), `r pkg("CARBayesST")`, `r pkg("sphet")`, `r pkg("spind")`, `r pkg("spaMM")`, `r pkg("glmmfields")`, `r pkg("glmmTMB")` (brms?) (See also "Handling and Analyzing Spatio-Temporal Data Task View") 
-- **Differential equations**: `r pkg("mixedsde")`, `r pkg("nlmeODE")` `r pkg("PSM")`
+- **Spatial models**: [INLA](http://www.r-inla.org/home), `r pkg("nlme")` (with `corStruct` functions), `r pkg("CARBayesST")`, `r pkg("sphet")`, `r pkg("spind")`, `r pkg("spaMM")`, `r pkg("glmmfields")`, `r pkg("glmmTMB")`, `r pkg("inlabru")` (spatial point processes via log-Gaussian Cox processes) (brms?) (See also `r view("Handling and Analyzing Spatio-Temporal Data")`)
+- **Differential equations**: `r pkg("mixedsde")`, `r pkg("nlmeODE")` `r pkg("PSM")`: see also `r view("Differential Equations")`
 - **Large data sets**: `r pkg("mgcv")` (`bam()`)
 - **Multinomial responses**: FIXME
+- **Longitudinal data** (FIXME, explain): `r pkg("lmeNB")`
+- **Factor analytic, latent variable, and structural equation modelling**:  `r pkg("lavaan")`, `r pkg("nlmm")`,`r pkg("sem")`, `r pkg("piecewiseSEM")`, `r pkg("semtree")`, `r pkg("semPLS")` and  `r pkg("blavaan")` . (See also the `r view("Psychometrics")` task view)
+- **Tree-based models**: `r pkg("glmertree")`, `r pkg("semtree")`
 
 ## Model diagnostics and summary statistics
-
-(See also "Inference")
 
 ### Model diagnostics
 
@@ -136,39 +141,19 @@ provide convenient frameworks for less experienced users to fit and interpret mi
 
 `r pkg("MCMC.qpcr")`,`r pkg("CpGassoc")`, `r pkg("QGglmm")`, `r pkg("Phxnlme")`, `r pkg("mlmm.gwas")`
 
-
-### Factor analytic, latent variable, and structural equation models
-
-Factor analytic models study variabilities in observed, correlated variables using unobserved variables known as factors. Latent variable models relates a set of observable variables (called manifest/response variables) to a set of latent variables (unobserved variables that are assumed to influence the response variables). Structural equation models combine a mixture of mathematical models, computer algorithms, and statistical methods in fitting networks of constructs to data.  
-
- The following packages are applied in factor analytic, latent variable, and structural equation modelling:  `r pkg("lavaan")`, `r pkg("nlmm")`,`r pkg("sem")`, `r pkg("piecewiseSEM")`, `r pkg("semtree")`, `r pkg("semPLS")` and  `r pkg("blavaan")` . 
-
- 
- 
-`r pkg("lavaan")` fits a variety of latent variable models, including confirmatory factor analysis, structural equation and latent growth curve models.  `r pkg("nlmm")` fit linear mixed models based on convolutions of the generalized Laplace (GL) distribution. 
- 
- `r pkg("sem")`  contains functions for fitting general linear structural
-equation models with observed and latent variables. `r pkg("semtree")` constructs decision trees and forests to Structural Equation Models (SEM).
-
-`r pkg("piecewiseSEM")` implements piecewise structural equation modelling from a single list of structural equations and handles non-linear, latent, and composite variables, standardized coefficients, query-based prediction and indirect effects.  `r pkg("semPLS")` fits structural equation models using partial least squares (PLS).
-
-`r pkg("blavaan")` fits a variety of Bayesian latent variable models, including confirmatory factor analysis, structural equation models, and latent growth curve models. 
-
-
- (See also "Psychometrics task view") 
-
 #### Power analysis
 
 `r pkg("longpower")`, `r pkg("clusterPower")`, `r pkg("powerlmm")`, `r pkg("pass.lme")`.
      
 #### Other
 
-The following are other packages applied in mixed models. `r pkg("LMest")`; `r pkg("lmeNBBayes")` `r pkg("MarginalMediation")`
+The following are other packages applied in mixed models. ; `r pkg("lmeNBBayes")` `r pkg("MarginalMediation")`
 `r pkg("skewlmm")`  fits scale mixture of skew-normal linear mixed models using  expectation-maximization (EM) 
-`r pkg("mvglmmRank")` implements multivariate Generalized Linear Mixed Models for ranking sport teams ;  implements multi-locus mixed model (MLMM) for  Genome-Wide Association Study (an area of study that detects common traits in a population and associations between genetic variants.). `r pkg(" glmertree")` constructs tree models using GLMM or LMM for recursive tree splits. `r pkg("lmeNB")` fits longitudinal  count variables with a negative binomial mixed-effect regression model and uses maximum likelihood methods to estimate the  fixed effect parameters.
+`r pkg("mvglmmRank")` implements multivariate Generalized Linear Mixed Models for ranking sport teams  constructs tree models using GLMM or LMM for recursive tree splits.
    
 ## Links
 
 - [R-SIG-mixed-models mailing list](https://stat.ethz.ch/mailman/listinfo/r-sig-mixed-models) for discussion of mixed-model-related questions, course announcements, etc.. 
 - [r+mixed-models tags on Stack Overflow](http://stackoverflow.com/questions/tagged/r+mixed-models)
 - [Cross Validated](http://stats.stackexchange.com)
+- [INLA](http://www.r-inla.org/home)
