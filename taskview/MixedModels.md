@@ -149,7 +149,7 @@ provide convenient frameworks for less experienced users to fit and interpret mi
 
 The following are other packages applied in mixed models. ; `r pkg("lmeNBBayes")` `r pkg("MarginalMediation")`
 `r pkg("skewlmm")`  fits scale mixture of skew-normal linear mixed models using  expectation-maximization (EM) 
-`r pkg("mvglmmRank")` implements multivariate Generalized Linear Mixed Models for ranking sport teams  constructs tree models using GLMM or LMM for recursive tree splits.
+`r pkg("mvglmmRank")` implements multivariate Generalized Linear Mixed Models for ranking sport teams
    
 ## Links
 
