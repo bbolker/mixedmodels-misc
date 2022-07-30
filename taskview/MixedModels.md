@@ -157,3 +157,11 @@ The following are other packages applied in mixed models. ; `r pkg("lmeNBBayes")
 - [r+mixed-models tags on Stack Overflow](http://stackoverflow.com/questions/tagged/r+mixed-models)
 - [Cross Validated](http://stats.stackexchange.com)
 - [INLA](http://www.r-inla.org/home)
+
+## To do
+
+- more cleanup
+- more description?
+- mention AS-REML, R interface; section on off-CRAN/commercial alternatives? (INLA, AS-REML, Mplus) Graphical front-ends (JASP/Jamovi)?
+- missing packages: sommer, ... 
+- scripts to check for archiving, download rank, etc.? link to/cross-check with [mixed model comparison table](https://docs.google.com/spreadsheets/d/19itelYaVW0U0gtNtRfqh76ZGt1awlamNcJwT71u_5Uk/edit#gid=0) ?
