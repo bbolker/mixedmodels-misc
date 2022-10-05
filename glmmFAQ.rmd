@@ -9,14 +9,14 @@ output:
      toc: true
 ---
 
-<!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-3131047-9"></script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-KY1JY0C53S"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
 
-  gtag('config', 'UA-3131047-9');
+  gtag('config', 'G-KY1JY0C53S');
 </script>
 
 ```{r setup,message=FALSE,echo=FALSE}
