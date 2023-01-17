@@ -508,10 +508,12 @@ Penalized quasi-likelihood | Flexible, widely implemented | Likelihood inference
 Laplace approximation | More accurate than PQL | Slower and less flexible than PQL | glmer (R:lme4,lme4a), glmm.admb (R:glmmADMB), INLA, glmmTMB, AD Model Builder, HLM 
 Gauss-Hermite quadrature | More accurate than Laplace | Slower than Laplace; limited to 2‑3 random effects | PROC NLMIXED (SAS), glmer (R:lme4, lme4a), glmmML (R:glmmML), xtlogit (Stata)
 Markov chain Monte Carlo | Highly flexible, arbitrary number of random effects; accurate | Slow, technically challenging, Bayesian framework | MCMCglmm (R:MCMCglmm), rstanarm (R), brms (R), MCMCpack (R), WinBUGS/OpenBUGS (R interface: BRugs/R2WinBUGS), JAGS (R interface: rjags/R2jags), AD Model Builder (R interface: R2admb), glmm.admb (post hoc MCMC after Laplace fit) (R:glmmADMB)"
-)
 set.alignment(default="left")
 pander(methtab,split.table=Inf)
 ```
+
+These approaches (PQL, Laplace approximation, GHQ, MCMC) are most common. Other less-common methods include Monte Carlo EM [@booth_maximizing_1999; @knudsonLikelihoodbased2021] (`glmm` package), hierarchical GLMs (which use an entirely different inference framework: [@jinReview2021; @mengDecoding2009; @mengWhat2011])
+
 
 ## Troubleshooting
 
