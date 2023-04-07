@@ -4,6 +4,7 @@ author: "Ben Bolker"
 date: "`r format(Sys.time(),'%d %B %Y')`"
 ---
 
+
 Consider a situation where we have multiple items of some sort which have associated effects, but we can't association observations with single items; instead, each observation is associated with a *group* of items. (Two examples which have come up are (1) authorship of papers and (2) hockey players on a team.) These are *not* quite identical to "multi-membership models" (I think), although similar techniques to those shown here could work for multi-membership models.
 
 Load packages (we don't really need anything beyond `lme4`; the rest are for convenience/drawing pictures).
@@ -65,13 +66,17 @@ X <- model.matrix(~x, data=M)
 ## (theta is scaled relative to residual error)
 ## here, use theta=sigma=1
 M$y <- c(X %*% beta) + c(W1 %*% b) +rnorm(nobs0,sd=1)
+## we'll need this later
+M$fake <- rep(LETTERS[seq(nm)],length.out=nobs0)
 ```
+
+
+## modular/from scratch in lme4
 
 Fit (see `?modular`):
 ```{r modular_fit}
 ## helpful to specify a factor with the right levels:
 ## actual values are unimportant since we will specify Zt/Ztlist directly
-M$fake <- rep(LETTERS[seq(nm)],length.out=nobs)
 lmod <- lFormula(y~x+(1|fake), data=M)
 lmod$reTrms$Zt <- lmod$reTrms$Ztlist[[1]] <- Matrix(t(W1))
 devfun <- do.call(mkLmerDevfun, lmod)
@@ -236,7 +241,7 @@ fit <- with(gt1, nlminb(par, objective = fn, gr = gr))
 m3 <- finalizeTMB(gt0, gt1, fit)
 ```
 
-```{r}
+```{r compare}
 L1 <- (list(raw_lme4 = m1, multimemb = m2, glmmTMB = m3)
     |> purrr::map_dfr(tidy, effects = "fixed", .id = "model")
     |> select(model, term, estimate, std.error)
@@ -249,6 +254,20 @@ L1 <- (list(raw_lme4 = m1, multimemb = m2, glmmTMB = m3)
     |> pivot_wider(id_cols = "term", names_from = "model",
                    values_from = "std.error")
 )
+```
+
+## from package
+
+JP van Paridon and Phillip Alday have a package on GitHub that provides methods to fit these kinds of problems. Don't quite know how to adapt to this example at the moment ...
+
+```{r pkg, eval = FALSE}
+## NOT WORKING YET
+## slightly naughty
+while (!require("lmerMultiMember")) {
+    remotes::install_github("https://github.com/jvparidon/lmerMultiMember")
+}
+m0 <- lmerMultiMember::lmer(y~x+(1|fake), memberships = list(fake = W1), data=M)
+## subscript too long ..
 ```
 
 ---
