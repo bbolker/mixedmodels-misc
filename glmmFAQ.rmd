@@ -408,10 +408,10 @@ In this case (e.g. a spike of zeros in the center of an otherwise continuous dis
 
 - you can use a likelihood ratio test between the regular and zero-inflated version of the model, but be aware of boundary issues (search "boundary" elsewhere on this page ...) -- the null value (no zero inflation) is on the boundary of the feasible space
 - you can use AIC or variations, with the same caveats
-- you can use Vuong's test, which is often recommended for testing zero-inflation in GLMs, because under some circumstances the various model flavors under consideration (hurdle vs zero-inflated vs "vanilla") are not nested. Vuong's test is implemented (and referenced) in the `pscl` package, but not for (G)LMMs. However, the `nonnest` package provides an example (in conjunction with the `merDeriv` package) for using its `vuongtest` function with `merMod` objects. (May also work with `glmmTMB`, haven't tried it ...)
+- according to @wilsonMisuse2015a you should **not** use Vuong's test [@vuongLikelihood1989] when  even though it is frequently recommended for testing zero-inflation in GLMs, because the boundary issues that invalidate AIC comparisons and likelihood ratio tests also apply to the Vuong test. @heTest2019
 - two untested but reasonable approaches:
     -  use a `simulate()` method if it exists to construct a simulated distribution of the proportion of zeros expected overall from your model, and compare it to the observed proportion of zeros in the data set
-    - compute the probability of a zero for each observation.  On the basis of (conditionally) independent Bernoulli trials, compute the expected number of zeros and the confidence intervals -- compare it with the observed number.
+    - Try to estimate the expected number of zeros. The [check_zeroinflation function in the `performance` package](https://easystats.github.io/performance/reference/check_zeroinflation.html) compares expected vs. observed to see if they are within some specified threshold (by default 0.05 - i.e. the function returns under- or overinflation if the observed number of zeros is more than 5% different from the expected number based on the predicted probabilities of zero for each observation. It does **not** try to give confidence intervals or a p-value for these probabilities (this would be possible if we assume there is no uncertainty in the estimated parameters, but would be harder otherwise ...)
 
 ## Spatial and temporal correlation models, heteroscedasticity ("R-side" models)
 
@@ -508,11 +508,12 @@ Penalized quasi-likelihood | Flexible, widely implemented | Likelihood inference
 Laplace approximation | More accurate than PQL | Slower and less flexible than PQL | glmer (R:lme4,lme4a), glmm.admb (R:glmmADMB), INLA, glmmTMB, AD Model Builder, HLM 
 Gauss-Hermite quadrature | More accurate than Laplace | Slower than Laplace; limited to 2‑3 random effects | PROC NLMIXED (SAS), glmer (R:lme4, lme4a), glmmML (R:glmmML), xtlogit (Stata)
 Markov chain Monte Carlo | Highly flexible, arbitrary number of random effects; accurate | Slow, technically challenging, Bayesian framework | MCMCglmm (R:MCMCglmm), rstanarm (R), brms (R), MCMCpack (R), WinBUGS/OpenBUGS (R interface: BRugs/R2WinBUGS), JAGS (R interface: rjags/R2jags), AD Model Builder (R interface: R2admb), glmm.admb (post hoc MCMC after Laplace fit) (R:glmmADMB)"
+)
 set.alignment(default="left")
 pander(methtab,split.table=Inf)
 ```
 
-These approaches (PQL, Laplace approximation, GHQ, MCMC) are most common. Other less-common methods include Monte Carlo EM [@booth_maximizing_1999; @knudsonLikelihoodbased2021] (`glmm` package), hierarchical GLMs (which use an entirely different inference framework: [@jinReview2021; @mengDecoding2009; @mengWhat2011])
+These approaches (PQL, Laplace approximation, GHQ, MCMC) are most common. Other less-common methods include Monte Carlo EM [@booth_maximizing_1999; @knudsonLikelihoodbased2021] (`glmm` package), hierarchical GLMs (which use an entirely different inference framework: [@jinReview2021; @mengDecoding2009; @mengWhat2011]). Also see the [Mixed Models Task View](https://cran.r-project.org/web/views/MixedModels.html).
 
 
 ## Troubleshooting

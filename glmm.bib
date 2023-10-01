@@ -855,6 +855,7 @@ Many criteria for statistical parameter estimation, such as maximum likelihood, 
 
 
 
+
 @article{ponciano_hierarchical_2009,
 	title = {Hierarchical Models in Ecology: Confidence Intervals, Hypothesis Testing, and Model Selection Using Data Cloning},
 	volume = {90},
@@ -2735,7 +2736,7 @@ Regression Models},
 	issn = {1932-6203},
 	url = {https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0129606},
 	doi = {10.1371/journal.pone.0129606},
-	abstract = {Typical data in a microbiome study consist of the operational taxonomic unit (OTU) counts that have the characteristic of excess zeros, which are often ignored by investigators. In this paper, we compare the performance of different competing methods to model data with zero inflated features through extensive simulations and application to a microbiome study. These methods include standard parametric and non-parametric models, hurdle models, and zero inflated models. We examine varying degrees of zero inflation, with or without dispersion in the count component, as well as different magnitude and direction of the covariate effect on structural zeros and the count components. We focus on the assessment of type I error, power to detect the overall covariate effect, measures of model fit, and bias and effectiveness of parameter estimations. We also evaluate the abilities of model selection strategies using Akaike information criterion (AIC) or Vuong test to identify the correct model. The simulation studies show that hurdle and zero inflated models have well controlled type I errors, higher power, better goodness of fit measures, and are more accurate and efficient in the parameter estimation. Besides that, the hurdle models have similar goodness of fit and parameter estimation for the count component as their corresponding zero inflated models. However, the estimation and interpretation of the parameters for the zero components differs, and hurdle models are more stable when structural zeros are absent. We then discuss the model selection strategy for zero inflated data and implement it in a gut microbiome study of {\textgreater} 400 independent subjects.},
+	abstract = {Typical data in a microbiome study consist of the operational taxonomic unit (OTU) counts that have the characteristic of excess zeros, which are often ignored by investigators. In this paper, we compare the performance of different competing methods to model data with zero inflated features through extensive simulations and application to a microbiome study. These methods include standard parametric and non-parametric models, hurdle models, and zero inflated models. We examine varying degrees of zero inflation, with or without dispersion in the count component, as well as different magnitude and direction of the covariate effect on structural zeros and the count components. We focus on the assessment of type I error, power to detect the overall covariate effect, measures of model fit, and bias and effectiveness of parameter estimations. We also evaluate the abilities of model selection strategies using Akaike information criterion (AIC) or Vuong test to identify the correct model. The simulation studies show that hurdle and zero inflated models have well controlled type I errors, higher power, better goodness of fit measures, and are more accurate and efficient in the parameter estimation. Besides that, the hurdle models have similar goodnxoess of fit and parameter estimation for the count component as their corresponding zero inflated models. However, the estimation and interpretation of the parameters for the zero components differs, and hurdle models are more stable when structural zeros are absent. We then discuss the model selection strategy for zero inflated data and implement it in a gut microbiome study of {\textgreater} 400 independent subjects.},
 	language = {en},
 	number = {7},
 	urldate = {2018-10-29},
@@ -3108,3 +3109,56 @@ Section: New Results},
   file = {/home/bolker/Zotero/storage/PHUDDYHP/Meng - 2011 - What's the H in H‐likelihood A Holy Grail or an A.pdf;/home/bolker/Zotero/storage/APPU6CDN/141653466.html}
 }
 
+
+@article{wilsonMisuse2015a,
+  title = {The Misuse of the {{Vuong}} Test for Non-Nested Models to Test for Zero-Inflation},
+  author = {Wilson, Paul},
+  year = {2015},
+  month = feb,
+  journal = {Economics Letters},
+  volume = {127},
+  pages = {51--53},
+  issn = {0165-1765},
+  doi = {10.1016/j.econlet.2014.12.029},
+  urldate = {2023-10-01},
+  abstract = {The Vuong test for non-nested models is being widely used as a test of zero-inflation. We show that such use is erroneous. We see that this stems from a misunderstanding of what is meant by the term ``non-nested model'' and suggest other approaches for determining zero-inflation},
+  keywords = {Non-nested models,Vuong test,Zero-inflation},
+  file = {/home/bolker/Zotero/storage/7PLSYUUJ/Wilson - 2015 - The misuse of the Vuong test for non-nested models.pdf;/home/bolker/Zotero/storage/DWQHV7Q4/S016517651400490X.html}
+}
+
+@article{vuongLikelihood1989,
+  title = {Likelihood {{Ratio Tests}} for {{Model Selection}} and {{Non-Nested Hypotheses}}},
+  author = {Vuong, Quang H.},
+  year = {1989},
+  month = mar,
+  journal = {Econometrica},
+  volume = {57},
+  number = {2},
+  eprint = {1912557},
+  eprinttype = {jstor},
+  pages = {307--333},
+  issn = {0012-9682},
+  doi = {10.2307/1912557},
+  urldate = {2011-10-31},
+  abstract = {In this paper, we develop a classical approach to model selection. Using the Kullback-Leibler Information Criterion to measure the closeness of a model to the truth, we propose simple likelihood-ratio based statistics for testing the null hypothesis that the competing models are equally close to the true data generating process against the alternative hypothesis that one model is closer. The tests are directional and are derived successively for the cases where the competing models are non-nested, overlapping, or nested and whether both, one, or neither is misspecified. As a prerequisite, we fully characterize the asymptotic distribution of the likelihood ratio statistic under the most general conditions. We show that it is a weighted sum of chi-square distribution or a normal distribution depending on whether the distributions in the competing models closest to the truth are observationally identical. We also propose a test of this latter condition.},
+  annotation = {ArticleType: research-article / Full publication date: Mar., 1989 / Copyright \textcopyright{} 1989 The Econometric Society},
+  file = {/home/bolker/Zotero/storage/TKZBN5EI/Vuong - 1989 - Likelihood Ratio Tests for Model Selection and Non.pdf}
+}
+
+@article{heTest2019,
+  title = {A Test of Inflated Zeros for {{Poisson}} Regression Models},
+  author = {He, Hua and Zhang, Hui and Ye, Peng and Tang, Wan},
+  year = {2019},
+  month = apr,
+  journal = {Statistical methods in medical research},
+  volume = {28},
+  number = {4},
+  pages = {1157--1169},
+  issn = {0962-2802},
+  doi = {10.1177/0962280217749991},
+  urldate = {2023-10-01},
+  abstract = {Excessive zeros are common in practice and may cause overdispersion and invalidate inference when fitting Poisson regression models. There is a large body of literature on zero-inflated Poisson models. However, methods for testing whether there are excessive zeros are less well developed. The Vuong test comparing a Poisson and a zero-inflated Poisson model is commonly applied in practice. However, the type I error of the test often deviates seriously from the nominal level, rendering serious doubts on the validity of the test in such applications. In this paper, we develop a new approach for testing inflated zeros under the Poisson model. Unlike the Vuong test for inflated zeros, our method does not require a zero-inflated Poisson model to perform the test. Simulation studies show that when compared with the Vuong test our approach not only better at controlling type I error rate, but also yield more power.},
+  pmcid = {PMC6345607},
+  pmid = {29284370},
+  file = {/home/bolker/Zotero/storage/L6YAVNTZ/He et al. - 2019 - A test of inflated zeros for Poisson regression mo.pdf}
+}
