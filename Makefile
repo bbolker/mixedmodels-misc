@@ -10,5 +10,3 @@ glmmbib.html: ../glmm.bib
 	cd ..; ./mkbibhtml; cp -r glmmbib.html gh-pages
 clean:
 	rm -f *.log *.aux *.md *.out texput.log
-
-
