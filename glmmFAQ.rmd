@@ -534,15 +534,13 @@ Most of the current advice about troubleshooting `lme4` convergence problems can
 - restart the fit from the apparent optimum, or from a point perturbed slightly away from the optimum (`getME(model,c("theta","beta"))` should retrieve the parameters in a form suitable to be used as the `start` parameter)
 - a common error is to specify an offset to a log-link model as a raw searching-effort value, i.e. `offset(effort)` rather than `offset(log(effort))`. While the intention is to fit a model where $\textrm{counts} \propto \textrm{effort}$, specifying `offset(effort)` leads to a model where $\textrm{counts} \propto \exp(\textrm{effort})$ instead; `exp(effort)` is often a huge (and model-destabilizing) number.
 
-[]{singular-fit}
-[]{zero-variance}
-<!-- preserve link based on previous section title -->
-[]{singular-models-random-effect-variances-estimated-as-zero-or-correlations-estimated-as---1}
-<!-- <a id="singular-fit"></a>
-<a id="zero-variance"></a> -->
+<a id="singular-fit"></a>
+<a id="zero-variance"></a>
 
-https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#singular-models-random-effect-variances-estimated-as-zero-or-correlations-estimated-as---1
-### Singular models: random effect variances estimated as zero, or correlations estimated as +/- 1
+<!-- preserve link based on previous section title -->
+<a id = "singular-models-random-effect-variances-estimated-as-zero-or-correlations-estimated-as---1"></a>
+
+### Singular fits
 
 It is very common for overfitted mixed models to result in singular fits. Technically, singularity means that the random effects variance-covariance matrix is of *less than full rank*. There are various ways to describe this, from more to less technical:
 
@@ -551,7 +549,7 @@ It is very common for overfitted mixed models to result in singular fits. Techni
 - some linear combinations of elements of the random-effects vector have zero variance;
 - an $n \times n$ covariance matrix corresponds to an $n$-dimensional ellipsoid where the lengths of the major axes are proportional to the eigenvalues; the ellipsoid is "flat" in some directions, e.g. an ellipse has collapsed to a line segment
 
-- In the case of a scalar random effect such as a random intercept, this is easy to understand - the random effects variance is zero or near zero
+- In simple cases where a random effect term is represented by a single variance (*scalar* random effects), this is reflected in a variance estimate that is zero or near zero. Functions such as `nlme::lme()` or `glmmTMB()` that estimate variances on the log scale will often *not* report a singular fit, but will instead return a very small value (1e-6 or less) for the random-effects variance; on the log scale, this will correspond to a parameter estimate that is a large negative number &mdash; and, usually, warnings about non-positive-definite Hessians or (in the case of `lme()`) ridiculously large Wald confidence intervals returned by `intervals()`.
 - In the case of a two-dimensional random effect (such as a random-slopes model), this typically corresponds to a perfect (+/- 1) correlation between the slope and intercept
 - in higher-dimensional random effects (such as the random effect of a categorical variable with more than two levels, or a random-slopes model with more than one covariate), it's pretty much impossible to see at a glance that the covariance matrix is singular. Extracting the RE covariance matrix and computing its eigenvalues (this is what `rePCA` in the `lme4` package does) will tell you. In the particular case of `lme4`, singularity is detectable by seeing if any of the elements of the $\boldsymbol \theta$ (variance-covariance Cholesky decomposition) vector corresponding to diagonal elements are (near) zero; this is what `?isSingular` does.
 
@@ -560,18 +558,19 @@ Singular fits commonly occur in two scenarios:
 - small numbers of random-effect levels (e.g. <5), as illustrated in [these simulations](http://rpubs.com/bbolker/4187) and discussed (in a somewhat different, Bayesian context) by @gelman_prior_2006.
 - complex random-effects models, e.g. models of the form `(f|g)` where `f` is a categorical variable with a relatively large number of levels, or models with several different random-slopes terms.
 
-- In `MCMCglmm`, singular or near-singular models will provoke an error and a requirement to specify a stronger prior.
+- In `MCMCglmm`, singular or near-singular fits will provoke an error and a requirement to specify a stronger prior.
 
-At present there are a variety of strong opinions about how to resolve such problems. Briefly:
+At present there are a variety of strong opinions about how to resolve such problems, which are sometimes conflated with the general problem of how to decide on the appropriate complexity of the random-effects component of a model. Briefly:
 
+- If a variance component is zero, dropping it from the model will have no effect on any of the estimated quantities (although it will affect the AIC, as the variance parameter is counted even though it has no effect). @pasch_interspecific_2013 gives one example where random effects were dropped because the variance components were consistently estimated as zero. Conversely, if one chooses for philosophical grounds to retain these 
+parameters, it won't change any of the answers.
 - @barr_random_2013 suggest always starting with the maximal model (i.e. the most random-effects component of the model that is *theoretically* identifiable given the experimental design) and then dropping terms when singularity or non-convergence occurs (please see the paper for detailed recommendations ...)
-- @matuschek_balancing_2017 and @bates_parsimonious_2015 strongly disagree, suggesting that models should be simplified *a priori* whenever possible; they also provide [tools](https://github.com/dmbates/RePsychLing) for diagnosing and mitigating singularity.
+- @matuschek_balancing_2017 and @bates_parsimonious_2015 disagree, suggesting that models should be simplified *a priori* whenever possible. In particular, they suggest $p$-value-based stepwise reduction of the random effects model using a loose $p$-value criterion (e.g. $\alpha_{\text LRT} = 0.2$). They also provide [tools](https://github.com/dmbates/RePsychLing) for diagnosing and mitigating singularity.
 - One alternative (suggested by Robert LaBudde) for the small-numbers-of-levels scenario is to "fit the model with the random factor as a fixed effect, get the level coefficients in the sum to zero form, and then compute the standard deviation of the coefficients." This is appropriate for users who are (a) primarily interested in measuring variation (i.e. the random effects are not just nuisance parameters, and the variability [rather than the estimated values for each level] is of scientific interest), (b) unable or unwilling to use other approaches (e.g. MCMC with half-Cauchy priors in WinBUGS), (c) unable or unwilling to collect more data. For the simplest case (balanced, orthogonal, nested designs with normal errors) these estimates of standard deviations should equal the classical method-of-moments estimates.
 - Bayesian approaches allow the user to specify a informative prior that avoids singularity.
     - The `blme` package [@chung_nondegenerate_2013] provides a wrapper for the `lme4` machinery that adds a particular form of weak prior to get an approximate a Bayesian maximum *a posteriori* estimate that avoids singularity.
     - The `MCMCglmm` package allows for priors on the variance-covariance matrix
 	- The `rstanarm` and `brms` packages provide wrappers for the Stan Hamiltonian MCMC engine that fit GLMMs via `lme4` syntax, again allowing a variety of priors to be set.
-- If a variance component is zero, dropping it from the model will have no effect on any of the estimated quantities (although it will affect the AIC, as the variance parameter is counted even though it has no effect). @pasch_interspecific_2013 gives one example where random effects were dropped because the variance components were consistently estimated as zero. Conversely, if one chooses for philosophical grounds to retain these parameters, it won't change any of the answers.
 
 ### Setting residual variances to a fixed value (zero or other)
 
@@ -596,7 +595,7 @@ nlme::lme(Reaction~Days,random=~1|Subject,
           data=lme4::sleepstudy,
           control=list(sigma=1e-8))
 ```
-- the `glmmTMB` package can set the residual variance to zero, by specifying `dispformula = ~0`
+- the `glmmTMB` package can set the residual variance to (approximately) zero, by specifying `dispformula = ~0` (in fact the value can be set via `glmmTMBControl(zerodisp_val=...)`; the default value is `log(sqrt(.Machine$double.eps))`)
 - There is an [rrBlupMethod6 package](https://CRAN.R-project.org/package=rrBlupMethod6) on CRAN ("Re-parametrization of mixed model formulation to allow for a fixed residual variance when using RR-BLUP for genom[e]wide estimation of marker effects"), but it seems fairly special-purpose.
 - it might be possible *in principle* to adapt `lme4`'s internal `devfun2()` function (used in the likelihood profiling computation for LMMs), which uses a specified value of the residual standard deviation in computing likelihood, but as @bates_fitting_2015 say:
 
