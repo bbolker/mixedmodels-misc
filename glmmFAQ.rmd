@@ -308,7 +308,7 @@ library(dplyr)
 tidy_quasi <- function(model, phi=overdisp_fun(model)["ratio"],
                        conf.level=0.95) {
     tt <- (tidy(model, effects="fixed")
-        %>% mutate(std.error=std.error*sqrt(phi),
+       %>% mutate(std.error=std.error*sqrt(phi),
                    statistic=estimate/std.error,
                    p.value=2*pnorm(abs(statistic), lower.tail=FALSE))
     )
@@ -318,7 +318,7 @@ tidy_quasi(m1)
 tidy_quasi(m2)
 ```
 
-These functions make some simplifying assumptions: (1) this overdispersion computation is approximate
+These functions make some simplifying assumptions: (1) this overdispersion computation is approximate (based on Pearson $\chi^2$, see caveats above); (2) considers Gaussian sampling distributions only (i.e. no denominator-degree-of-freedom/$t$ corrections).
 
 In this case using quasi-likelihood doesn't make much difference, since the data we simulated in the first place were Poisson.) Keep in mind that once you switch to quasi-likelihood you will either have to eschew inferential methods such as the likelihood ratio test, profile confidence intervals, AIC, etc., or make more heroic assumptions to compute "quasi-" analogs of all of the above (such as QAIC). 
 
