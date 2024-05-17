@@ -1,0 +1,178 @@
+---
+title: "hack an AR1 x AR1 Kronecker product model"
+---
+
+```{r pkgs, message = FALSE}
+library(lme4)
+library(Matrix)
+## for rearranging/plotting sim results
+library(tidyverse); theme_set(theme_bw())
+## convenience function; convert to Matrix and suppress the stuff we don't care about
+ifun <- function(m) {
+    image(Matrix(m), xlab = "", ylab = "", sub = "")
+}
+```
+
+From Wicklin, Rick (2018) [“Fast Simulation of Multivariate Normal Data with an AR(1) Correlation Structure.”](https://blogs.sas.com/content/iml/2018/10/03/ar1-cholesky-root-simulation.html), code to generate the Cholesky factor of an AR1 covariance directly. (This returns the result as the *upper* triangle, which is consistent with (e.g.) `chol()` in base R, but is opposite the convention for `lme4` - see below ...
+
+```{r ar1choldef}
+ar1chol <- function(rho, p) {
+    R <- matrix(0, p, p)
+    R[1,] = rho^(0:(p-1))        ## formula for 1st row
+    c <- sqrt(1 - rho^2)         ## scaling factor: c^2 + rho^2 = 1
+    R2 <- c * R[1,]              ## formula for 2nd row
+    for (j in  2:p) {            ## shift elements in 2nd row for remaining rows
+        R[j, j:p] = R2[1:(p-j+1)] 
+    }
+    return(R)
+}
+C0 <- ar1chol(0.5, 10)
+ifun(C0)
+```
+
+The Kronecker product is pretty:
+
+```{r kron1}
+kchol <- function(N, sigma, rho) {
+    kronecker(sigma[1]*ar1chol(rho[1], N[1]), sigma[2] * ar1chol(rho[2], N[2]))
+}
+C1 <- kchol(N = c(10, 10), sigma = c(2, 3), rho = c(0.5, 0.3))
+ifun(C1)
+```
+
+To be thorough, let's create a function to construct an AR1 correlation matrix and confirm
+numerically that $\textrm{Chol}(A \otimes B) = \textrm{Chol}(A) \otimes \textrm{Chol}(B)$ ...
+
+```{r ar1cor}
+ar1cor <- function(rho, p) {
+    m <- matrix(NA_real_, p, p)
+    m[] <- rho^(abs(row(m) - col(m)))
+    return(m)
+}
+ifun(ar1cor(0.5, 10))
+```
+
+```{r check_kron}
+C1B <- chol(kronecker(4*ar1cor(rho = 0.5, p = 10), 9 * ar1cor(rho = 0.3, p = 10)))
+stopifnot(all.equal(C1, C1B))
+```
+
+Now let's create a function for simulating $P$ plots, each of which is $N_1 \times N_2$,
+with parameters $\{ \rho_x, \rho_y, \sigma_x, \sigma_y, \sigma_r \}$:
+
+```{r simfun}
+#' @param P number of plots
+#' @param N dimensions in x and y
+#' @param rho AR1 correlations
+#' @param sigma standard deviations (x, y, resid)
+simfun <- function(P = 10, N = c(10, 10), rho = c(0.5, 0.3), sigma = c(2, 1, 0.1)) {
+	dd <- data.frame(
+		plot = rep(1:P, each = prod(N)),
+		x = rep(1:N[1], N[2]*P),
+		y = rep(rep(1:N[2], each = N[1]), P)
+    )
+    C1 <- kronecker(sigma[1]*ar1chol(rho= rho[1], p =  N[1]), sigma[2]*ar1chol(rho = rho[2], p = N[2]))
+    dd$z <- c(vapply(1:P,
+                     ## generate MVN by multiplying rnorm() by the (upper-triangular) Cholesky factor ...
+                     ## (more efficient than using MASS::mvrnorm(), which starts from the covariance matrix
+                     ## and then decomposes it -- not that efficiency matters much in this context)
+                     function(i) rnorm(prod(N)) %*% C1,
+                     FUN.VALUE = numeric(prod(N)))
+              )
+    dd$z <- dd$z + sigma[3]*rnorm(P*prod(N))
+    return(dd)
+}
+```
+
+This shows something is going on but I would have to do more work to check that this is really what's expected if we treat the entire data set as a single vector ...
+```{r acf}
+acf(simfun()$z)
+```
+
+```{r sim1}
+set.seed(101)
+dd <- simfun()
+```
+
+```{r modfit1}
+lf <- lFormula(z ~ 1 + (interaction(x,y)|plot), data = dd,
+               control = lmerControl(check.nobs.vs.nRE = "ignore"))
+dim(lf$reTrms$Lambdat)  ## check dimensions are sensible
+df <- do.call(mkLmerDevfun, lf)
+
+devfun2 <- function(p) {
+    ## reconstruct theta from parameter vector
+    ## (sd1, sd2, rho1, rho2)
+    C1 <- kchol(c(10, 10), p[c(1, 3)], p[c(2, 4)])
+    C1t <- t(C1)
+    th <- C1t[lower.tri(C1t, diag = TRUE)]
+    df(th)
+}
+
+devfun2(c(sd1 = 1, rho1 = 0.1, sd2 = 1, rho2 = -0.1))
+nloptwrap(fn = devfun2, par = c(sd1 = 1, rho1 = 0.1, sd2 = 1, rho2 = -0.1),
+          lower = c(0,-1,0, -1), upper = c(Inf, 1, Inf, 1))
+```
+
+Now continue with a sampling exercise (slightly inefficient because we're simulating/reconstructing everything every time
+rather than just updating the response variable ...
+
+```{r simfitfun}
+simfitfun <- function(P = 10, N = c(10, 10), rho = c(0.5, 0.3),
+                      sigma = c(2,1,0.1), prt = FALSE) {
+    if (prt) cat(".") ## poor-man's progress bar
+    dd <- simfun(P = P, N = N, rho = rho, sigma = sigma)
+    lf <- lFormula(z ~ 1 + (interaction(x,y)|plot), data = dd,
+                   control = lmerControl(check.nobs.vs.nRE = "ignore"))
+    df <- do.call(mkLmerDevfun, lf)
+    devfun2 <- function(p) {
+        ## reconstruct theta from parameter vector
+        ## order: sd1, rho1, sd2, rho2
+        C1 <- kchol(N, p[c(1, 3)], p[c(2, 4)])
+        C1t <- t(C1)
+        th <- C1t[lower.tri(C1t, diag = TRUE)]
+        df(th)
+    }
+    fit <- nloptwrap(fn = devfun2,
+                     ## starting vals
+                     par = c(sd1 = 1, rho1 = 0, sd2 = 1, rho2 = 0),
+                     lower = c(0,  -1,   0, -1),
+                     upper = c(Inf, 1, Inf,  1))
+    return(c(fit$par, fit$conv))
+}
+```
+
+```{r sims, cache = TRUE}
+set.seed(101)
+system.time(
+    simres <- t(replicate(200, simfitfun()))
+)
+```
+
+```{r unpack_sims}
+truedf <- data.frame(
+    param = c("sdx", "rhox", "sdy", "rhoy"),
+    trueval = c(2, 0.5, 1, 0.3))
+simdf <- (simres
+    |> as.data.frame()
+    |> setNames(c(truedf$param, "conv"))
+    |> select(-conv)
+    |> tidyr::pivot_longer(everything(), names_to = "param")
+)
+all(simres[,5] == 0)  ## everything converged?
+```
+
+```{r hist}
+ggplot(simdf, aes(x=value)) + geom_histogram() + facet_wrap(~param,
+                                                            scale = "free") +
+    geom_vline(data = truedf, aes(xintercept = trueval), col = "red")
+```
+
+Hmm. The results aren't crazy, but they're off.  What am I doing wrong?
+
+## to do
+
+* debug!
+* fit corrs on a transformed scale?
+* are `sdx`, `sdy` jointly identifiable??? (But shouldn't screw up cor estimates anyway?)
+* be more careful about checking that `theta` represents the *scaled* cov matrix?
