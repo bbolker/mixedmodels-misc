@@ -1,0 +1,25 @@
+---
+title: "constraining complexity of mixed models"
+bibliography: glmm.bib
+---
+
+An R-centric discussion of what to do to manage the complexity of mixed models, specifically their random effect components.
+
+## setup
+
+For this example we'll think about a forest restoration experiment with four plots; 5 restoration treatments that are applied in each plot (a randomized complete block design); and 6 replicates within each block/treatment.
+
+## maximal model
+
+## model reduction strategies
+
+- set correlations to zero (`||`/`diag()`
+   - caveat 1: using `||` for factor-valued terms in `lme4` won't work as expected; use `afex` or `glmmTMB` (or expand the factor in dummy variables)
+   - caveat 2: results are sensitive to zero point (centering) of covariates
+- drop terms
+- reduced-rank models (`glmmTMB`)
+
+## model constraint strategies
+
+- priors to prevent singularity (Chung et al); `blme`, `glmmTMB`
+- priors to regularize
