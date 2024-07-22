@@ -1,25 +1,160 @@
 ---
 title: "constraining complexity of mixed models"
-bibliography: glmm.bib
+bibliography: ./glmm.bib
 ---
 
 An R-centric discussion of what to do to manage the complexity of mixed models, specifically their random effect components.
 
 ## setup
 
+```{r pkgs, message=FALSE}
+library(lme4)
+library(Matrix)
+```
+
 For this example we'll think about a forest restoration experiment with four plots; 5 restoration treatments that are applied in each plot (a randomized complete block design); and 6 replicates within each block/treatment.
+
+```{r sim}
+library(lme4)
+set.seed(101)
+dd <- expand.grid(plot = factor(1:4),
+                  ttt = factor(LETTERS[1:5]),
+                  rep = 1:6)
+## sample a random 5x5 correlation matrix
+cchol <- nimble::rlkj_corr_cholesky(n = 1, eta = 1.2, p = 5) *
+    ## scale by random SDs
+    rlnorm(5, meanlog = 0, sdlog = 0.2)
+theta <- t(cchol)[lower.tri(cchol, diag = TRUE)]
+dd$y <- suppressMessages(
+    simulate( ~ ttt + (ttt|plot),
+             family = gaussian,
+             newdata = dd,
+             newparams = list(beta = seq(1, by = -0.5, length.out = 5),
+                              theta = theta,
+                              sigma = 1)))[[1]]
+```
 
 ## maximal model
 
-## model reduction strategies
+We would like to be able to fit `~ ttt + (ttt|plot)`, but that's very unlikely to actually work:
 
-- set correlations to zero (`||`/`diag()`
-   - caveat 1: using `||` for factor-valued terms in `lme4` won't work as expected; use `afex` or `glmmTMB` (or expand the factor in dummy variables)
-   - caveat 2: results are sensitive to zero point (centering) of covariates
-- drop terms
-- reduced-rank models (`glmmTMB`)
+```{r fit-full}
+m1 <- lmer(y ~ ttt + (ttt|plot), data  = dd)
+isSingular(m1)
+getME(m1, "theta")[getME(m1, "lower") ==0]
+```
+
+Seems pretty clear here that the real rank of the estimate is 3 ...
+
+## diagnostics
+
+Investigate eigenvectors of the estimated $\Sigma$; we can see again that the covariance matrix has 2 trivial ($\approx 0$) eigenvalues, but not much else; the rotation matrix doesn't give us any particularly useful clues about how to simplify the model (maybe a heatmap with column (eigenvector) order held fixed and reordering and hierarchical clustering done on the rows would be helpful for identifying clusters?  Ideally, the clustering would be done based on shared similarity based on *absolute values* (i.e., we might want to identify linear combinations/contrasts among terms that would allow us to simplify the model ... surely someone has done something like this?) [`rePCA()` definitely could use some additions to make it more useful, e.g. a plot method ... even the original paper [@bates_parsimonious_2015] doesn't offer much guidance ...]
+
+```{r repca}
+(r <- rePCA(m1))
+image(Matrix(r$plot$rotation))
+```
 
 ## model constraint strategies
 
-- priors to prevent singularity (Chung et al); `blme`, `glmmTMB`
-- priors to regularize
+When we constrain the covariance matrix (i.e. any model for specific than "general positive semi-definite"), the model results and definition depend on the contrasts used. For factor terms, it might make the most sense to specify sum-to-zero contrasts unless there is a clear reference/control level against which all other levels should be compared; for continuous terms, the predictors should probably be zero centered (or at least zeroed at some sensible reference level; see the end of section 2.2 in @bates_fitting_2015).
+
+### compound-symmetric models
+
+For factor models with many levels, compound-symmetric models are a good simplification approach. This restricts the correlations among levels to be identical for all pairs of levels (i.e., a correlation matrix with all off-diagonal elements equal to the same constant $\rho$).
+
+For example, working with the built-in `cbpp` data set where `period` is a four-level factor, the covariance matrices implied by `(period|herd)` vs. `(1|period/herd)` are:
+
+$$
+(\textrm{intercept}, \textrm{slope}) =
+\textrm{MVN}\left(\boldsymbol 0,
+\left[
+\begin{array}{cccc}
+\sigma^2_{\{h|1\}}  & . & . & .  \\
+\sigma_{\{h|1\},\{h|p_{21}\}} &
+\sigma^2_{\{h|p_{21}\}} & . & .  \\
+\sigma_{\{h|1\},     \{h|p_{31}\}} &
+\sigma_{\{h|p_{21}\},\{h|p_{31}\}} &
+\sigma^2_{\{h|p_{31}\}} & .  \\
+\sigma_{\{h|1\}     ,\{h|p_{41}\}} &
+\sigma_{\{h|p_{21}\},\{h|p_{41}\}} &
+\sigma_{\{h|p_{31}\},\{h|p_{41}\}} &
+\sigma^2_{\{h|p_{41}\}}
+\end{array}
+\right]
+\right)
+$$
+(=$(n(n+1))/2 = (4\times 5)/2 = 10$ parameters)
+vs.
+$$
+\left[
+\begin{array}{cccc}
+\sigma^2 & . & . & .  \\
+\rho \sigma^2 & \sigma^2 & . & .  \\
+\rho \sigma^2 & \rho \sigma^2 & \sigma^2 & .   \\
+\rho \sigma^2 & \rho \sigma^2 & \rho \sigma^2 & \sigma^2  \\
+\end{array}
+\right]
+$$
+where $\sigma^2 = \sigma^2_{\{b|1\}}+\sigma^2_{\{herd:period|1\}}$,
+$\rho = \sigma^2_{\{b|1\}}/\sigma^2$ (=2 parameters;
+$\rho$ must be >0)
+
+- The shortcut of using a nested model works in most mixed model frameworks (almost any platform that allows for multiple random effects will allow them to be nested), but is restricted to positive compound-symmetric models (i.e. $\rho>0$). Some packages allow general compound symmetric matrices (i.e. $-1 < \rho < 1$), e.g. using `pdCompSymm` in `nlme`, `cs()` in `glmmTMB`, `cosy` in `brms` (apparently `MCMCglmm` doesn't have a CS struture?) ... 
+- We also need to distinguish between *heterogeneous* compound symmetry (i.e., variances are the same for every level; $n+1$ parameters for an $n \times n$ covariance matrix) and *homogeneous* compound symmetry (all variances are the same, 2 parameters regardless of the size of the cov matrix). The nesting trick described above only handles homogeneous CS. `cs()` in `glmmTMB` does heterogeneous CS, homogeneous CS could be handled by using the `map` argument to fix all of the standard deviations to be the same (or a `homcs()` structure could be added if there's enough demand for it).
+
+### independence models
+
+This is probably the best known approach to model simplification (e.g. as recommended by @barr_random_2013). It's actually a special case of CS, with $\rho=0$. Also called "diagonal" for obvious (?) reasons.
+
+- in `lme4` (or `glmmTMB` or `brms`), use `||` in place of `|`; `glmmTMB` allows `diag()` for heterogenous diagonal/independence models (and `homdiag()` for homogeneous); `MCMCglmm` uses `idv()` (homogeneous) and `idh()` (heterogeneous).
+- `||` (still) doesn't work in `lme4` for factor-valued terms; use `afex::mixed` or `glmmTMB`, or expand the model in dummies (`(0 + dummy(f, level1)|g) + (0 + dummy(f, level2)|g) + ...`; kind of a pain for large numbers of factors, although you could construct it via string processing if you wanted)
+- see general comments above about the dependence of the constrained model on the zero point of the numeric terms
+
+### dropping terms
+
+Especially for vector-valued random effects consisting of variation in multiple numeric predictors, it may make sense to drop the random effect term for terms with very small variance, or terms that are of less interest. For example, you might reduce the random-effect term `(1 + fire + NPP | biome)` to `(1 + fire | biome)` by dropping the variation in `NPP` across biomes.
+
+### reduced-rank models
+
+*Factor-analytic* or *reduced-rank* models are a more flexible approach to simplifying complex covariance functions, by doing something analogous to computing a principal components analysis on the covariance matrix and keeping a subset of the terms. In `glmmTMB` you can do this with the `rr()` covariance structure; see the relevant section of the [covariance structure vignette](), or [this draft](https://www.math.mcmaster.ca/bolker/misc/mcgillycuddy2024.pdf) by McGillycuddy et al. in press in *J. Stat. Software*.
+
+## parameter constraint strategies
+
+Instead of changing the covariance model to reduce its dimensionality, you can add a Bayesian prior (or a regularization term, if you're not Bayesian) to make the model better behaved and/or keep it from being singular.
+
+- If you want to apply a minimally informative prior that will prevent singularity, @chung_nondegenerate_2013 show that an improper Gamma(shape=2, rate=0) is the weakest Gamma prior for the standard deviation that will prevent a posterior mode at zero. (The mode will be "approximately one standard error away from zero when the maximum likelihood estimate is at zero".) In practice this might be implemented using a very small rate parameter or very large shape parameter. A Wishart prior with $\nu = 1 + d$ and infinite scale might (?) have similar properties for vector-valued random effects/covariance matrices larger than 1×1. The `blme` package implements this approach (although with a default shape of 2.5 rather than 2); it can also be implemented in `glmmTMB` (see the [priors vignette](https://cran.r-universe.dev/glmmTMB/doc/priors.html)), and of course in any of the full-Bayesian packages (`brms`, `rstanarm`, `MCMCglmm`, etc.)
+- If you're a real Bayesian or are otherwise comfortable with stronger priors, you can choose from a variety of other priors (e.g. half-Normal or half-$t$ or Gamma or log-Normal priors for standard deviations, Wishart or inverse-Wishart distributions for full covariance matrices, [LKJ priors](https://en.wikipedia.org/wiki/Lewandowski-Kurowicka-Joe_distribution) for correlations) to help out your model. (LKJ priors are a nice generalization of the diagonal covariance structures above, as an LKJ prior with $\eta>1$ pushes the correlation matrix to be closer to diagonal without constraining it to be exactly diagonal ...)
+- a real Bayesian would also say you should **not** choose priors just to make your model behave better (e.g. eliminate divergences in a Hamiltonian Monte Carlo run). Instead, you should use prior predictive simulations to tune the priors to limit the random-effects structures to those that produce reasonable output (and then cross your fingers that this also resolves your computational problems).
+
+## multiple RE terms
+
+Given all these options, any combination of which might apply to different RE terms in a model with more than one random effect, how should one choose among them?
+
+- if a model seemed to be sampling or converging to an optimum reasonably well but the fit was singular (i.e. on the boundary of the space of allowed covariance estimates), and the results were sufficiently robust that you could get estimates and standard errors/CIs for all of the values of interest), you might choose to proceed with the singular model. Singular fits are theoretically valid; they just make a lot of downstream procedures, such as those based on calculating curvature of the log-likelihood surface, harder. It might also be reasonable to suppose that numerical procedures could be less reliable in this case.
+- @barr_random_2013 suggest "keep[ing] it maximal", i.e. reducing the model only where necessary to deal convergence issues (they don't actually mention singular fits, nor say much about the [issues with convergence checks in lme4](https://lme4.r-universe.dev/lme4/doc/manual.html#convergence):
+> In cases of nonconvergence, simplification of the random effects structure proceeded as follows. For between-items designs, the by-subjects random slope was dropped. For within-items designs, statistics from the partially converged model were inspected, and the slope associated with smaller variance was dropped
+It doesn't seem that they considered models with multiple random effects terms (where one wouldn't necessarily know which term to try simplifying first ...)
+- @matuschek_balancing_2017 prefer a model selection approach; they lay out a stepwise approach based on likelihood ratio tests with a relaxed threshold ($\alpha = 0.2$) for retaining terms. Based on a model with two random-slopes terms, they suggest a sequence^[I don't understand how we choose between models 3 and 4 in this list; they are both nested in model 2 and contain model 5, but neither is nested in the other ...]
+1. full model 
+2. independent slopes and intercepts for both terms [$\rho = 0$]
+3. drop the random slope for one term [item-specific random slopes]
+4. drop the random slope for the other term [subject-specific random slopes]
+5. drop both random slopes
+They also consider AIC-based selection.
+- @moritzrole2023a used a more complex model than either of the references above: the among-group variation of an intercept and four numeric predictors (i.e., a 5×5 covariance matrix), applied at three different grouping levels. They consider the possibilities of (1) a full (unconstrained) covariance matrix, (2) a diagonal/independent covariance, or (3) an intercept-only random effect, for each grouping variable, i.e. a total of $3^3 = 81$ possible models. They fitted all 81 models and chose the model with the best AIC among only the models with non-singular fits
+- @singmannIntroduction2019 doesn't present any methods suggested above, but the section on "Specifying the Random Effects Structure" has a clear description
+- several R packages have implemented model selection machinery for the random effects (most of the options, e.g. `MuMIn`, `glmulti`, `glmmLasso`, do model selection only on the fixed effects component)
+   - The [buildmer](https://cran.r-project.org/package=buildmer)  package is probably the fanciest: it
+
+    > [f]inds the largest possible regression model that will still converge for various types of regression analyses ... and then optionally performs stepwise elimination similar to the forward and backward effect-selection methods in SAS, based on the change in log-likelihood or its significance, Akaike's Information Criterion, the Bayesian Information Criterion, the explained deviance, or the F-test of the change in R².
+   Its allowed steps appear to include both including/excluding particular terms from the RE term for a particular grouping variable, as well as including or excluding complete terms (i.e. adding or dropping a grouping variable)
+   - `step.lmerModLmerTest()` from [lmerTest](https://CRAN.R-project.org/package=lmerTest) does backward stepwise selection (*among* random-effects terms, i.e. not considering simplification of individual terms as discussed above) based on likelihood ratio tests
+   - `ffRanefLMER.fnc()` from [LMERConvenienceFunctions](https://CRAN.R-project.org/package=LMERConvenienceFunctions) does forward selection (the description of the `ran.effects` argument that specifies the possible random effects is complicated ...)
+
+## to do 
+
+- provide examples of all (!?) of these approaches. In addition to the simulated example I started with (a single RE with a multi-level factor), might need to include examples with (1) multiple continuous predictors and (2) multiple RE terms in order to illustrate everything ...
+- fancy ideas; RJMCMC for Bayesian models?
+
+## references
