@@ -1,6 +1,9 @@
 ---
 title: "constraining complexity of mixed models"
 bibliography: ./glmm.bib
+format:
+  html:
+    embed-resources: true
 ---
 
 An R-centric discussion of what to do to manage the complexity of mixed models, specifically their random effect components.
