@@ -2812,7 +2812,7 @@ attr(,&quot;class&quot;)
 </ol>
 <ul>
 <li><span class="citation" data-cites="moritzrole2023a">Moritz, Batllori, and Bolker (<a href="#ref-moritzrole2023a" role="doc-biblioref">2023</a>)</span> used a more complex model than either of the references above: the among-group variation of an intercept and four numeric predictors (i.e., a 5×5 covariance matrix), applied at three different grouping levels. They consider the possibilities of (1) a full (unconstrained) covariance matrix, (2) a diagonal/independent covariance, or (3) an intercept-only random effect, for each grouping variable, i.e. a total of <span class="math inline">\(3^3 = 81\)</span> possible models. They fitted all 81 models and chose the model with the best AIC among only the models with non-singular fits</li>
-<li><span class="citation" data-cites="singmannIntroduction2019">Singmann and Kellen (<a href="#ref-singmannIntroduction2019" role="doc-biblioref">2019</a>)</span> doesn’t present any methods suggested above, but the section on “Specifying the Random Effects Structure” has a clear description</li>
+<li><span class="citation" data-cites="singmannIntroduction2019">Singmann and Kellen (<a href="#ref-singmannIntroduction2019" role="doc-biblioref">2019</a>)</span> doesn’t present any methods beyond those suggested above, but the section on “Specifying the Random Effects Structure” has a clear description</li>
 <li>several R packages have implemented model selection machinery for the random effects (most of the options, e.g. <code>MuMIn</code>, <code>glmulti</code>, <code>glmmLasso</code>, do model selection only on the fixed effects component)
 <ul>
 <li>The <a href="https://cran.r-project.org/package=buildmer">buildmer</a> package is probably the fanciest: it</li>
