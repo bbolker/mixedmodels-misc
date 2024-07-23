@@ -2665,7 +2665,7 @@ vertical-align: -.125em;
 
 </header>
 
-<p>Source file is <a href="https://github.com/bbolker/mixedmodels-misc/blob/master/simplify.qmd">here</a>. Also see Emi Tanaka’s approach, mostly with AS-REML: https://rpubs.com/emitanaka/simplify-revarstr</p>
+<p>Source file is <a href="https://github.com/bbolker/mixedmodels-misc/blob/master/simplify.qmd">here</a>. Also see <a href="https://rpubs.com/emitanaka/simplify-revarstr">Emi Tanaka’s approach to the example below</a>, mostly with AS-REML.</p>
 <p>An R-centric discussion of what to do to manage the complexity of mixed models, specifically their random effect components.</p>
 <section id="setup" class="level2">
 <h2 class="anchored" data-anchor-id="setup">setup</h2>
@@ -2907,6 +2907,7 @@ m1_us_prior_glmmTMB   NA 21</code></pre>
 <ul>
 <li><code>step.lmerModLmerTest()</code> from <a href="https://CRAN.R-project.org/package=lmerTest">lmerTest</a> does backward stepwise selection (<em>among</em> random-effects terms, i.e. not considering simplification of individual terms as discussed above) based on likelihood ratio tests</li>
 <li><code>ffRanefLMER.fnc()</code> from <a href="https://CRAN.R-project.org/package=LMERConvenienceFunctions">LMERConvenienceFunctions</a> does forward selection (the description of the <code>ran.effects</code> argument that specifies the possible random effects is complicated …)</li>
+<li>the <a href="https://cran.r-project.org/package=asremlPlus">asremlPlus</a> package has a lot of machinery, and some detailed examples, for model building and selection using AS-REML</li>
 </ul></li>
 </ul>
 </section>
