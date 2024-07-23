@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Ben Bolker">
-<meta name="dcterms.date" content="2024-07-22">
+<meta name="dcterms.date" content="2024-07-23">
 
 <title>choosing random effects terms in mixed models</title>
 <style>
@@ -2655,7 +2655,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 22, 2024</p>
+      <p class="date">July 23, 2024</p>
     </div>
   </div>
   
@@ -2665,13 +2665,14 @@ vertical-align: -.125em;
 
 </header>
 
-<p>Source file is <a href="https://github.com/bbolker/mixedmodels-misc/blob/master/simplify.qmd">here</a>.</p>
+<p>Source file is <a href="https://github.com/bbolker/mixedmodels-misc/blob/master/simplify.qmd">here</a>. Also see Emi Tanaka’s approach, mostly with AS-REML: https://rpubs.com/emitanaka/simplify-revarstr</p>
 <p>An R-centric discussion of what to do to manage the complexity of mixed models, specifically their random effect components.</p>
 <section id="setup" class="level2">
 <h2 class="anchored" data-anchor-id="setup">setup</h2>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lme4)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(Matrix)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(Matrix)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(glmmTMB)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>For this example we’ll think about a forest restoration experiment with four plots; 5 restoration treatments that are applied in each plot (a randomized complete block design); and 6 replicates within each block/treatment.</p>
 <div class="cell">
@@ -2782,6 +2783,13 @@ attr(,&quot;class&quot;)
 <li>The shortcut of using a nested model works in most mixed model frameworks (almost any platform that allows for multiple random effects will allow them to be nested), but is restricted to positive compound-symmetric models (i.e. <span class="math inline">\(\rho&gt;0\)</span>). Some packages allow general compound symmetric matrices (i.e. <span class="math inline">\(-1 &lt; \rho &lt; 1\)</span>), e.g. using <code>pdCompSymm</code> in <code>nlme</code>, <code>cs()</code> in <code>glmmTMB</code>, <code>cosy</code> in <code>brms</code> (apparently <code>MCMCglmm</code> doesn’t have a CS struture?) …</li>
 <li>We also need to distinguish between <em>heterogeneous</em> compound symmetry (i.e., variances are the same for every level; <span class="math inline">\(n+1\)</span> parameters for an <span class="math inline">\(n \times n\)</span> covariance matrix) and <em>homogeneous</em> compound symmetry (all variances are the same, 2 parameters regardless of the size of the cov matrix). The nesting trick described above only handles homogeneous CS. <code>cs()</code> in <code>glmmTMB</code> does heterogeneous CS, homogeneous CS could be handled by using the <code>map</code> argument to fix all of the standard deviations to be the same (or a <code>homcs()</code> structure could be added if there’s enough demand for it).</li>
 </ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>m1_homcs_lmer <span class="ot">&lt;-</span> <span class="fu">lmer</span>(y <span class="sc">~</span> ttt <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>plot<span class="sc">/</span>ttt), <span class="at">data  =</span> dd)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>m1_homcs_glmmTMB <span class="ot">&lt;-</span> <span class="fu">glmmTMB</span>(y <span class="sc">~</span> ttt <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>plot<span class="sc">/</span>ttt), <span class="at">data  =</span> dd,</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>                            <span class="at">REML =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>m1_hetcs_glmmTMB <span class="ot">&lt;-</span> <span class="fu">glmmTMB</span>(y <span class="sc">~</span> ttt <span class="sc">+</span> <span class="fu">cs</span>(ttt<span class="sc">|</span>plot), <span class="at">data  =</span> dd,</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>                            <span class="at">REML =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 </section>
 <section id="independence-models" class="level3">
 <h3 class="anchored" data-anchor-id="independence-models">independence models</h3>
@@ -2791,6 +2799,11 @@ attr(,&quot;class&quot;)
 <li><code>||</code> (still) doesn’t work in <code>lme4</code> for factor-valued terms; use <code>afex::mixed</code> or <code>glmmTMB</code>, or expand the model in dummies (<code>(0 + dummy(f, level1)|g) + (0 + dummy(f, level2)|g) + ...</code>; kind of a pain for large numbers of factors, although you could construct it via string processing if you wanted)</li>
 <li>see general comments above about the dependence of the constrained model on the zero point of the numeric terms</li>
 </ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>m1_diag_glmmTMB <span class="ot">&lt;-</span> <span class="fu">glmmTMB</span>(y <span class="sc">~</span> ttt <span class="sc">+</span> <span class="fu">diag</span>(ttt<span class="sc">|</span>plot), <span class="at">data  =</span> dd,</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>                           <span class="at">REML =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="do">## also try afex::mixed?</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 </section>
 <section id="dropping-terms" class="level3">
 <h3 class="anchored" data-anchor-id="dropping-terms">dropping terms</h3>
@@ -2799,6 +2812,17 @@ attr(,&quot;class&quot;)
 <section id="reduced-rank-models" class="level3">
 <h3 class="anchored" data-anchor-id="reduced-rank-models">reduced-rank models</h3>
 <p><em>Factor-analytic</em> or <em>reduced-rank</em> models are a more flexible approach to simplifying complex covariance functions, by doing something analogous to computing a principal components analysis on the covariance matrix and keeping a subset of the terms. In <code>glmmTMB</code> you can do this with the <code>rr()</code> covariance structure; see the relevant section of the <a href>covariance structure vignette</a>, or <a href="https://www.math.mcmaster.ca/bolker/misc/mcgillycuddy2024.pdf">this draft</a> by McGillycuddy et al. in press in <em>J. Stat. Software</em>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>m1_rr1_glmmTMB <span class="ot">&lt;-</span> <span class="fu">glmmTMB</span>(y <span class="sc">~</span> ttt <span class="sc">+</span> <span class="fu">rr</span>(ttt<span class="sc">|</span>plot, <span class="at">d=</span><span class="dv">1</span>), <span class="at">data  =</span> dd,</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>                           <span class="at">REML =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>m1_diag_rr1_glmmTMB <span class="ot">&lt;-</span> <span class="fu">glmmTMB</span>(y <span class="sc">~</span> ttt <span class="sc">+</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>                                   <span class="fu">diag</span>(ttt<span class="sc">|</span>plot) <span class="sc">+</span> </span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>                                   <span class="fu">rr</span>(ttt<span class="sc">|</span>plot, <span class="at">d=</span><span class="dv">1</span>), <span class="at">data  =</span> dd,</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>                               <span class="at">REML =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>m1_diag_rr2_glmmTMB <span class="ot">&lt;-</span> <span class="fu">glmmTMB</span>(y <span class="sc">~</span> ttt <span class="sc">+</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>                                   <span class="fu">rr</span>(ttt<span class="sc">|</span>plot, <span class="at">d=</span><span class="dv">2</span>), <span class="at">data  =</span> dd,</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>                           <span class="at">REML =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 </section>
 </section>
 <section id="parameter-constraint-strategies" class="level2">
@@ -2809,6 +2833,51 @@ attr(,&quot;class&quot;)
 <li>If you’re a real Bayesian or are otherwise comfortable with stronger priors, you can choose from a variety of other priors (e.g. half-Normal or half-<span class="math inline">\(t\)</span> or Gamma or log-Normal priors for standard deviations, Wishart or inverse-Wishart distributions for full covariance matrices, <a href="https://en.wikipedia.org/wiki/Lewandowski-Kurowicka-Joe_distribution">LKJ priors</a> for correlations) to help out your model. (LKJ priors are a nice generalization of the diagonal covariance structures above, as an LKJ prior with <span class="math inline">\(\eta&gt;1\)</span> pushes the correlation matrix to be closer to diagonal without constraining it to be exactly diagonal …)</li>
 <li>a real Bayesian would also say you should <strong>not</strong> choose priors just to make your model behave better (e.g. eliminate divergences in a Hamiltonian Monte Carlo run). Instead, you should use prior predictive simulations to tune the priors to limit the random-effects structures to those that produce reasonable output (and then cross your fingers that this also resolves your computational problems).</li>
 </ul>
+<p>Constraining just the standard deviations to be positive doesn’t help us: the 5×5 correlation matrix is only rank-4 … a singularity-avoiding prior for the correlation matrix isn’t available yet.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>gprior <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">prior =</span> <span class="st">&quot;gamma(1e8, 2.5)&quot;</span>,</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>                     <span class="at">class =</span> <span class="st">&quot;ranef&quot;</span>,</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>                     <span class="at">coef =</span> <span class="st">&quot;&quot;</span>)</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>m1_us_prior_glmmTMB <span class="ot">&lt;-</span> <span class="fu">glmmTMB</span>(y <span class="sc">~</span> ttt <span class="sc">+</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>                                   (ttt<span class="sc">|</span>plot),</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>                               <span class="at">data  =</span> dd,</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>                               <span class="at">prior =</span> gprior,</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>                               <span class="at">REML =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in finalizeTMB(TMBStruc, obj, fit, h, data.tmb.old): Model convergence
+problem; non-positive-definite Hessian matrix. See vignette(&#39;troubleshooting&#39;)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in finalizeTMB(TMBStruc, obj, fit, h, data.tmb.old): Model convergence
+problem; false convergence (8). See vignette(&#39;troubleshooting&#39;),
+help(&#39;diagnose&#39;)</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>cormat <span class="ot">&lt;-</span> <span class="fu">cov2cor</span>(<span class="fu">VarCorr</span>(m1_us_prior_glmmTMB)<span class="sc">$</span>cond[[<span class="dv">1</span>]])</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">eigen</span>(cormat)<span class="sc">$</span>value, <span class="at">digits =</span> <span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 3.85e+00 8.44e-01 2.15e-01 8.85e-02 6.46e-11</code></pre>
+</div>
+</div>
+<section id="aic-comparison" class="level3">
+<h3 class="anchored" data-anchor-id="aic-comparison">AIC comparison</h3>
+<p>The more complex models really aren’t doing well in terms of AIC in this case …</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>all_fits <span class="ot">&lt;-</span> <span class="fu">ls</span>(<span class="at">pattern =</span> <span class="st">&quot;^m1_&quot;</span>)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>all_fit_list <span class="ot">&lt;-</span> <span class="fu">mget</span>(all_fits)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>bbmle<span class="sc">::</span><span class="fu">AICtab</span>(all_fit_list)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                    dAIC df
+m1_homcs_glmmTMB     0.0 8 
+m1_homcs_lmer        0.0 8 
+m1_diag_glmmTMB      1.9 11
+m1_hetcs_glmmTMB     3.6 12
+m1_diag_rr1_glmmTMB  9.0 16
+m1_diag_rr2_glmmTMB 14.0 15
+m1_rr1_glmmTMB      29.4 11
+m1_us_prior_glmmTMB   NA 21</code></pre>
+</div>
+</div>
+</section>
 </section>
 <section id="multiple-re-terms" class="level2">
 <h2 class="anchored" data-anchor-id="multiple-re-terms">multiple RE terms</h2>
@@ -2845,7 +2914,7 @@ attr(,&quot;class&quot;)
 <h2 class="anchored" data-anchor-id="to-do">to do</h2>
 <ul>
 <li>provide examples of all (!?) of these approaches. In addition to the simulated example I started with (a single RE with a multi-level factor), might need to include examples with (1) multiple continuous predictors and (2) multiple RE terms in order to illustrate everything …</li>
-<li>fancy ideas; RJMCMC for Bayesian models?</li>
+<li>fancy ideas; RJMCMC for Bayesian models? Hierarchical clustering to lump/reduce factor levels? Priors on distribution of RR variances (e.g. geometric)?</li>
 </ul>
 </section>
 <section id="references" class="level2 unnumbered">
