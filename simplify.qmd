@@ -8,7 +8,7 @@ format:
     embed-resources: true
 ---
 
-Source file is [here](https://github.com/bbolker/mixedmodels-misc/blob/master/simplify.qmd). Also see Emi Tanaka's approach, mostly with AS-REML: https://rpubs.com/emitanaka/simplify-revarstr
+Source file is [here](https://github.com/bbolker/mixedmodels-misc/blob/master/simplify.qmd). Also see [Emi Tanaka's approach to the example below](https://rpubs.com/emitanaka/simplify-revarstr), mostly with AS-REML.
 
 An R-centric discussion of what to do to manage the complexity of mixed models, specifically their random effect components.
 
@@ -210,6 +210,7 @@ They also consider AIC-based selection.
    Its allowed steps appear to include both including/excluding particular terms from the RE term for a particular grouping variable, as well as including or excluding complete terms (i.e. adding or dropping a grouping variable)
    - `step.lmerModLmerTest()` from [lmerTest](https://CRAN.R-project.org/package=lmerTest) does backward stepwise selection (*among* random-effects terms, i.e. not considering simplification of individual terms as discussed above) based on likelihood ratio tests
    - `ffRanefLMER.fnc()` from [LMERConvenienceFunctions](https://CRAN.R-project.org/package=LMERConvenienceFunctions) does forward selection (the description of the `ran.effects` argument that specifies the possible random effects is complicated ...)
+   - the [asremlPlus](https://cran.r-project.org/package=asremlPlus) package has a lot of machinery, and some detailed examples, for model building and selection using AS-REML
 
 ## to do 
 
