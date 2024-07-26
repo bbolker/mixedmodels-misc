@@ -4,6 +4,7 @@ author: "Ben Bolker"
 date: "`r format(Sys.time(),'%d %B %Y')`"
 ---
 
+
 Consider a situation where we have multiple items of some sort which have associated effects, but we can't association observations with single items; instead, each observation is associated with a *group* of items. (Two examples which have come up are (1) authorship of papers and (2) hockey players on a team.) These are *not* quite identical to "multi-membership models" (I think), although similar techniques to those shown here could work for multi-membership models.
 
 Load packages (we don't really need anything beyond `lme4`; the rest are for convenience/drawing pictures).
@@ -13,6 +14,7 @@ library(lme4)
 library(broom.mixed)
 library(ggplot2); theme_set(theme_bw())
 library(Matrix)
+library(dplyr); library(tidyr)
 ```
 
 Construct a simulated example: first, simulate the
@@ -23,19 +25,19 @@ nm <- 20
 nobs0 <- 500
 set.seed(101)
 ## choose items for observations
-W <- matrix(rbinom(nobs0*nm, prob=0.25, size=1),nrow=nobs0,ncol=nm)
-dimnames(W) <- list(NULL,LETTERS[seq(nm)])
-W[1:5,]
-table(rowSums(W))
+W1 <- matrix(rbinom(nobs0*nm, prob=0.25, size=1),nrow=nobs0,ncol=nm)
+dimnames(W1) <- list(NULL,LETTERS[seq(nm)])
+W1[1:5,]
+table(rowSums(W1))
 ```
 
 The first 10 observations:
 
 ```{r showobs}
-image(Matrix(W),ylim=c(1,10),sub="",ylab="Observation",
+image(Matrix(W1),ylim=c(1,10),sub="",ylab="Observation",
       xlab="Item",
       ## draw tick labels at top
-      scales=list(at=1:20,x=list(labels=colnames(W),
+      scales=list(at=1:20,x=list(labels=colnames(W1),
                                  alternating=2)))
 ```
 
@@ -63,16 +65,20 @@ X <- model.matrix(~x, data=M)
 ## n.b. get in trouble if we don't add residual error
 ## (theta is scaled relative to residual error)
 ## here, use theta=sigma=1
-M$y <- c(X %*% beta) + c(W %*% b) +rnorm(nobs0,sd=1)
+M$y <- c(X %*% beta) + c(W1 %*% b) +rnorm(nobs0,sd=1)
+## we'll need this later
+M$fake <- rep(LETTERS[seq(nm)],length.out=nobs0)
 ```
+
+
+## modular/from scratch in lme4
 
 Fit (see `?modular`):
 ```{r modular_fit}
 ## helpful to specify a factor with the right levels:
 ## actual values are unimportant since we will specify Zt/Ztlist directly
-M$fake <- rep(LETTERS[seq(nm)],length.out=nobs)
 lmod <- lFormula(y~x+(1|fake), data=M)
-lmod$reTrms$Zt <- lmod$reTrms$Ztlist[[1]] <- Matrix(t(W))
+lmod$reTrms$Zt <- lmod$reTrms$Ztlist[[1]] <- Matrix(t(W1))
 devfun <- do.call(mkLmerDevfun, lmod)
 opt <- optimizeLmer(devfun)
 m1 <- mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr)
@@ -131,11 +137,11 @@ lmer_multimemb <- function(formula,data,memb_mat=list(),...) {
       form <- as.formula(substitute(~z,list(z=fb[[i]][[2]])))
       ## construct model matrix & compute Khatri-Rao product 
       X <- model.matrix(form,data=data)
-      Zt <- Matrix::KhatriRao(t(M),t(X),make.dimnames=TRUE)
+      Zt <- Matrix::KhatriRao(t(M), t(X), make.dimnames=TRUE)
       ## FIXME: mess with names?
       Ztlist[[fbnm]] <- Zt
       ## if necessary, add factor to data
-      if (!m %in% names(data)) {
+      if (!gvars[[i]] %in% names(data)) {
         ## if the factor has non-trivial ordering, it should be included
         ## in the data.  Do we have to worry about ordering of Z? test!
         data[[gvars[i]]] <- factor(colnames(memb_mat[[w]]))
@@ -160,9 +166,9 @@ lmer_multimemb <- function(formula,data,memb_mat=list(),...) {
 This seems to work ...
 
 ```{r test}
-lmer_multimemb(formula=y ~ x + (1|team),
+(m2 <- lmer_multimemb(formula=y ~ x + (1|team),
                data=M,
-               memb_mat=list(team=W))
+               memb_mat=list(team=W1)))
 ```
 
 ## Data formats
@@ -182,7 +188,7 @@ tmp <- data.frame(id = 1:5,
 ## list of teachers
 all_tch <- with(tmp,sort(unique(na.omit(c(tch1,tch2,tch3)))))
 ## empty (sparse) matrix with dimnames
-W <- Matrix(0,nrow=nrow(tmp),ncol=length(all_tch),
+W2 <- Matrix(0,nrow=nrow(tmp),ncol=length(all_tch),
             dimnames=list(as.character(tmp$id),as.character(all_tch)))
 ## melt all teacher columns to long/combined format
 all_prs0 <- na.omit(reshape2::melt(tmp[,1:4],id="id"))
@@ -192,7 +198,7 @@ all_prs2 <- all_prs1
 all_prs2[] <- lapply(all_prs2,function(x) as.numeric(factor(x)))
 ## convert to two-column matrix
 all_prs2 <- as.matrix(all_prs2)
-W[all_prs2] <- 1 ## weights
+W2[all_prs2] <- 1 ## weights
 ```
 
 ## row_ID, col_ID, weight as three columns
@@ -205,10 +211,63 @@ all_prs3 <- all_prs1
 all_prs3[] <- lapply(all_prs3, factor)
 all_prs3$wts <- 1
 ## now data frame -> matrix
-W0 <- reshape2::dcast(all_prs3,id~value, value.var="wts", fill=0)
-idvars <- W0$id
-W <- Matrix(as.matrix(W0[,-1])) ## drop 'id' column and sparsify
-rownames(W) <- as.character(idvars)
+W3 <- reshape2::dcast(all_prs3,id~value, value.var="wts", fill=0)
+idvars <- W3$id
+W <- Matrix(as.matrix(W3[,-1])) ## drop 'id' column and sparsify
+rownames(W3) <- as.character(idvars)
+```
+
+# glmmTMB
+
+Can we do this with `glmmTMB`?
+
+(need `modular` branch for now: `remotes::install_github("glmmTMB/glmmTMB/glmmTMB@modular")`)
+
+```{r glmmTMB}
+library(glmmTMB)
+gt0 <- glmmTMB(y~x+(1|fake), data=M, doFit = FALSE)
+gt1 <- fitTMB(gt0, doOptim = FALSE)
+## now hack data
+gt1$env$data$Z <- as(Matrix(W1), "TsparseMatrix")
+## rebuild TMB object
+gt1 <- with(gt1$env,
+                TMB::MakeADFun(data,
+                               parameters,
+                               map = map,
+                               random = random,
+                               silent = silent,
+                               DLL = "glmmTMB"))
+fit <- with(gt1, nlminb(par, objective = fn, gr = gr))
+m3 <- finalizeTMB(gt0, gt1, fit)
+```
+
+```{r compare}
+L1 <- (list(raw_lme4 = m1, multimemb = m2, glmmTMB = m3)
+    |> purrr::map_dfr(tidy, effects = "fixed", .id = "model")
+    |> select(model, term, estimate, std.error)
+)
+(L1 |> select(-std.error)
+    |> pivot_wider(id_cols = "term", names_from = "model",
+                   values_from = "estimate")
+)
+(L1 |> select(-estimate)
+    |> pivot_wider(id_cols = "term", names_from = "model",
+                   values_from = "std.error")
+)
+```
+
+## from package
+
+JP van Paridon and Phillip Alday have a package on GitHub that provides methods to fit these kinds of problems. Don't quite know how to adapt to this example at the moment ...
+
+```{r pkg, eval = FALSE}
+## NOT WORKING YET
+## slightly naughty
+while (!require("lmerMultiMember")) {
+    remotes::install_github("https://github.com/jvparidon/lmerMultiMember")
+}
+m0 <- lmerMultiMember::lmer(y~x+(1|fake), memberships = list(fake = W1), data=M)
+## subscript too long ..
 ```
 
 ---
