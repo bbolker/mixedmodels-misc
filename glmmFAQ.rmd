@@ -1051,6 +1051,7 @@ A related question is how to quantify "repeatability" (i.e., ratios of variance 
 
 The bottom line is that there are some simple recipes (and some more complex recipes that may or may not have been coded up by someone), but that '''you have to think carefully about what information you want to get out of the coefficient of determination''', because no recipe will have all of the properties of $R^2$ in the simple linear model case.
 
+
 **Packages/functions**: See [`performance::r2()`](https://easystats.github.io/performance/reference/r2.html), `MuMIn::r.squaredGLMM()`, the [`r2glmm` package](https://CRAN.R-project.org/package=r2glmm), the standalone [r2MLM function](https://my.vanderbilt.edu/jasonrights/software/r2MLM), stuff in the `piecewiseSEM` package, [`psycho::R2_nakagawa`](http://finzi.psych.upenn.edu/R/library/psycho/html/R2_nakagawa.html), [partR2](https://github.com/mastoffel/partR2) package ... (try e.g. `sos::findFn("Nakagawa Schielzeth")` for an up-to-date list ...)
 
 ## Variable importance
