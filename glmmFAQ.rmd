@@ -190,7 +190,7 @@ Some researchers (who treat fixed vs random as a philosophical rather than a pra
 
 Also see a very thoughtful chapter in @hodges_richly_2016.
 
-Treating factors with small numbers of levels as random will in the best case  lead to very small and/or imprecise estimates of random effects; in the worst case it will lead to various numerical difficulties such as lack of convergence, zero variance estimates, etc.. (A small [simulation exercise](https:/rpubs.com/bbolker/4187) shows that at least the estimates of the standard deviation are downwardly biased in this case; it's not clear whether/how this bias would affect the point estimates of  fixed effects or their estimated confidence intervals.) In the classical method-of-moments approach these problems may not arise (because the sums of squares are always well defined as long as there are at least two units), but the underlying problems of lack of power are there nevertheless.
+Treating factors with small numbers of levels as random will in the best case  lead to very small and/or imprecise estimates of random effects; in the worst case it will lead to various numerical difficulties such as lack of convergence, zero variance estimates, etc.. (A small [simulation exercise](https://rpubs.com/bbolker/4187) shows that at least the estimates of the standard deviation are downwardly biased in this case; it's not clear whether/how this bias would affect the point estimates of  fixed effects or their estimated confidence intervals.) In the classical method-of-moments approach these problems may not arise (because the sums of squares are always well defined as long as there are at least two units), but the underlying problems of lack of power are there nevertheless.
 
 
 Thierry Onkelinx has [a blog post](https://www.muscardinus.be/2018/09/number-random-effect-levels/) with some simulations on the impact of the number of levels and concludes with a few recommendations for the number of levels of the grouping variable $n_s$:
@@ -279,6 +279,11 @@ accordingly, as follows:
 [^2]: the dispersion factor is estimated on a
 variance, so we need to take the square root to apply it to the
 standard error
+
+```{r up2date, echo = FALSE}
+## rescue cached fit
+m2 <- up2date(m2)
+```
 
 ```{r quasi}
 ## extract summary table; you may also be able to do this via
