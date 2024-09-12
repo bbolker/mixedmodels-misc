@@ -359,6 +359,7 @@ Underdispersion (much *less* variability than expected) is a less common problem
 ## Gamma GLMMs
 
 While one (well, OK I) would naively think that GLMMs with Gamma distributions would be just as easy (or hard) as any other sort of GLMMs, it seems that they are in fact harder to implement. Basic simulated examples of Gamma GLMMs can fail in lme4 despite analogous problems with Poisson, binomial, etc. distributions.  Solutions:
+
 - the default inverse link seems particularly problematic; try other links (especially `family=Gamma(link="log")`) if that is possible/makes sense
 - consider whether a lognormal model (i.e. a regular LMM on logged data) would work/makes sense.
 - @lo_transform_2015 argue that the Gamma family with an *identity* link is superior to lognormal models for reaction-time data. I (BMB) don't find their argument particularly convincing, but lots of people want to do this. Unfortunately this is technically challenging (see [here](https://github.com/lme4/lme4/issues/573)), because it is likely that some "illegal" values (predicted responses $\le 0$) will occur while fitting the model, even if the final fitted model makes no impossible predictions. Thus something has to be done to make the model-fitting machinery tolerant of such values (i.e. returning `NA` for these model evaluations, or clamping illegal values to the constrained space with an appropriate smooth penalty function).
