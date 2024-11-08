@@ -12,56 +12,15 @@ Source file is [here](https://github.com/bbolker/mixedmodels-misc/blob/master/si
 
 An R-centric discussion of what to do to manage the complexity of mixed models, specifically their random effect components.
 
-## setup
-
-```{r pkgs, message=FALSE}
-library(lme4)
-library(Matrix)
-library(glmmTMB)
-```
-
-For this example we'll think about a forest restoration experiment with four plots; 5 restoration treatments that are applied in each plot (a randomized complete block design); and 6 replicates within each block/treatment.
-
-```{r sim}
-library(lme4)
-set.seed(101)
-dd <- expand.grid(plot = factor(1:4),
-                  ttt = factor(LETTERS[1:5]),
-                  rep = 1:6)
-## sample a random 5x5 correlation matrix
-cchol <- nimble::rlkj_corr_cholesky(n = 1, eta = 1.2, p = 5) *
-    ## scale by random SDs
-    rlnorm(5, meanlog = 0, sdlog = 0.2)
-theta <- t(cchol)[lower.tri(cchol, diag = TRUE)]
-dd$y <- suppressMessages(
-    simulate( ~ ttt + (ttt|plot),
-             family = gaussian,
-             newdata = dd,
-             newparams = list(beta = seq(1, by = -0.5, length.out = 5),
-                              theta = theta,
-                              sigma = 1)))[[1]]
-```
+# General framework
 
 ## maximal model
 
-We would like to be able to fit `~ ttt + (ttt|plot)`, but that's very unlikely to actually work:
+The *maximal model* [@barr_random_2013] is the model that includes all random effect terms that would be identifiable, given the experimental (observational) experimental design, *given arbitrarily large samples* (both of groups and of observations within groups), what I would call satisfying ``strong identifiability''.
 
-```{r fit-full}
-m1 <- lmer(y ~ ttt + (ttt|plot), data  = dd)
-isSingular(m1)
-getME(m1, "theta")[getME(m1, "lower") ==0]
-```
-
-Seems pretty clear here that the real rank of the estimate is 3 ...
-
-## diagnostics
-
-Investigate eigenvectors of the estimated $\Sigma$; we can see again that the covariance matrix has 2 trivial ($\approx 0$) eigenvalues, but not much else; the rotation matrix doesn't give us any particularly useful clues about how to simplify the model (maybe a heatmap with column (eigenvector) order held fixed and reordering and hierarchical clustering done on the rows would be helpful for identifying clusters?  Ideally, the clustering would be done based on shared similarity based on *absolute values* (i.e., we might want to identify linear combinations/contrasts among terms that would allow us to simplify the model ... surely someone has done something like this?) [`rePCA()` definitely could use some additions to make it more useful, e.g. a plot method ... even the original paper [@bates_parsimonious_2015] doesn't offer much guidance ...]
-
-```{r repca}
-(r <- rePCA(m1))
-image(Matrix(r$plot$rotation))
-```
+* all categorical variables in the data with exchangeable levels are treated as random effects [@yarkonigeneralizability2022]
+* all terms in the fixed-effect model are included as varying terms where possible, i.e. within every grouping variable where the values of the fixed-effect term vary within (and not just between) groups
+* for models where the conditional distribution has an estimated scale parameter (e.g. Gaussian, Gamma) and a varying term with $n$ parameters (e.g. $n=2$ for a random-slopes model), there must be at least $n+1$ observations per group in order for the scale parameter (residual variance in the case of a Gaussian) to be identifiable, e.g. see "starlings" example [here](https://bbolker.github.io/mm_iowa2024/notes/mixed_lab.html). For models with fixed scale/dispersion (e.g. Poisson, Gamma) the limitation is $n$ observations per group (unless an observation-level random effect is added, in which case we again need $n+1$). For models with estimated dispersion rather than scale (e.g. negative binomial), the model is *theoretically* identifiable with only $n$ observations per group, but it probably won't work.
 
 ## model constraint strategies
 
@@ -111,14 +70,6 @@ $\rho$ must be >0)
 - The shortcut of using a nested model works in most mixed model frameworks (almost any platform that allows for multiple random effects will allow them to be nested), but is restricted to positive compound-symmetric models (i.e. $\rho>0$). Some packages allow general compound symmetric matrices (i.e. $-1 < \rho < 1$), e.g. using `pdCompSymm` in `nlme`, `cs()` in `glmmTMB`, `cosy` in `brms` (apparently `MCMCglmm` doesn't have a CS struture?) ... 
 - We also need to distinguish between *heterogeneous* compound symmetry (i.e., variances are the same for every level; $n+1$ parameters for an $n \times n$ covariance matrix) and *homogeneous* compound symmetry (all variances are the same, 2 parameters regardless of the size of the cov matrix). The nesting trick described above only handles homogeneous CS. `cs()` in `glmmTMB` does heterogeneous CS, homogeneous CS could be handled by using the `map` argument to fix all of the standard deviations to be the same (or a `homcs()` structure could be added if there's enough demand for it).
 
-```{r cs-fits}
-m1_homcs_lmer <- lmer(y ~ ttt + (1|plot/ttt), data  = dd)
-m1_homcs_glmmTMB <- glmmTMB(y ~ ttt + (1|plot/ttt), data  = dd,
-                            REML = TRUE)
-m1_hetcs_glmmTMB <- glmmTMB(y ~ ttt + cs(ttt|plot), data  = dd,
-                            REML = TRUE)
-```
-
 ### independence models
 
 This is probably the best known approach to model simplification (e.g. as recommended by @barr_random_2013). It's actually a special case of CS, with $\rho=0$. Also called "diagonal" for obvious (?) reasons.
@@ -127,31 +78,13 @@ This is probably the best known approach to model simplification (e.g. as recomm
 - `||` (still) doesn't work in `lme4` for factor-valued terms; use `afex::mixed` or `glmmTMB`, or expand the model in dummies (`(0 + dummy(f, level1)|g) + (0 + dummy(f, level2)|g) + ...`; kind of a pain for large numbers of factors, although you could construct it via string processing if you wanted)
 - see general comments above about the dependence of the constrained model on the zero point of the numeric terms
 
-```{r diag-fits}
-m1_diag_glmmTMB <- glmmTMB(y ~ ttt + diag(ttt|plot), data  = dd,
-                           REML = TRUE)
-## also try afex::mixed?
-```
-
 ### dropping terms
 
 Especially for vector-valued random effects consisting of variation in multiple numeric predictors, it may make sense to drop the random effect term for terms with very small variance, or terms that are of less interest. For example, you might reduce the random-effect term `(1 + fire + NPP | biome)` to `(1 + fire | biome)` by dropping the variation in `NPP` across biomes.
 
 ### reduced-rank models
 
-*Factor-analytic* or *reduced-rank* models are a more flexible approach to simplifying complex covariance functions, by doing something analogous to computing a principal components analysis on the covariance matrix and keeping a subset of the terms. In `glmmTMB` you can do this with the `rr()` covariance structure; see the relevant section of the [covariance structure vignette](), or [this draft](https://www.math.mcmaster.ca/bolker/misc/mcgillycuddy2024.pdf) by McGillycuddy et al. in press in *J. Stat. Software*.
-
-```{r rr-fits}
-m1_rr1_glmmTMB <- glmmTMB(y ~ ttt + rr(ttt|plot, d=1), data  = dd,
-                           REML = TRUE)
-m1_diag_rr1_glmmTMB <- glmmTMB(y ~ ttt +
-                                   diag(ttt|plot) + 
-                                   rr(ttt|plot, d=1), data  = dd,
-                               REML = TRUE)
-m1_diag_rr2_glmmTMB <- glmmTMB(y ~ ttt +
-                                   rr(ttt|plot, d=2), data  = dd,
-                           REML = TRUE)
-```
+*Factor-analytic* or *reduced-rank* models are a more flexible approach to simplifying complex covariance functions, by doing something analogous to computing a principal components analysis on the covariance matrix and keeping a subset of the terms. In `glmmTMB` you can do this with the `rr()` covariance structure; see the relevant section of the [covariance structure vignette](), or [this draft](https://www.math.mcmaster.ca/bolker/misc/mcgillycuddy2024.pdf) by McGillycuddy et al., in press in *J. Stat. Software*.
 
 ## parameter constraint strategies
 
@@ -160,31 +93,6 @@ Instead of changing the covariance model to reduce its dimensionality, you can a
 - If you want to apply a minimally informative prior that will prevent singularity, @chung_nondegenerate_2013 show that an improper Gamma(shape=2, rate=0) is the weakest Gamma prior for the standard deviation that will prevent a posterior mode at zero. (The mode will be "approximately one standard error away from zero when the maximum likelihood estimate is at zero".) In practice this might be implemented using a very small rate parameter or very large shape parameter. A Wishart prior with $\nu = 1 + d$ and infinite scale might (?) have similar properties for vector-valued random effects/covariance matrices larger than 1×1. The `blme` package implements this approach (although with a default shape of 2.5 rather than 2); it can also be implemented in `glmmTMB` (see the [priors vignette](https://cran.r-universe.dev/glmmTMB/doc/priors.html)), and of course in any of the full-Bayesian packages (`brms`, `rstanarm`, `MCMCglmm`, etc.)
 - If you're a real Bayesian or are otherwise comfortable with stronger priors, you can choose from a variety of other priors (e.g. half-Normal or half-$t$ or Gamma or log-Normal priors for standard deviations, Wishart or inverse-Wishart distributions for full covariance matrices, [LKJ priors](https://en.wikipedia.org/wiki/Lewandowski-Kurowicka-Joe_distribution) for correlations) to help out your model. (LKJ priors are a nice generalization of the diagonal covariance structures above, as an LKJ prior with $\eta>1$ pushes the correlation matrix to be closer to diagonal without constraining it to be exactly diagonal ...)
 - a real Bayesian would also say you should **not** choose priors just to make your model behave better (e.g. eliminate divergences in a Hamiltonian Monte Carlo run). Instead, you should use prior predictive simulations to tune the priors to limit the random-effects structures to those that produce reasonable output (and then cross your fingers that this also resolves your computational problems).
-
-Constraining just the standard deviations to be positive doesn't help us: the 5×5 correlation matrix is only rank-4 ... a singularity-avoiding prior for the correlation matrix isn't available yet.
-
-```{r prior}
-gprior <- data.frame(prior = "gamma(1e8, 2.5)",
-                     class = "ranef",
-                     coef = "")
-m1_us_prior_glmmTMB <- glmmTMB(y ~ ttt +
-                                   (ttt|plot),
-                               data  = dd,
-                               prior = gprior,
-                               REML = TRUE)
-cormat <- cov2cor(VarCorr(m1_us_prior_glmmTMB)$cond[[1]])
-print(eigen(cormat)$value, digits = 3)
-```
-
-### AIC comparison
-
-The more complex models really aren't doing well in terms of AIC in this case ...
-
-```{r aictab}
-all_fits <- ls(pattern = "^m1_")
-all_fit_list <- mget(all_fits)
-bbmle::AICtab(all_fit_list)
-```
 
 ## multiple RE terms
 
@@ -211,6 +119,125 @@ They also consider AIC-based selection.
    - `step.lmerModLmerTest()` from [lmerTest](https://CRAN.R-project.org/package=lmerTest) does backward stepwise selection (*among* random-effects terms, i.e. not considering simplification of individual terms as discussed above) based on likelihood ratio tests
    - `ffRanefLMER.fnc()` from [LMERConvenienceFunctions](https://CRAN.R-project.org/package=LMERConvenienceFunctions) does forward selection (the description of the `ran.effects` argument that specifies the possible random effects is complicated ...)
    - the [asremlPlus](https://cran.r-project.org/package=asremlPlus) package has a lot of machinery, and some detailed examples, for model building and selection using AS-REML
+
+# Example
+
+## setup
+
+```{r pkgs, message=FALSE}
+library(lme4)
+library(Matrix)
+library(glmmTMB)
+## For rlkj_corr_cholesky; LKJ simulation also available in `rethinking` package
+## (GitHub only: remotes::install_github("rmcelreath/rethinking"))
+library(nimble)
+library(blme)
+conflicted::conflict_prefer("simulate", "stats")
+
+```
+
+For this example we'll think about a forest restoration experiment with four plots; 5 restoration treatments that are applied in each plot (a randomized complete block design); and 6 replicates within each block/treatment.
+
+```{r sim}
+library(lme4)
+set.seed(101)
+dd <- expand.grid(plot = factor(1:4),
+                  ttt = factor(LETTERS[1:5]),
+                  rep = 1:6)
+## sample a random 5x5 correlation matrix
+cchol <- nimble::rlkj_corr_cholesky(n = 1, eta = 1.2, p = 5) *
+    ## scale by random SDs
+    rlnorm(5, meanlog = 0, sdlog = 0.2)
+theta <- t(cchol)[lower.tri(cchol, diag = TRUE)]
+dd$y <- suppressMessages(
+    simulate( ~ ttt + (ttt|plot),
+             family = gaussian,
+             newdata = dd,
+             newparams = list(beta = seq(1, by = -0.5, length.out = 5),
+                              theta = theta,
+                              sigma = 1)))[[1]]
+```
+
+## maximal model
+
+We would like to be able to fit `~ ttt + (ttt|plot)`, but that's very unlikely to actually work:
+
+```{r fit-full}
+m1 <- lmer(y ~ ttt + (ttt|plot), data  = dd)
+isSingular(m1)
+getME(m1, "theta")[getME(m1, "lower") ==0]
+```
+
+Seems pretty clear here that the real rank of the estimate is 3 ...
+
+## diagnostics
+
+Investigate eigenvectors of the estimated $\Sigma$; we can see again that the covariance matrix has 2 trivial ($\approx 0$) eigenvalues, but not much else; the rotation matrix doesn't give us any particularly useful clues about how to simplify the model (maybe a heatmap with column (eigenvector) order held fixed and reordering and hierarchical clustering done on the rows would be helpful for identifying clusters?  Ideally, the clustering would be done based on shared similarity based on *absolute values* (i.e., we might want to identify linear combinations/contrasts among terms that would allow us to simplify the model ... surely someone has done something like this?) [`rePCA()` definitely could use some additions to make it more useful, e.g. a plot method ... even the original paper [@bates_parsimonious_2015] doesn't offer much guidance ...]
+
+```{r repca}
+(r <- rePCA(m1))
+image(Matrix(r$plot$rotation))
+```
+
+## constraining the model
+
+```{r cs-fits}
+m1_homcs_lmer <- lmer(y ~ ttt + (1|plot/ttt), data  = dd)
+m1_homcs_glmmTMB <- glmmTMB(y ~ ttt + (1|plot/ttt), data  = dd,
+                            REML = TRUE)
+m1_hetcs_glmmTMB <- glmmTMB(y ~ ttt + cs(ttt|plot), data  = dd,
+                            REML = TRUE)
+```
+
+### independence models
+
+```{r diag-fits}
+m1_diag_glmmTMB <- glmmTMB(y ~ ttt + diag(ttt|plot), data  = dd,
+                           REML = TRUE)
+## also try afex::mixed?
+```
+
+### reduced-rank models
+
+```{r rr-fits}
+m1_rr1_glmmTMB <- glmmTMB(y ~ ttt + rr(ttt|plot, d=1), data  = dd,
+                           REML = TRUE)
+m1_diag_rr1_glmmTMB <- glmmTMB(y ~ ttt +
+                                   diag(ttt|plot) + 
+                                   rr(ttt|plot, d=1), data  = dd,
+                               REML = TRUE)
+m1_diag_rr2_glmmTMB <- glmmTMB(y ~ ttt +
+                                   rr(ttt|plot, d=2), data  = dd,
+                           REML = TRUE)
+```
+
+## parameter constraints/regularization
+
+Constraining just the standard deviations to be positive doesn't help us: the 5×5 correlation matrix is only rank-4 ... a singularity-avoiding prior for the correlation matrix isn't available yet.
+
+```{r prior}
+gprior <- data.frame(prior = "gamma(1e8, 2.5)",
+                     class = "ranef",
+                     coef = "")
+m1_us_prior_glmmTMB <- glmmTMB(y ~ ttt +
+                                   (ttt|plot),
+                               data  = dd,
+                               prior = gprior,
+                               REML = TRUE)
+cormat <- cov2cor(VarCorr(m1_us_prior_glmmTMB)$cond[[1]])
+print(eigen(cormat)$value, digits = 3)
+```
+
+### AIC comparison
+
+The more complex models really aren't doing well in terms of AIC in this case ...
+
+```{r aictab}
+all_fits <- ls(pattern = "^m1_")
+all_fit_list <- mget(all_fits)
+bbmle::AICtab(all_fit_list)
+```
+
 
 ## to do 
 
