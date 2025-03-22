@@ -1,6 +1,9 @@
 %.html: %.rmd
 	Rscript -e "library(\"rmarkdown\"); render(\"$<\")"
 
+%.html: %.qmd
+	quarto render $<
+
 %.md: %.rmd
 	Rscript -e "library(\"knitr\"); knit(\"$<\")"
 
