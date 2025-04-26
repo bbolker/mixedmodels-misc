@@ -194,6 +194,7 @@ Treating factors with small numbers of levels as random will in the best case  l
 
 
 Thierry Onkelinx has [a blog post](https://www.muscardinus.be/2018/09/number-random-effect-levels/) with some simulations on the impact of the number of levels and concludes with a few recommendations for the number of levels of the grouping variable $n_s$:
+
 > - get $n_s > 1000$ levels when an accurate estimate of the random effect variance is crucial. E.g. when a single number will be use for power calculations.
 > - get $n_s > 100$ levels when a reasonable estimate of the random effect variance is sufficient. E.g. power calculations with sensitivity analysis of the random effect variance.
 > - get $n_s > 20$ levels for an experimental study
