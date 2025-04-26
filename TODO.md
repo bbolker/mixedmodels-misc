@@ -1,6 +1,3 @@
-- glmm FAQ: revive dynamic dependency graphs?
-- better regex golfing?
-- revive Task View
+- remember gh-pages setup  and switch over to docs/
 - package table
 - more on varying variance by group
-- more on `GLMMadaptive`
