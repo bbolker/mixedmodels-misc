@@ -1,5 +1,5 @@
 ---
-title: "choosing random effects terms in mixed models"
+title: "choosing and simplifying random effects terms in mixed models"
 author: Ben Bolker
 date: today
 bibliography: ./glmm.bib
@@ -10,7 +10,7 @@ format:
 
 Source file is [here](https://github.com/bbolker/mixedmodels-misc/blob/master/simplify.qmd). Also see [Emi Tanaka's approach to the example below](https://rpubs.com/emitanaka/simplify-revarstr), mostly with AS-REML.
 
-An R-centric discussion of what to do to manage the complexity of mixed models, specifically their random effect components.
+An R-centric discussion of what to do to manage the complexity of random effects terms in mixed models.
 
 # General framework
 
@@ -19,8 +19,14 @@ An R-centric discussion of what to do to manage the complexity of mixed models, 
 The *maximal model* [@barr_random_2013] is the model that includes all random effect terms that would be identifiable, given the experimental (observational) experimental design, *given arbitrarily large samples* (both of groups and of observations within groups), what I would call satisfying ``strong identifiability''.
 
 * all categorical variables in the data with exchangeable levels are treated as random effects [@yarkonigeneralizability2022]
-* all terms in the fixed-effect model are included as varying terms where possible, i.e. within every grouping variable where the values of the fixed-effect term vary within (and not just between) groups
+* all terms in the fixed-effect model are included as varying terms where possible, i.e. within every grouping variable where the values of the fixed-effect term vary within (and not just between) groups (*within-subjects* effects in an experimental design)
 * for models where the conditional distribution has an estimated scale parameter (e.g. Gaussian, Gamma) and a varying term with $n$ parameters (e.g. $n=2$ for a random-slopes model), there must be at least $n+1$ observations per group in order for the scale parameter (residual variance in the case of a Gaussian) to be identifiable, e.g. see "starlings" example [here](https://bbolker.github.io/mm_iowa2024/notes/mixed_lab.html). For models with fixed scale/dispersion (e.g. Poisson, Gamma) the limitation is $n$ observations per group (unless an observation-level random effect is added, in which case we again need $n+1$). For models with estimated dispersion rather than scale (e.g. negative binomial), the model is *theoretically* identifiable with only $n$ observations per group, but it probably won't work.
+
+For example, working with the built-in `cbpp` data set where `period` is a four-level factor, the random-effects term `(1+period|herd)` would correspond to estimating four variances and $4 \times 3/2 = six covariances. The exact meanings of these parameters (if they matter in your application) depend on the contrasts used to expand the factor into dummy variables, but the overall model fit (and the estimates and standard errors of any fixed effect parameters) will be the same in any case.
+
+::: {.callout-caution collapse="true"}
+## Expand for more details of contrasts etc.
+:::
 
 ## model constraint strategies
 
@@ -28,9 +34,16 @@ When we constrain the covariance matrix (i.e. any model for specific than "gener
 
 ### compound-symmetric models
 
-For factor models with many levels, compound-symmetric models are a good simplification approach. This restricts the correlations among levels to be identical for all pairs of levels (i.e., a correlation matrix with all off-diagonal elements equal to the same constant $\rho$).
+For within-subjects categorical effects (factors) with more than two levels, compound-symmetric models are a good simplification approach [@scandolaReliability2024a]. This restricts the correlations among levels to be identical for all pairs of levels (i.e., a correlation matrix with all off-diagonal elements equal to the same constant $\rho$).
 
-For example, working with the built-in `cbpp` data set where `period` is a four-level factor, the covariance matrices implied by `(period|herd)` vs. `(1|period/herd)` are:
+
+the covariance matrices implied by `(period|herd)` vs. `(1|period/herd)` are:
+
+
+::: {.callout-caution collapse="true"}
+## Expand for mathematical details
+
+For example, 
 
 $$
 (\textrm{intercept}, \textrm{slope}) =
@@ -66,6 +79,8 @@ $$
 where $\sigma^2 = \sigma^2_{\{b|1\}}+\sigma^2_{\{herd:period|1\}}$,
 $\rho = \sigma^2_{\{b|1\}}/\sigma^2$ (=2 parameters;
 $\rho$ must be >0)
+:::
+
 
 - The shortcut of using a nested model works in most mixed model frameworks (almost any platform that allows for multiple random effects will allow them to be nested), but is restricted to positive compound-symmetric models (i.e. $\rho>0$). Some packages allow general compound symmetric matrices (i.e. $-1 < \rho < 1$), e.g. using `pdCompSymm` in `nlme`, `cs()` in `glmmTMB`, `cosy` in `brms` (apparently `MCMCglmm` doesn't have a CS struture?) ... 
 - We also need to distinguish between *heterogeneous* compound symmetry (i.e., variances are the same for every level; $n+1$ parameters for an $n \times n$ covariance matrix) and *homogeneous* compound symmetry (all variances are the same, 2 parameters regardless of the size of the cov matrix). The nesting trick described above only handles homogeneous CS. `cs()` in `glmmTMB` does heterogeneous CS, homogeneous CS could be handled by using the `map` argument to fix all of the standard deviations to be the same (or a `homcs()` structure could be added if there's enough demand for it).
@@ -76,7 +91,7 @@ This is probably the best known approach to model simplification (e.g. as recomm
 
 - in `lme4` (or `glmmTMB` or `brms`), use `||` in place of `|`; `glmmTMB` allows `diag()` for heterogenous diagonal/independence models (and `homdiag()` for homogeneous); `MCMCglmm` uses `idv()` (homogeneous) and `idh()` (heterogeneous).
 - `||` (still) doesn't work in `lme4` for factor-valued terms; use `afex::mixed` or `glmmTMB`, or expand the model in dummies (`(0 + dummy(f, level1)|g) + (0 + dummy(f, level2)|g) + ...`; kind of a pain for large numbers of factors, although you could construct it via string processing if you wanted)
-- see general comments above about the dependence of the constrained model on the zero point of the numeric terms
+- 
 
 ### dropping terms
 
