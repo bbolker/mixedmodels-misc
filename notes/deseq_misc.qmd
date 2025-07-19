@@ -1,0 +1,19 @@
+---
+title: DESeq2 and beyond: microbiome/diff abundance analysis with `glmmTMB`
+---
+
+(see also `R/misc/constante.R`, `shortDf.rds`)
+
+- normalization (offsets)
+- `nbinom12`
+- random effects in dispersion
+- shrinkage
+
+---
+
+- zero-inflation
+- complex zero-inflation (RE, treatment effects)
+- factor-analytic models
+    - in intercepts
+	- in treatments
+	- correlated between intercept and treatment?
