@@ -12,6 +12,13 @@ Source file is [here](https://github.com/bbolker/mixedmodels-misc/blob/master/si
 
 An R-centric discussion of what to do to manage the complexity of random effects terms in mixed models.
 
+# Overview
+
+Some questions to ask yourself first:
+
+* do you prefer to work in a frequentist, partly Bayesian (e.g. using priors to prevent awkward situations), or fully Bayesian framework?
+* are your random effects *scalar* (typically only considering variation in intercepts between groups, i.e. `(1|g)` in a random-effects formula) or *vector-valued* (i.e. you have a random-slopes model or a model that considers 'within-subjects' variation)
+
 # General framework
 
 ## maximal model
@@ -26,6 +33,7 @@ For example, working with the built-in `cbpp` data set where `period` is a four-
 
 ::: {.callout-caution collapse="true"}
 ## Expand for more details of contrasts etc.
+
 :::
 
 ## model constraint strategies
