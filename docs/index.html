@@ -1,0 +1,85 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Mixedmodels-misc by bbolker</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-dark.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="stylesheets/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+  </head>
+  <body>
+      <div id="header">
+        <nav>
+          <li class="fork"><a href="https://github.com/bbolker/mixedmodels-misc">View On GitHub</a></li>
+          <li class="downloads"><a href="https://github.com/bbolker/mixedmodels-misc/zipball/master">ZIP</a></li>
+          <li class="downloads"><a href="https://github.com/bbolker/mixedmodels-misc/tarball/master">TAR</a></li>
+          <li class="title">DOWNLOADS</li>
+        </nav>
+      </div><!-- end header -->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>Mixedmodels-misc</h1>
+          <p>miscellaneous materials for mixed models, mostly in R</p>
+          <hr>
+          <span class="credits left">Project maintained by <a href="https://github.com/bbolker">bbolker</a></span>
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/michigangraham">mattgraham</a></span>
+        </div>
+
+        <p>This repository provides a variety of resources I've written, or compiled, about mixed models; the focus is on the tools I help develop and maintain (the <code>lme4</code>, <code>glmmTMB</code>, and <code>glmmADMB</code> packages for R). (See the <a href="https://github.com/bbolker/mixedmodels-misc/">Github repo</a> for source code.)</p>
+      </section>
+      <section>
+	<h2>Stuff</h2>
+	<ul>
+	  <li><a href="glmmFAQ.html">GLMM FAQ</a></li>
+	  <li><a href="MixedModels.html">mixed models Task View draft</a></li>
+	  <li><a href="ecostats_chap.html">supplementary materials for Bolker (2015)</a></li>
+	  <li><a href="glmmbib.html">GLMM bibliography</a> (<a href="glmm.bib">BibTeX</a>)</li>
+	  <li><a href="R/mm_utils.R">miscellaneous (small) utility functions</a> (including <code>calcDenDf()</code>, improved degree-of-freedom counting for <code>lme</code> models)</li>
+	  <li>Notes
+	    <ul>
+	      <li>hacking structured covariance matrices with lme4
+		(<a href="notes/varmats.html">HTML</a>,
+		<a href="notes/varmats.rmd">Rmd</a>)
+	      </li>
+	      <li>multi-membership models with lme4
+		(<a href="notes/multimember.html">HTML</a>,
+		<a href="notes/multimember.rmd">Rmd</a>)
+	      </li>
+	      <li><a href="notes/contrasts.pdf">notes on contrasts for linear models</a> (not MM-specific ...) </li>
+	      <li>excerpt from <a href="https://global.oup.com/academic/product/ecological-statistics-9780199672554">Fox et al. 2015</a> on <a href="notes/GLMM_results_report.pdf">reporting GLMM results</a>
+              <li><a href="notes/cloglogsim.html">fitting comparison for cloglog model with many fixed effects</a> (<a href="notes/cloglog.jl">my julia code</a>; Doug Bates's <a href="notes/cloglog.jmd">Julia markdown version</a> and <a href="notes/cloglog.html">compiled HTML</a>)</li>
+              <li><a href="notes/bglmer_cmp.html">fitting comparison on randomized-block Bernoulli</a></li>
+              <li><a href="notes/phylog.html">PGLMM hacks with lme4</a></li>
+	      <li><a href="notes/corr_braindump.html">fitting mixed models with (temporal) correlations in R</a> (<a href="notes/corr_braindump.rmd">rmd</a>)</li>
+	      <li><a href="notes/glmm_gtar.html">mixed models in R</a> (<a href="notes/glmm_gtar.rmd">rmd</a>)</li>
+	      <li><a href="notes/lme4_multiresponse.html">"efficiently fitting many mixed models with different fixed effects in `lme4`"</a> (<a href="notes/lme4_multiresponse.rmd">rmd</a>)</li>
+	      <li><a href="notes/lme4_multiv.html">"Multivariate analysis with mixed modeling tools in R"</a> (<a href="notes/lme4_multiv.rmd">rmd</a>)</li>
+	    </ul>
+	  </li>
+	</ul>
+      </section>
+      <section>
+	<h2>Coming soon</h2>
+	<ul>
+	  <li>various notes (e.g. copied over from Rpubs)</li>
+	  <li>other material from wikidot site</li>
+	</ul>
+      </section>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    
+  </body>
+</html>

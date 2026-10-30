@@ -1,0 +1,149 @@
+---
+title: "diagnosing a cloglog model"
+author: "Ben Bolker and Doug Bates"
+date: "2017-07-24"
+---
+
+Responding to a query from Rolf Turner on `r-sig-mixed-models@r-project.org`.
+
+**tl;dr** the error messages are spurious/due to a singular fit. Considerable speed-ups can be achieved by (1) switching optimizers, (2) using `nAGQ=0`, (3) using `glmmTMB` or Julia ...
+
+**to do**
+
+- compare variance-covariance matrix estimates (they vary a lot, although it doesn't seem to have much effect on the fixed effects?
+- play with/fight with Julia more: speed? try `fast!` (corresponding to `nAGQ=0`)?
+- try estimation with treatment and treatment-by-x effects either as real random effects (i.e., with shrinkage) *or* with large fixed variance (for computational efficiency)
+
+**caveats**
+
+- Julia timing is still questionable; I have previously gotten results as fast as 7 seconds for the full model fit (vs. the 36 seconds reported below)
+
+## Load packages and the data
+
+Load the Julia packages to be used
+```{julia;label=pkgs;term=true}
+using DataFrames, GLM, MixedModels, RCall
+```
+and load the R packages through `RCall`
+```{julia;label=rpkgs;term=true}
+R"""
+## fitting packages
+suppressMessages(library(lme4))
+library(glmmTMB)
+library(brms)
+""";
+```
+
+Read the data previously generated in R.  At present the `MixedModels` package does not support the two-column response format for a binomial and the total and propostion must be calculated explicitly.
+
+```{julia;label=readdata;}
+const df = readtable("artSim.csv", makefactors=true);
+df[:Tot] = float.(df[:Alive] .+ df[:Dead]);
+df[:prop] = df[:Dead] ./ df[:Tot];
+```
+Push the data to the R process
+```{julia;label=rdata}
+@rput df
+```
+and examine the structure
+```{julia;label=rstr}
+R"str(df)"
+```
+
+The model that is to be fit to these data is represented by the formula
+```{julia;label=frm}
+frm = @formula(prop ~ 0 + Trt + Trt&x + (1 + x|Rep))
+```
+
+There will be 3 parameters in the covariance matrix for the random effects term and 48 fixed-effects coefficients.
+This is a case where the `glmer` option `nAGQ=0` should produce a much faster fit because the constrained nonlinear optimization will be over the 3 parameters from the covariance matrix.
+Without this option the 3-parameter optimization is done first then followed by a constrained nonlinear optimization over **both** the covariance parameters and the fixed-effects, a total of 39 parameters.
+
+## Fit using glmm from the MixedModels package for Julia
+
+When timing a Julia fit it is important to distinguish between the initial call to a function, which may cause "Just In Time" or JIT compilation, and subsequent executions.
+Depending upon the exact sequence of calls the first call can take much longer.
+
+First use the `fast=true` option to the `fit!` call.
+This is equivalent to using `nAGQ=0` in `glmer`
+
+```{julia;label=fit1}
+show(fit!(glmm(frm, df, Binomial(), CloglogLink(), wt=Array(df[:Tot])), fast=true))
+@time g3 = fit!(glmm(frm, df, Binomial(), CloglogLink(), wt=Array(df[:Tot])), fast=true);
+@show loglikelihood(g3)
+show(g3.LMM.optsum)
+```
+
+The two-stage fit is a bit slower but produces a slightly greater log-likelihood at the estimate.
+```{julia;label=fit2}
+@time g4 = fit!(glmm(frm, df, Binomial(), CloglogLink(), wt=Array(df[:Tot])));
+@show loglikelihood(g4)
+show(g4.LMM.optsum)
+```
+
+For reference, the version of Julia and the packages are
+```{julia;label=version}
+versioninfo()
+```
+```{julia;label=pkginfo}
+Pkg.status.(["GLM", "MixedModels"])
+```
+
+## Fit using glmmTMB in R
+
+The [`glmmTMB`](https://github.com/glmmTMB/glmmTMB) package for R provides the function of the same name.
+
+```{julia;label=TMB}
+R"""
+t1 <- system.time(fit1 <- glmmTMB(prop ~ (Trt + 0)/x + (x | Rep),
+                                  weights = Tot,
+                                  family=binomial(link="cloglog"),data=df))
+print(t1)
+print(summary(fit1))
+""";
+```
+
+Notice that the log-likelihood, -1416.0, for these estimates is slightly smaller than that from the `glmm` fits, -1413.28 and -1413.21.
+
+The estimates of the fixed-effects coefficients and the covariance matrix for the random effects are similar to those from the fit in Julia.
+
+The deviance displayed in this summary is quite different from that in the Julia fits.
+The value in this summary is simply `-2 * log-likelihood`, which does not take into account the saturated model, which is described as the
+> maximum achieveable log-likelihood (McCullagh and Nelder, *Generalized Linear Models (2nd ed)*, p. 118)
+
+This is why the model fits are compared using the log-likelihood, which should be defined consistently.
+
+## Fit using glmer with nAGQ=0
+
+Using the default optimizer and `nAGQ=0` glmer converges quickly but to a singular covariance matrix with a much smaller log-likelihood, -1451.7
+
+```{julia;label=rfit1;term=true}
+R"""
+t2 <- system.time(fit2 <- glmer(cbind(Dead,Alive) ~ (Trt + 0)/x + (x | Rep),
+                        family=binomial(link="cloglog"),
+                        data=df, nAGQ=0L))
+print(t2)
+summary(fit2)
+"""
+```
+
+The singular covariance matrix is on the boundary of the parameter space.
+```{julia;label=theta;term=true}
+@show getθ(g3)
+@show getθ(g4)
+show(R"""getME(fit2, "theta")""")
+```
+
+We can use the converged estimates from the `glmm` fits as the starting estimates for the `glmer` fit to show that the log-likelihood is reproduced.
+
+```{julia;label=fit3;term=true}
+g3th = getθ(g3)
+@rput g3th
+R"""
+t3 <- system.time(fit3 <- glmer(cbind(Dead,Alive) ~ (Trt + 0)/x + (x | Rep),
+                        family=binomial(link="cloglog"),
+                        data=df, start=g3th, nAGQ=0L))
+print(t3)
+summary(fit3)
+"""
+```

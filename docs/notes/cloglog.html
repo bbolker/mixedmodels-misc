@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<HTML lang = "en">
+<HEAD>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>diagnosing a cloglog model</title>
+  
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+    });
+  </script>
+
+  <script src='https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
+
+  <style type="text/css">
+  @font-face {
+  font-style: normal;
+  font-weight: 300;
+}
+@font-face {
+  font-style: normal;
+  font-weight: 400;
+}
+@font-face {
+  font-style: normal;
+  font-weight: 600;
+}
+html {
+  font-family: sans-serif; /* 1 */
+  -ms-text-size-adjust: 100%; /* 2 */
+  -webkit-text-size-adjust: 100%; /* 2 */
+}
+body {
+  margin: 0;
+}
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+main,
+menu,
+nav,
+section,
+summary {
+  display: block;
+}
+audio,
+canvas,
+progress,
+video {
+  display: inline-block; /* 1 */
+  vertical-align: baseline; /* 2 */
+}
+audio:not([controls]) {
+  display: none;
+  height: 0;
+}
+[hidden],
+template {
+  display: none;
+}
+a:active,
+a:hover {
+  outline: 0;
+}
+abbr[title] {
+  border-bottom: 1px dotted;
+}
+b,
+strong {
+  font-weight: bold;
+}
+dfn {
+  font-style: italic;
+}
+h1 {
+  font-size: 2em;
+  margin: 0.67em 0;
+}
+mark {
+  background: #ff0;
+  color: #000;
+}
+small {
+  font-size: 80%;
+}
+sub,
+sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+sup {
+  top: -0.5em;
+}
+sub {
+  bottom: -0.25em;
+}
+img {
+  border: 0;
+}
+svg:not(:root) {
+  overflow: hidden;
+}
+figure {
+  margin: 1em 40px;
+}
+hr {
+  -moz-box-sizing: content-box;
+  box-sizing: content-box;
+  height: 0;
+}
+pre {
+  overflow: auto;
+}
+code,
+kbd,
+pre,
+samp {
+  font-family: monospace, monospace;
+  font-size: 1em;
+}
+button,
+input,
+optgroup,
+select,
+textarea {
+  color: inherit; /* 1 */
+  font: inherit; /* 2 */
+  margin: 0; /* 3 */
+}
+button {
+  overflow: visible;
+}
+button,
+select {
+  text-transform: none;
+}
+button,
+html input[type="button"], /* 1 */
+input[type="reset"],
+input[type="submit"] {
+  -webkit-appearance: button; /* 2 */
+  cursor: pointer; /* 3 */
+}
+button[disabled],
+html input[disabled] {
+  cursor: default;
+}
+button::-moz-focus-inner,
+input::-moz-focus-inner {
+  border: 0;
+  padding: 0;
+}
+input {
+  line-height: normal;
+}
+input[type="checkbox"],
+input[type="radio"] {
+  box-sizing: border-box; /* 1 */
+  padding: 0; /* 2 */
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  height: auto;
+}
+input[type="search"] {
+  -webkit-appearance: textfield; /* 1 */
+  -moz-box-sizing: content-box;
+  -webkit-box-sizing: content-box; /* 2 */
+  box-sizing: content-box;
+}
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+fieldset {
+  border: 1px solid #c0c0c0;
+  margin: 0 2px;
+  padding: 0.35em 0.625em 0.75em;
+}
+legend {
+  border: 0; /* 1 */
+  padding: 0; /* 2 */
+}
+textarea {
+  overflow: auto;
+}
+optgroup {
+  font-weight: bold;
+}
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+td,
+th {
+  padding: 0;
+}
+
+
+/*
+* Skeleton V2.0.4
+* Copyright 2014, Dave Gamache
+* www.getskeleton.com
+* Free to use under the MIT license.
+* http://www.opensource.org/licenses/mit-license.php
+* 12/29/2014
+*/
+.container {
+  position: relative;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 20px;
+  box-sizing: border-box; }
+.column,
+.columns {
+  width: 100%;
+  float: left;
+  box-sizing: border-box; }
+@media (min-width: 400px) {
+  .container {
+    width: 85%;
+    padding: 0; }
+}
+@media (min-width: 550px) {
+  .container {
+    width: 80%; }
+  .column,
+  .columns {
+    margin-left: 4%; }
+  .column:first-child,
+  .columns:first-child {
+    margin-left: 0; }
+
+  .one.column,
+  .one.columns                    { width: 4.66666666667%; }
+  .two.columns                    { width: 13.3333333333%; }
+  .three.columns                  { width: 22%;            }
+  .four.columns                   { width: 30.6666666667%; }
+  .five.columns                   { width: 39.3333333333%; }
+  .six.columns                    { width: 48%;            }
+  .seven.columns                  { width: 56.6666666667%; }
+  .eight.columns                  { width: 65.3333333333%; }
+  .nine.columns                   { width: 74.0%;          }
+  .ten.columns                    { width: 82.6666666667%; }
+  .eleven.columns                 { width: 91.3333333333%; }
+  .twelve.columns                 { width: 100%; margin-left: 0; }
+
+  .one-third.column               { width: 30.6666666667%; }
+  .two-thirds.column              { width: 65.3333333333%; }
+
+  .one-half.column                { width: 48%; }
+
+  /* Offsets */
+  .offset-by-one.column,
+  .offset-by-one.columns          { margin-left: 8.66666666667%; }
+  .offset-by-two.column,
+  .offset-by-two.columns          { margin-left: 17.3333333333%; }
+  .offset-by-three.column,
+  .offset-by-three.columns        { margin-left: 26%;            }
+  .offset-by-four.column,
+  .offset-by-four.columns         { margin-left: 34.6666666667%; }
+  .offset-by-five.column,
+  .offset-by-five.columns         { margin-left: 43.3333333333%; }
+  .offset-by-six.column,
+  .offset-by-six.columns          { margin-left: 52%;            }
+  .offset-by-seven.column,
+  .offset-by-seven.columns        { margin-left: 60.6666666667%; }
+  .offset-by-eight.column,
+  .offset-by-eight.columns        { margin-left: 69.3333333333%; }
+  .offset-by-nine.column,
+  .offset-by-nine.columns         { margin-left: 78.0%;          }
+  .offset-by-ten.column,
+  .offset-by-ten.columns          { margin-left: 86.6666666667%; }
+  .offset-by-eleven.column,
+  .offset-by-eleven.columns       { margin-left: 95.3333333333%; }
+
+  .offset-by-one-third.column,
+  .offset-by-one-third.columns    { margin-left: 34.6666666667%; }
+  .offset-by-two-thirds.column,
+  .offset-by-two-thirds.columns   { margin-left: 69.3333333333%; }
+
+  .offset-by-one-half.column,
+  .offset-by-one-half.columns     { margin-left: 52%; }
+
+}
+html {
+  font-size: 62.5%; }
+body {
+  font-size: 1.5em; /* currently ems cause chrome bug misinterpreting rems on body element */
+  line-height: 1.6;
+  font-weight: 400;
+  font-family: "Raleway", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: #222; }
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 0;
+  margin-bottom: 2rem;
+  font-weight: 300; }
+h1 { font-size: 3.6rem; line-height: 1.2;  letter-spacing: -.1rem;}
+h2 { font-size: 3.4rem; line-height: 1.25; letter-spacing: -.1rem; }
+h3 { font-size: 3.2rem; line-height: 1.3;  letter-spacing: -.1rem; }
+h4 { font-size: 2.8rem; line-height: 1.35; letter-spacing: -.08rem; }
+h5 { font-size: 2.4rem; line-height: 1.5;  letter-spacing: -.05rem; }
+h6 { font-size: 1.5rem; line-height: 1.6;  letter-spacing: 0; }
+
+p {
+  margin-top: 0; }
+a {
+  color: #1EAEDB; }
+a:hover {
+  color: #0FA0CE; }
+.button,
+button,
+input[type="submit"],
+input[type="reset"],
+input[type="button"] {
+  display: inline-block;
+  height: 38px;
+  padding: 0 30px;
+  color: #555;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 38px;
+  letter-spacing: .1rem;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  background-color: transparent;
+  border-radius: 4px;
+  border: 1px solid #bbb;
+  cursor: pointer;
+  box-sizing: border-box; }
+.button:hover,
+button:hover,
+input[type="submit"]:hover,
+input[type="reset"]:hover,
+input[type="button"]:hover,
+.button:focus,
+button:focus,
+input[type="submit"]:focus,
+input[type="reset"]:focus,
+input[type="button"]:focus {
+  color: #333;
+  border-color: #888;
+  outline: 0; }
+.button.button-primary,
+button.button-primary,
+input[type="submit"].button-primary,
+input[type="reset"].button-primary,
+input[type="button"].button-primary {
+  color: #FFF;
+  background-color: #33C3F0;
+  border-color: #33C3F0; }
+.button.button-primary:hover,
+button.button-primary:hover,
+input[type="submit"].button-primary:hover,
+input[type="reset"].button-primary:hover,
+input[type="button"].button-primary:hover,
+.button.button-primary:focus,
+button.button-primary:focus,
+input[type="submit"].button-primary:focus,
+input[type="reset"].button-primary:focus,
+input[type="button"].button-primary:focus {
+  color: #FFF;
+  background-color: #1EAEDB;
+  border-color: #1EAEDB; }
+input[type="email"],
+input[type="number"],
+input[type="search"],
+input[type="text"],
+input[type="tel"],
+input[type="url"],
+input[type="password"],
+textarea,
+select {
+  height: 38px;
+  padding: 6px 10px; /* The 6px vertically centers text on FF, ignored by Webkit */
+  background-color: #fff;
+  border: 1px solid #D1D1D1;
+  border-radius: 4px;
+  box-shadow: none;
+  box-sizing: border-box; }
+/* Removes awkward default styles on some inputs for iOS */
+input[type="email"],
+input[type="number"],
+input[type="search"],
+input[type="text"],
+input[type="tel"],
+input[type="url"],
+input[type="password"],
+textarea {
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none; }
+textarea {
+  min-height: 65px;
+  padding-top: 6px;
+  padding-bottom: 6px; }
+input[type="email"]:focus,
+input[type="number"]:focus,
+input[type="search"]:focus,
+input[type="text"]:focus,
+input[type="tel"]:focus,
+input[type="url"]:focus,
+input[type="password"]:focus,
+textarea:focus,
+select:focus {
+  border: 1px solid #33C3F0;
+  outline: 0; }
+label,
+legend {
+  display: block;
+  margin-bottom: .5rem;
+  font-weight: 600; }
+fieldset {
+  padding: 0;
+  border-width: 0; }
+input[type="checkbox"],
+input[type="radio"] {
+  display: inline; }
+label > .label-body {
+  display: inline-block;
+  margin-left: .5rem;
+  font-weight: normal; }
+ul {
+  list-style: circle; }
+ol {
+  list-style: decimal; }
+ul ul,
+ul ol,
+ol ol,
+ol ul {
+  margin: 1.5rem 0 1.5rem 3rem;
+  font-size: 90%; }
+li {
+  margin-bottom: 1rem; }
+th,
+td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #E1E1E1; }
+th:first-child,
+td:first-child {
+  padding-left: 0; }
+th:last-child,
+td:last-child {
+  padding-right: 0; }
+button,
+.button {
+  margin-bottom: 1rem; }
+input,
+textarea,
+select,
+fieldset {
+  margin-bottom: 1.5rem; }
+pre,
+blockquote,
+dl,
+figure,
+table,
+p,
+ul,
+ol,
+form {
+  margin-bottom: 2.5rem; }
+.u-full-width {
+  width: 100%;
+  box-sizing: border-box; }
+.u-max-full-width {
+  max-width: 100%;
+  box-sizing: border-box; }
+.u-pull-right {
+  float: right; }
+.u-pull-left {
+  float: left; }
+hr {
+  margin-top: 3rem;
+  margin-bottom: 3.5rem;
+  border-width: 0;
+  border-top: 1px solid #E1E1E1; }
+.container:after,
+.row:after,
+.u-cf {
+  content: "";
+  display: table;
+  clear: both; }
+
+pre {
+  display: block;
+  padding: 9.5px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.42857143;
+  color: #333;
+  word-break: break-all;
+  word-wrap: break-word;
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+pre.sourceCode.julia {
+  display: block;
+  padding: 9.5px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.42857143;
+  color: #333;
+  word-break: break-all;
+  word-wrap: break-word;
+  background-color: #f5f5f5;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+code,
+kbd,
+pre,
+samp {
+  font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+code {
+  padding: 2px 4px;
+  font-size: 90%;
+
+  background-color: #ffffff;
+  border-radius: 4px;
+}
+
+@media (min-width: 400px) {}
+@media (min-width: 550px) {}
+@media (min-width: 750px) {}
+@media (min-width: 1000px) {}
+@media (min-width: 1200px) {}
+
+h1.title {margin-top : 20px}
+img {max-width : 100%%}
+div.title {text-align: center;}
+
+  </style>
+
+  
+<style>
+pre.hljl {
+    border: 1px solid #ccc;
+    margin: 5px;
+    padding: 5px;
+    overflow-x: auto;
+    color: rgb(68,68,68); background-color: rgb(251,251,251); }
+pre.hljl > span.hljl-t { }
+pre.hljl > span.hljl-w { }
+pre.hljl > span.hljl-e { }
+pre.hljl > span.hljl-eB { }
+pre.hljl > span.hljl-o { }
+pre.hljl > span.hljl-k { color: rgb(148,91,176); font-weight: bold; }
+pre.hljl > span.hljl-kc { color: rgb(59,151,46); font-style: italic; }
+pre.hljl > span.hljl-kd { color: rgb(214,102,97); font-style: italic; }
+pre.hljl > span.hljl-kn { color: rgb(148,91,176); font-weight: bold; }
+pre.hljl > span.hljl-kp { color: rgb(148,91,176); font-weight: bold; }
+pre.hljl > span.hljl-kr { color: rgb(148,91,176); font-weight: bold; }
+pre.hljl > span.hljl-kt { color: rgb(148,91,176); font-weight: bold; }
+pre.hljl > span.hljl-n { }
+pre.hljl > span.hljl-na { }
+pre.hljl > span.hljl-nb { }
+pre.hljl > span.hljl-nbp { }
+pre.hljl > span.hljl-nc { }
+pre.hljl > span.hljl-ncB { }
+pre.hljl > span.hljl-nd { color: rgb(214,102,97); }
+pre.hljl > span.hljl-ne { }
+pre.hljl > span.hljl-neB { }
+pre.hljl > span.hljl-nf { color: rgb(66,102,213); }
+pre.hljl > span.hljl-nfm { color: rgb(66,102,213); }
+pre.hljl > span.hljl-np { }
+pre.hljl > span.hljl-nl { }
+pre.hljl > span.hljl-nn { }
+pre.hljl > span.hljl-no { }
+pre.hljl > span.hljl-nt { }
+pre.hljl > span.hljl-nv { }
+pre.hljl > span.hljl-nvc { }
+pre.hljl > span.hljl-nvg { }
+pre.hljl > span.hljl-nvi { }
+pre.hljl > span.hljl-nvm { }
+pre.hljl > span.hljl-l { }
+pre.hljl > span.hljl-ld { color: rgb(148,91,176); font-style: italic; }
+pre.hljl > span.hljl-s { color: rgb(201,61,57); }
+pre.hljl > span.hljl-sa { color: rgb(201,61,57); }
+pre.hljl > span.hljl-sb { color: rgb(201,61,57); }
+pre.hljl > span.hljl-sc { color: rgb(201,61,57); }
+pre.hljl > span.hljl-sd { color: rgb(201,61,57); }
+pre.hljl > span.hljl-sdB { color: rgb(201,61,57); }
+pre.hljl > span.hljl-sdC { color: rgb(201,61,57); }
+pre.hljl > span.hljl-se { color: rgb(59,151,46); }
+pre.hljl > span.hljl-sh { color: rgb(201,61,57); }
+pre.hljl > span.hljl-si { }
+pre.hljl > span.hljl-so { color: rgb(201,61,57); }
+pre.hljl > span.hljl-sr { color: rgb(201,61,57); }
+pre.hljl > span.hljl-ss { color: rgb(201,61,57); }
+pre.hljl > span.hljl-ssB { color: rgb(201,61,57); }
+pre.hljl > span.hljl-nB { color: rgb(59,151,46); }
+pre.hljl > span.hljl-nbB { color: rgb(59,151,46); }
+pre.hljl > span.hljl-nfB { color: rgb(59,151,46); }
+pre.hljl > span.hljl-nh { color: rgb(59,151,46); }
+pre.hljl > span.hljl-ni { color: rgb(59,151,46); }
+pre.hljl > span.hljl-nil { color: rgb(59,151,46); }
+pre.hljl > span.hljl-noB { color: rgb(59,151,46); }
+pre.hljl > span.hljl-oB { color: rgb(102,102,102); font-weight: bold; }
+pre.hljl > span.hljl-ow { color: rgb(102,102,102); font-weight: bold; }
+pre.hljl > span.hljl-p { }
+pre.hljl > span.hljl-c { color: rgb(153,153,119); font-style: italic; }
+pre.hljl > span.hljl-ch { color: rgb(153,153,119); font-style: italic; }
+pre.hljl > span.hljl-cm { color: rgb(153,153,119); font-style: italic; }
+pre.hljl > span.hljl-cp { color: rgb(153,153,119); font-style: italic; }
+pre.hljl > span.hljl-cpB { color: rgb(153,153,119); font-style: italic; }
+pre.hljl > span.hljl-cs { color: rgb(153,153,119); font-style: italic; }
+pre.hljl > span.hljl-csB { color: rgb(153,153,119); font-style: italic; }
+pre.hljl > span.hljl-g { }
+pre.hljl > span.hljl-gd { }
+pre.hljl > span.hljl-ge { }
+pre.hljl > span.hljl-geB { }
+pre.hljl > span.hljl-gh { }
+pre.hljl > span.hljl-gi { }
+pre.hljl > span.hljl-go { }
+pre.hljl > span.hljl-gp { }
+pre.hljl > span.hljl-gs { }
+pre.hljl > span.hljl-gsB { }
+pre.hljl > span.hljl-gt { }
+</style>
+
+
+
+</HEAD>
+  <BODY>
+    <div class ="container">
+      <div class = "row">
+        <div class = "col-md-12 twelve columns">
+
+          <div class="title">
+            <h1 class="title">diagnosing a cloglog model</h1>
+            <h5>Ben Bolker and Doug Bates</h5>
+            <h5>2017-07-24</h5>
+          </div>
+
+          <div><p>Responding to a query from Rolf Turner on <code>r-sig-mixed-models@r-project.org</code>.</p><p><strong>tl;dr</strong> the error messages are spurious/due to a singular fit. Considerable speed-ups can be achieved by (1) switching optimizers, (2) using <code>nAGQ=0</code>, (3) using <code>glmmTMB</code> or Julia ...</p><p><strong>to do</strong></p><ul><li><p>compare variance-covariance matrix estimates (they vary a lot, although it doesn&#39;t seem to have much effect on the fixed effects?</p></li><li><p>play with/fight with Julia more: speed? try <code>fast!</code> (corresponding to <code>nAGQ=0</code>)?</p></li><li><p>try estimation with treatment and treatment-by-x effects either as real random effects (i.e., with shrinkage) <em>or</em> with large fixed variance (for computational efficiency)</p></li></ul><p><strong>caveats</strong></p><ul><li><p>Julia timing is still questionable; I have previously gotten results as fast as 7 seconds for the full model fit (vs. the 36 seconds reported below)</p></li></ul><h2>Load packages and the data</h2><p>Load the Julia packages to be used</p></div>
+<pre class='hljl'>
+<span class='hljl-nB'>julia&gt; </span><span class='hljl-k'>using</span><span class='hljl-t'> </span><span class='hljl-n'>DataFrames</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>GLM</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>MixedModels</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>RCall</span><span class='hljl-t'>l</span>
+</pre>
+
+<div><p>and load the R packages through <code>RCall</code></p></div>
+<pre class='hljl'>
+<span class='hljl-nB'>julia&gt; </span><span class='hljl-so'>R&quot;&quot;&quot;
+</span><span class='hljl-t'>## fitting packages
+suppressMessages(library(lme4))
+library(glmmTMB)
+library(brms)
+&quot;&quot;&quot;;</span>
+</pre>
+
+<div><p>Read the data previously generated in R.  At present the <code>MixedModels</code> package does not support the two-column response format for a binomial and the total and propostion must be calculated explicitly.</p></div>
+
+<pre class='hljl'>
+<span class='hljl-kd'>const</span><span class='hljl-t'> </span><span class='hljl-n'>df</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-nf'>readtable</span><span class='hljl-p'>(</span><span class='hljl-s'>&quot;artSim.csv&quot;</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>makefactors</span><span class='hljl-oB'>=</span><span class='hljl-kc'>true</span><span class='hljl-p'>);</span><span class='hljl-t'>
+</span><span class='hljl-n'>df</span><span class='hljl-p'>[</span><span class='hljl-sc'>:Tot</span><span class='hljl-p'>]</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-n'>float</span><span class='hljl-oB'>.</span><span class='hljl-p'>(</span><span class='hljl-n'>df</span><span class='hljl-p'>[</span><span class='hljl-sc'>:Alive</span><span class='hljl-p'>]</span><span class='hljl-t'> </span><span class='hljl-oB'>.+</span><span class='hljl-t'> </span><span class='hljl-n'>df</span><span class='hljl-p'>[</span><span class='hljl-sc'>:Dead</span><span class='hljl-p'>]);</span><span class='hljl-t'>
+</span><span class='hljl-n'>df</span><span class='hljl-p'>[</span><span class='hljl-sc'>:prop</span><span class='hljl-p'>]</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-n'>df</span><span class='hljl-p'>[</span><span class='hljl-sc'>:Dead</span><span class='hljl-p'>]</span><span class='hljl-t'> </span><span class='hljl-oB'>./</span><span class='hljl-t'> </span><span class='hljl-n'>df</span><span class='hljl-p'>[</span><span class='hljl-sc'>:Tot</span><span class='hljl-p'>];</span>
+</pre>
+
+
+
+<div><p>Push the data to the R process</p></div>
+
+<pre class='hljl'>
+<span class='hljl-nd'>@rput</span><span class='hljl-t'> </span><span class='hljl-n'>df</span>
+</pre>
+
+
+
+<div><p>and examine the structure</p></div>
+
+<pre class='hljl'>
+<span class='hljl-so'>R&quot;str(df)&quot;</span>
+</pre>
+
+
+<pre class="hljl">
+&#39;data.frame&#39;:	1080 obs. of  7 variables:
+ &#36; x    : int  0 2 4 6 8 10 12 14 16 18 ...
+ &#36; Trt  : Factor w/ 24 levels &quot;A&quot;,&quot;B&quot;,&quot;C&quot;
+,&quot;D&quot;,..: 1 1 1 1 1 1 1 1 1 1 ...
+ &#36; Rep  : int  1 1 1 1 1 1 1 1 1 1 ...
+ &#36; Dead : int  0 0 2 2 1 1 1 0 3 2 ...
+ &#36; Alive: int  25 25 23 23 24 24 24 25 22 23 ...
+ &#36; Tot  : num  25 25 25 25 25 25 25 25 25 25 ...
+ &#36; prop : num  0 0 0.08 0.08 0.04 0.04 0.04 0 0.12 0.08 ...
+</pre>
+
+
+<div><p>The model that is to be fit to these data is represented by the formula</p></div>
+
+<pre class='hljl'>
+<span class='hljl-n'>frm</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-nd'>@formula</span><span class='hljl-p'>(</span><span class='hljl-n'>prop</span><span class='hljl-t'> </span><span class='hljl-oB'>~</span><span class='hljl-t'> </span><span class='hljl-ni'>0</span><span class='hljl-t'> </span><span class='hljl-oB'>+</span><span class='hljl-t'> </span><span class='hljl-n'>Trt</span><span class='hljl-t'> </span><span class='hljl-oB'>+</span><span class='hljl-t'> </span><span class='hljl-n'>Trt</span><span class='hljl-oB'>&amp;</span><span class='hljl-n'>x</span><span class='hljl-t'> </span><span class='hljl-oB'>+</span><span class='hljl-t'> </span><span class='hljl-p'>(</span><span class='hljl-ni'>1</span><span class='hljl-t'> </span><span class='hljl-oB'>+</span><span class='hljl-t'> </span><span class='hljl-n'>x</span><span class='hljl-oB'>|</span><span class='hljl-n'>Rep</span><span class='hljl-p'>))</span>
+</pre>
+
+
+
+<div><p>There will be 3 parameters in the covariance matrix for the random effects term and 48 fixed-effects coefficients. This is a case where the <code>glmer</code> option <code>nAGQ=0</code> should produce a much faster fit because the constrained nonlinear optimization will be over the 3 parameters from the covariance matrix. Without this option the 3-parameter optimization is done first then followed by a constrained nonlinear optimization over <strong>both</strong> the covariance parameters and the fixed-effects, a total of 39 parameters.</p><h2>Fit using glmm from the MixedModels package for Julia</h2><p>When timing a Julia fit it is important to distinguish between the initial call to a function, which may cause &quot;Just In Time&quot; or JIT compilation, and subsequent executions. Depending upon the exact sequence of calls the first call can take much longer.</p><p>First use the <code>fast=true</code> option to the <code>fit!</code> call. This is equivalent to using <code>nAGQ=0</code> in <code>glmer</code></p></div>
+
+<pre class='hljl'>
+<span class='hljl-nf'>show</span><span class='hljl-p'>(</span><span class='hljl-nf'>fit!</span><span class='hljl-p'>(</span><span class='hljl-nf'>glmm</span><span class='hljl-p'>(</span><span class='hljl-n'>frm</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>df</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-nf'>Binomial</span><span class='hljl-p'>(),</span><span class='hljl-t'> </span><span class='hljl-nf'>CloglogLink</span><span class='hljl-p'>(),</span><span class='hljl-t'> </span><span class='hljl-n'>wt</span><span class='hljl-oB'>=</span><span class='hljl-nf'>Array</span><span class='hljl-p'>(</span><span class='hljl-n'>df</span><span class='hljl-p'>[</span><span class='hljl-sc'>:Tot</span><span class='hljl-p'>])),</span><span class='hljl-t'> </span><span class='hljl-n'>fast</span><span class='hljl-oB'>=</span><span class='hljl-kc'>true</span><span class='hljl-p'>))</span>
+</pre>
+
+
+<pre class="hljl">
+Generalized Linear Mixed Model fit by minimizing the Laplace approximation 
+to the deviance
+  Formula: prop ~ 0 &#43; Trt &#43; Trt &amp; x &#43; &#40;&#40;1 &#43; x&#
+41; | Rep&#41;
+  Distribution: Distributions.Binomial&#123;Float64&#125;
+  Link: GLM.CloglogLink&#40;&#41;
+
+  Deviance &#40;Laplace approximation&#41;: 888.4787
+
+Variance components:
+         Column      Variance      Std.Dev.    Corr.
+ Rep &#40;Intercept&#41;  0.058839572456 0.242568696
+     x            0.000102296623 0.010114179 -0.59
+
+ Number of obs: 1080; levels of grouping factors: 72
+
+Fixed-effects parameters:
+             Estimate  Std.Error   z value P&#40;&gt;|z|&#41;
+Trt: A       -3.14366   0.270468  -11.6231  &lt;1e-30
+Trt: B       -2.80304   0.213021  -13.1585  &lt;1e-38
+Trt: C       -2.58196   0.197764  -13.0558  &lt;1e-38
+Trt: D       -2.31225   0.205731  -11.2392  &lt;1e-28
+Trt: E       -2.54773   0.220614  -11.5484  &lt;1e-30
+Trt: F       -2.12062   0.222265  -9.54095  &lt;1e-20
+Trt: G       -2.11696   0.199161  -10.6294  &lt;1e-25
+Trt: H       -2.03373   0.185538  -10.9612  &lt;1e-27
+Trt: I       -2.23967   0.195561  -11.4525  &lt;1e-29
+Trt: J       -1.81182   0.201949  -8.97166  &lt;1e-18
+Trt: K       -1.31475   0.198401  -6.62672  &lt;1e-10
+Trt: L       -1.29853   0.202599  -6.40935   &lt;1e-9
+Trt: M        -1.0978   0.168796  -6.50369  &lt;1e-10
+Trt: N      -0.924785    0.16666  -5.54893   &lt;1e-7
+Trt: O       -0.98236   0.180703  -5.43632   &lt;1e-7
+Trt: P      -0.816064   0.186235  -4.38191   &lt;1e-4
+Trt: Q      -0.615693   0.192595  -3.19683  0.0014
+Trt: R      -0.152161   0.187649 -0.810879  0.4174
+Trt: S      -0.217567   0.159767  -1.36178  0.1733
+Trt: T      -0.283216   0.168113  -1.68468  0.0921
+Trt: U       0.106325   0.177251  0.599856  0.5486
+Trt: V      0.0794044   0.187463  0.423573  0.6719
+Trt: W       0.427792   0.198575   2.15431  0.0312
+Trt: X       0.262161    0.19459   1.34725  0.1779
+Trt: A &amp; x  0.0513203  0.0133104   3.85564  0.0001
+Trt: B &amp; x   0.108349 0.00967386   11.2002  &lt;1e-28
+Trt: C &amp; x   0.143247 0.00942057   15.2057  &lt;1e-51
+Trt: D &amp; x   0.197537  0.0131269   15.0482  &lt;1e-50
+Trt: E &amp; x   0.235773   0.015821   14.9026  &lt;1e-49
+Trt: F &amp; x   0.287073  0.0217839   13.1782  &lt;1e-38
+Trt: G &amp; x  0.0555802 0.00940497   5.90967   &lt;1e-8
+Trt: H &amp; x   0.101309   0.008601   11.7787  &lt;1e-31
+Trt: I &amp; x   0.164692  0.0107969   15.2537  &lt;1e-51
+Trt: J &amp; x   0.219653   0.016244   13.5221  &lt;1e-40
+Trt: K &amp; x   0.241308  0.0205554   11.7394  &lt;1e-31
+Trt: L &amp; x   0.269954   0.023979   11.2579  &lt;1e-28
+Trt: M &amp; x   0.054908 0.00781037   7.03014  &lt;1e-11
+Trt: N &amp; x  0.0914613 0.00830168   11.0172  &lt;1e-27
+Trt: O &amp; x   0.162726  0.0138346   11.7622  &lt;1e-31
+Trt: P &amp; x   0.202323  0.0193266   10.4686  &lt;1e-24
+Trt: Q &amp; x   0.260135  0.0292534   8.89246  &lt;1e-18
+Trt: R &amp; x    0.23447  0.0321262   7.29842  &lt;1e-12
+Trt: S &amp; x  0.0530068  0.0076192   6.95701  &lt;1e-11
+Trt: T &amp; x   0.107314  0.0113858   9.42529  &lt;1e-20
+Trt: U &amp; x   0.148021  0.0210124   7.04447  &lt;1e-11
+Trt: V &amp; x   0.229408  0.0363827   6.30541   &lt;1e-9
+Trt: W &amp; x     0.3901  0.0986662   3.95373   &lt;1e-4
+Trt: X &amp; x   0.317157  0.0651612   4.86727   &lt;1e-5
+</pre>
+
+
+
+<pre class='hljl'>
+<span class='hljl-nd'>@time</span><span class='hljl-t'> </span><span class='hljl-n'>g3</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-nf'>fit!</span><span class='hljl-p'>(</span><span class='hljl-nf'>glmm</span><span class='hljl-p'>(</span><span class='hljl-n'>frm</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>df</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-nf'>Binomial</span><span class='hljl-p'>(),</span><span class='hljl-t'> </span><span class='hljl-nf'>CloglogLink</span><span class='hljl-p'>(),</span><span class='hljl-t'> </span><span class='hljl-n'>wt</span><span class='hljl-oB'>=</span><span class='hljl-nf'>Array</span><span class='hljl-p'>(</span><span class='hljl-n'>df</span><span class='hljl-p'>[</span><span class='hljl-sc'>:Tot</span><span class='hljl-p'>])),</span><span class='hljl-t'> </span><span class='hljl-n'>fast</span><span class='hljl-oB'>=</span><span class='hljl-kc'>true</span><span class='hljl-p'>);</span>
+</pre>
+
+
+<pre class="hljl">
+0.930170 seconds &#40;590.95 k allocations: 32.492 MiB, 0.61&#37; gc time
+&#41;
+</pre>
+
+
+
+<pre class='hljl'>
+<span class='hljl-nd'>@show</span><span class='hljl-t'> </span><span class='hljl-nf'>loglikelihood</span><span class='hljl-p'>(</span><span class='hljl-n'>g3</span><span class='hljl-p'>)</span>
+</pre>
+
+
+<pre class="hljl">
+loglikelihood&#40;g3&#41; &#61; -1413.2838981380403
+</pre>
+
+
+
+<pre class='hljl'>
+<span class='hljl-nf'>show</span><span class='hljl-p'>(</span><span class='hljl-n'>g3</span><span class='hljl-oB'>.</span><span class='hljl-n'>LMM</span><span class='hljl-oB'>.</span><span class='hljl-n'>optsum</span><span class='hljl-p'>)</span>
+</pre>
+
+
+<pre class="hljl">
+Initial parameter vector: &#91;1.0, 0.0, 1.0&#93;
+Initial objective value:  1480.8990814709841
+
+Optimizer &#40;from NLopt&#41;:   LN_BOBYQA
+Lower bounds:             &#91;0.0, -Inf, 0.0&#93;
+ftol_rel:                 1.0e-12
+ftol_abs:                 1.0e-8
+xtol_rel:                 0.0
+xtol_abs:                 &#91;1.0e-10, 1.0e-10, 1.0e-10&#93;
+initial_step:             &#91;0.75, 1.0, 0.75&#93;
+maxfeval:                 -1
+
+Function evaluations:     116
+Final parameter vector:   &#91;0.242569, -0.00594272, 0.00818418&#93;
+Final objective value:    888.4786718210885
+Return code:              FTOL_REACHED
+</pre>
+
+
+<div><p>The two-stage fit is a bit slower but produces a slightly greater log-likelihood at the estimate.</p></div>
+
+<pre class='hljl'>
+<span class='hljl-nd'>@time</span><span class='hljl-t'> </span><span class='hljl-n'>g4</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-nf'>fit!</span><span class='hljl-p'>(</span><span class='hljl-nf'>glmm</span><span class='hljl-p'>(</span><span class='hljl-n'>frm</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>df</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-nf'>Binomial</span><span class='hljl-p'>(),</span><span class='hljl-t'> </span><span class='hljl-nf'>CloglogLink</span><span class='hljl-p'>(),</span><span class='hljl-t'> </span><span class='hljl-n'>wt</span><span class='hljl-oB'>=</span><span class='hljl-nf'>Array</span><span class='hljl-p'>(</span><span class='hljl-n'>df</span><span class='hljl-p'>[</span><span class='hljl-sc'>:Tot</span><span class='hljl-p'>])));</span>
+</pre>
+
+
+<pre class="hljl">
+4.859606 seconds &#40;3.05 M allocations: 158.008 MiB, 0.64&#37; gc time&
+#41;
+</pre>
+
+
+
+<pre class='hljl'>
+<span class='hljl-nd'>@show</span><span class='hljl-t'> </span><span class='hljl-nf'>loglikelihood</span><span class='hljl-p'>(</span><span class='hljl-n'>g4</span><span class='hljl-p'>)</span>
+</pre>
+
+
+<pre class="hljl">
+loglikelihood&#40;g4&#41; &#61; -1413.2069452041058
+</pre>
+
+
+
+<pre class='hljl'>
+<span class='hljl-nf'>show</span><span class='hljl-p'>(</span><span class='hljl-n'>g4</span><span class='hljl-oB'>.</span><span class='hljl-n'>LMM</span><span class='hljl-oB'>.</span><span class='hljl-n'>optsum</span><span class='hljl-p'>)</span>
+</pre>
+
+
+<pre class="hljl">
+Initial parameter vector: &#91;-3.14366, -2.80304, -2.58196, -2.31225, -2.5
+4773, -2.12062, -2.11696, -2.03373, -2.23967, -1.81182, -1.31475, -1.29853,
+ -1.0978, -0.924785, -0.98236, -0.816064, -0.615693, -0.152161, -0.217567, 
+-0.283216, 0.106325, 0.0794044, 0.427792, 0.262161, 0.0513203, 0.108349, 0.
+143247, 0.197537, 0.235773, 0.287073, 0.0555802, 0.101309, 0.164692, 0.2196
+53, 0.241308, 0.269954, 0.054908, 0.0914613, 0.162726, 0.202323, 0.260135, 
+0.23447, 0.0530068, 0.107314, 0.148021, 0.229408, 0.3901, 0.317157, 0.24256
+9, -0.00594272, 0.00818418&#93;
+Initial objective value:  888.4786714335524
+
+Optimizer &#40;from NLopt&#41;:   LN_BOBYQA
+Lower bounds:             &#91;-Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -I
+nf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf,
+ -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -I
+nf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf,
+ -Inf, -Inf, -Inf, 0.0, -Inf, 0.0&#93;
+ftol_rel:                 1.0e-12
+ftol_abs:                 1.0e-8
+xtol_rel:                 0.0
+xtol_abs:                 &#91;1.0e-10, 1.0e-10, 1.0e-10&#93;
+initial_step:             &#91;0.0901558, 0.0710071, 0.0659213, 0.0685769, 
+0.0735379, 0.0740882, 0.066387, 0.0618461, 0.0651872, 0.0673164, 0.0661338,
+ 0.0675331, 0.0562654, 0.0555534, 0.0602344, 0.0620782, 0.0641984, 0.062549
+7, 0.0532555, 0.0560376, 0.0590838, 0.0624878, 0.0661918, 0.0648632, 0.0044
+3681, 0.00322462, 0.00314019, 0.00437564, 0.00527366, 0.00726129, 0.0031349
+9, 0.002867, 0.00359896, 0.00541467, 0.0068518, 0.007993, 0.00260346, 0.002
+76723, 0.00461154, 0.0064422, 0.00975114, 0.0107087, 0.00253973, 0.00379525
+, 0.00700414, 0.0121276, 0.0328887, 0.0217204, 0.05, -0.00148568, 0.0020460
+4&#93;
+maxfeval:                 -1
+
+Function evaluations:     619
+Final parameter vector:   &#91;-3.15538, -2.81229, -2.59413, -2.32564, -2.5
+6195, -2.13411, -2.12464, -2.04179, -2.25215, -1.82313, -1.32507, -1.30899,
+ -1.10267, -0.932395, -0.990863, -0.824555, -0.624065, -0.157924, -0.221121
+, -0.289599, 0.103097, 0.0754325, 0.426482, 0.258959, 0.0513934, 0.108647, 
+0.143932, 0.1987, 0.237116, 0.288876, 0.0557233, 0.10168, 0.165637, 0.22098
+4, 0.243059, 0.271927, 0.0550891, 0.0921122, 0.163939, 0.203958, 0.262643, 
+0.237327, 0.0533389, 0.108413, 0.149718, 0.232559, 0.400008, 0.32316, 0.242
+706, -0.00594923, 0.0082008&#93;
+Final objective value:    888.3247659533648
+Return code:              FTOL_REACHED
+</pre>
+
+
+<div><p>For reference, the version of Julia and the packages are</p></div>
+
+<pre class='hljl'>
+<span class='hljl-nf'>versioninfo</span><span class='hljl-p'>()</span>
+</pre>
+
+
+<pre class="hljl">
+Julia Version 0.6.0
+Commit 9036443 &#40;2017-06-19 13:05 UTC&#41;
+Platform Info:
+  OS: Linux &#40;x86_64-pc-linux-gnu&#41;
+  CPU: Intel&#40;R&#41; Core&#40;TM&#41; i5-3570 CPU @ 3.40GHz
+  WORD_SIZE: 64
+  BLAS: libopenblas &#40;USE64BITINT DYNAMIC_ARCH NO_AFFINITY Sandybridge&#
+41;
+  LAPACK: libopenblas64_
+  LIBM: libopenlibm
+  LLVM: libLLVM-3.9.1 &#40;ORCJIT, ivybridge&#41;
+</pre>
+
+
+
+<pre class='hljl'>
+<span class='hljl-n'>Pkg</span><span class='hljl-oB'>.</span><span class='hljl-n'>status</span><span class='hljl-oB'>.</span><span class='hljl-p'>([</span><span class='hljl-s'>&quot;GLM&quot;</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-s'>&quot;MixedModels&quot;</span><span class='hljl-p'>])</span>
+</pre>
+
+
+<pre class="hljl">
+- GLM                           0.7.0&#43;             master
+ - MixedModels                   0.10.0&#43;            master
+</pre>
+
+
+<div><h2>Fit using glmmTMB in R</h2><p>The <a href="https://github.com/glmmTMB/glmmTMB"><code>glmmTMB</code></a> package for R provides the function of the same name.</p></div>
+
+<pre class='hljl'>
+<span class='hljl-so'>R&quot;&quot;&quot;
+t1 &lt;- system.time(fit1 &lt;- glmmTMB(prop ~ (Trt + 0)/x + (x | Rep),
+                                  weights = Tot,
+                                  family=binomial(link=&quot;cloglog&quot;),data=df))
+print(t1)
+print(summary(fit1))
+&quot;&quot;&quot;</span><span class='hljl-p'>;</span>
+</pre>
+
+
+<pre class="hljl">
+user  system elapsed 
+ 12.940   0.204  12.900 
+ Family: binomial  &#40; cloglog &#41;
+Formula:          prop ~ &#40;Trt &#43; 0&#41;/x &#43; &#40;x | Rep&#41;
+Data: df
+Weights: Tot
+
+     AIC      BIC   logLik deviance df.resid 
+  2934.0   3188.2  -1416.0   2832.0     1029 
+
+Random effects:
+
+Conditional model:
+ Groups Name        Variance  Std.Dev. Corr 
+ Rep    &#40;Intercept&#41; 0.0911953 0.30199       
+        x           0.0002018 0.01421  -0.85
+Number of obs: 1080, groups:  Rep, 72
+
+Conditional model:
+        Estimate Std. Error z value Pr&#40;&gt;|z|&#41;    
+TrtA   -3.128386   0.288867 -10.830  &lt; 2e-16 ***
+TrtB   -2.795983   0.237114 -11.792  &lt; 2e-16 ***
+TrtC   -2.594271   0.224446 -11.559  &lt; 2e-16 ***
+TrtD   -2.315585   0.231151 -10.018  &lt; 2e-16 ***
+TrtE   -2.550779   0.244096 -10.450  &lt; 2e-16 ***
+TrtF   -2.127179   0.247135  -8.607  &lt; 2e-16 ***
+TrtG   -2.129283   0.225136  -9.458  &lt; 2e-16 ***
+TrtH   -2.034643   0.213341  -9.537  &lt; 2e-16 ***
+TrtI   -2.232149   0.219991 -10.147  &lt; 2e-16 ***
+TrtJ   -1.815797   0.226365  -8.022 1.04e-15 ***
+TrtK   -1.343958   0.226206  -5.941 2.83e-09 ***
+TrtL   -1.317193   0.228411  -5.767 8.08e-09 ***
+TrtM   -1.106273   0.198377  -5.577 2.45e-08 ***
+TrtN   -0.937612   0.197265  -4.753 2.00e-06 ***
+TrtO   -0.996496   0.208469  -4.780 1.75e-06 ***
+TrtP   -0.821662   0.214596  -3.829 0.000129 ***
+TrtQ   -0.628222   0.219452  -2.863 0.004201 ** 
+TrtR   -0.169397   0.216490  -0.782 0.433939    
+TrtS   -0.229032   0.191142  -1.198 0.230827    
+TrtT   -0.294068   0.197341  -1.490 0.136184    
+TrtU    0.100323   0.205449   0.488 0.625330    
+TrtV    0.070562   0.216039   0.327 0.743958    
+TrtW    0.416483   0.225147   1.850 0.064339 .  
+TrtX    0.251028   0.221212   1.135 0.256464    
+TrtA:x  0.051194   0.014474   3.537 0.000405 ***
+TrtB:x  0.108206   0.011283   9.590  &lt; 2e-16 ***
+TrtC:x  0.143226   0.011130  12.868  &lt; 2e-16 ***
+TrtD:x  0.198396   0.014400  13.778  &lt; 2e-16 ***
+TrtE:x  0.235215   0.016906  13.914  &lt; 2e-16 ***
+TrtF:x  0.290013   0.023029  12.593  &lt; 2e-16 ***
+TrtG:x  0.055388   0.011063   5.006 5.54e-07 ***
+TrtH:x  0.100285   0.010395   9.647  &lt; 2e-16 ***
+TrtI:x  0.164710   0.012149  13.557  &lt; 2e-16 ***
+TrtJ:x  0.219449   0.017037  12.881  &lt; 2e-16 ***
+TrtK:x  0.241748   0.021976  11.000  &lt; 2e-16 ***
+TrtL:x  0.269755   0.024818  10.869  &lt; 2e-16 ***
+TrtM:x  0.056040   0.009708   5.773 7.80e-09 ***
+TrtN:x  0.093264   0.010223   9.123  &lt; 2e-16 ***
+TrtO:x  0.160666   0.014882  10.796  &lt; 2e-16 ***
+TrtP:x  0.208033   0.020638  10.080  &lt; 2e-16 ***
+TrtQ:x  0.262988   0.030264   8.690  &lt; 2e-16 ***
+TrtR:x  0.234389   0.034003   6.893 5.45e-12 ***
+TrtS:x  0.055086   0.009585   5.747 9.10e-09 ***
+TrtT:x  0.107724   0.012583   8.561  &lt; 2e-16 ***
+TrtU:x  0.148538   0.021540   6.896 5.35e-12 ***
+TrtV:x  0.231748   0.038057   6.089 1.13e-09 ***
+TrtW:x  0.407326   0.102894   3.959 7.54e-05 ***
+TrtX:x  0.323814   0.065854   4.917 8.78e-07 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+</pre>
+
+
+<div><p>Notice that the log-likelihood, -1416.0, for these estimates is slightly smaller than that from the <code>glmm</code> fits, -1413.28 and -1413.21.</p><p>The estimates of the fixed-effects coefficients and the covariance matrix for the random effects are similar to those from the fit in Julia.</p><p>The deviance displayed in this summary is quite different from that in the Julia fits. The value in this summary is simply <code>-2 * log-likelihood</code>, which does not take into account the saturated model, which is described as the</p><blockquote><p>maximum achieveable log-likelihood (McCullagh and Nelder, <em>Generalized Linear Models (2nd ed)</em>, p. 118)</p></blockquote><p>This is why the model fits are compared using the log-likelihood, which should be defined consistently.</p><h2>Fit using glmer with nAGQ=0</h2><p>Using the default optimizer and <code>nAGQ=0</code> glmer converges quickly but to a singular covariance matrix with a much smaller log-likelihood, -1451.7</p></div>
+<pre class='hljl'>
+<span class='hljl-nB'>julia&gt; </span><span class='hljl-so'>R&quot;&quot;&quot;
+</span><span class='hljl-t'>t2 &lt;- system.time(fit2 &lt;- glmer(cbind(Dead,Alive) ~ (Trt + 0)/x + (x | Rep),
+                        family=binomial(link=&quot;cloglog&quot;),
+                        data=df, nAGQ=0L))
+print(t2)
+summary(fit2)
+&quot;&quot;&quot;
+   user  system elapsed 
+  0.352   0.000   0.355 
+RCall.RObject{RCall.VecSxp}
+Generalized linear mixed model fit by maximum likelihood (Adaptive
+  Gauss-Hermite Quadrature, nAGQ = 0) [glmerMod]
+ Family: binomial  ( cloglog )
+Formula: cbind(Dead, Alive) ~ (Trt + 0)/x + (x | Rep)
+   Data: df
+
+     AIC      BIC   logLik deviance df.resid 
+  3005.3   3259.6  -1451.7   2903.3     1029 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-5.0956 -0.2925  0.0000  0.3645  2.7530 
+
+Random effects:
+ Groups Name        Variance  Std.Dev. Corr
+ Rep    (Intercept) 0.0000000 0.00000      
+        x           0.0002326 0.01525   NaN
+Number of obs: 1080, groups:  Rep, 72
+
+Fixed effects:
+       Estimate Std. Error z value Pr(&gt;|z|)    
+TrtA   -3.12250    0.23059 -13.541  &lt; 2e-16 ***
+TrtB   -2.80040    0.16040 -17.459  &lt; 2e-16 ***
+TrtC   -2.57445    0.13942 -18.465  &lt; 2e-16 ***
+TrtD   -2.31281    0.15046 -15.372  &lt; 2e-16 ***
+TrtE   -2.54488    0.17026 -14.947  &lt; 2e-16 ***
+TrtF   -2.11982    0.17253 -12.287  &lt; 2e-16 ***
+TrtG   -2.10874    0.14127 -14.927  &lt; 2e-16 ***
+TrtH   -2.03019    0.12165 -16.689  &lt; 2e-16 ***
+TrtI   -2.27603    0.13817 -16.472  &lt; 2e-16 ***
+TrtJ   -1.81062    0.14536 -12.456  &lt; 2e-16 ***
+TrtK   -1.27570    0.13618  -9.368  &lt; 2e-16 ***
+TrtL   -1.27497    0.14407  -8.850  &lt; 2e-16 ***
+TrtM   -1.09395    0.09406 -11.631  &lt; 2e-16 ***
+TrtN   -0.92772    0.09060 -10.240  &lt; 2e-16 ***
+TrtO   -0.98662    0.11268  -8.756  &lt; 2e-16 ***
+TrtP   -0.81628    0.12265  -6.656 2.82e-11 ***
+TrtQ   -0.61601    0.13223  -4.659 3.18e-06 ***
+TrtR   -0.16271    0.12223  -1.331 0.183128    
+TrtS   -0.22316    0.07618  -2.929 0.003396 ** 
+TrtT   -0.29812    0.09266  -3.217 0.001295 ** 
+TrtU    0.08327    0.10664   0.781 0.434884    
+TrtV    0.05672    0.12220   0.464 0.642526    
+TrtW    0.42618    0.14042   3.035 0.002404 ** 
+TrtX    0.25690    0.13481   1.906 0.056703 .  
+TrtA:x  0.04941    0.01490   3.316 0.000913 ***
+TrtB:x  0.10818    0.01171   9.240  &lt; 2e-16 ***
+TrtC:x  0.14289    0.01149  12.431  &lt; 2e-16 ***
+TrtD:x  0.19835    0.01470  13.490  &lt; 2e-16 ***
+TrtE:x  0.23567    0.01713  13.761  &lt; 2e-16 ***
+TrtF:x  0.28697    0.02275  12.615  &lt; 2e-16 ***
+TrtG:x  0.05517    0.01148   4.805 1.55e-06 ***
+TrtH:x  0.10128    0.01086   9.327  &lt; 2e-16 ***
+TrtI:x  0.16903    0.01283  13.177  &lt; 2e-16 ***
+TrtJ:x  0.21958    0.01752  12.536  &lt; 2e-16 ***
+TrtK:x  0.23385    0.02073  11.282  &lt; 2e-16 ***
+TrtL:x  0.26510    0.02432  10.903  &lt; 2e-16 ***
+TrtM:x  0.05473    0.01022   5.356 8.51e-08 ***
+TrtN:x  0.09199    0.01063   8.651  &lt; 2e-16 ***
+TrtO:x  0.16596    0.01530  10.845  &lt; 2e-16 ***
+TrtP:x  0.20232    0.02040   9.920  &lt; 2e-16 ***
+TrtQ:x  0.26029    0.03000   8.677  &lt; 2e-16 ***
+TrtR:x  0.22405    0.03103   7.221 5.14e-13 ***
+TrtS:x  0.05280    0.01005   5.253 1.50e-07 ***
+TrtT:x  0.11057    0.01327   8.335  &lt; 2e-16 ***
+TrtU:x  0.14664    0.02137   6.863 6.74e-12 ***
+TrtV:x  0.22058    0.03516   6.274 3.53e-10 ***
+TrtW:x  0.38493    0.09740   3.952 7.75e-05 ***
+TrtX:x  0.31591    0.06512   4.851 1.23e-06 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1</span>
+</pre>
+
+<div><p>The singular covariance matrix is on the boundary of the parameter space.</p></div>
+<pre class='hljl'>
+<span class='hljl-nB'>julia&gt; </span><span class='hljl-nd'>@show</span><span class='hljl-t'> </span><span class='hljl-nf'>getθ</span><span class='hljl-p'>(</span><span class='hljl-n'>g3</span><span class='hljl-p'>)</span><span class='hljl-t'>
+getθ(g3) = [0.242569, -0.00594272, 0.00818418]
+3-element Array{Float64,1}:
+  0.242569  
+ -0.00594272
+  0.00818418
+
+</span><span class='hljl-nB'>julia&gt; </span><span class='hljl-nd'>@show</span><span class='hljl-t'> </span><span class='hljl-nf'>getθ</span><span class='hljl-p'>(</span><span class='hljl-n'>g4</span><span class='hljl-p'>)</span><span class='hljl-t'>
+getθ(g4) = [0.242706, -0.00594923, 0.0082008]
+3-element Array{Float64,1}:
+  0.242706  
+ -0.00594923
+  0.0082008 
+
+</span><span class='hljl-nB'>julia&gt; </span><span class='hljl-nf'>show</span><span class='hljl-p'>(</span><span class='hljl-so'>R&quot;&quot;&quot;getME(fit2, &quot;theta&quot;)&quot;&quot;&quot;</span><span class='hljl-p'>)</span><span class='hljl-t'>
+RCall.RObject{RCall.RealSxp}
+  Rep.(Intercept) Rep.x.(Intercept)             Rep.x 
+     0.0000000000     -0.0152457093      0.0003684742</span>
+</pre>
+
+<div><p>We can use the converged estimates from the <code>glmm</code> fits as the starting estimates for the <code>glmer</code> fit to show that the log-likelihood is reproduced.</p></div>
+<pre class='hljl'>
+<span class='hljl-nB'>julia&gt; </span><span class='hljl-n'>g3th</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-nf'>getθ</span><span class='hljl-p'>(</span><span class='hljl-n'>g3</span><span class='hljl-p'>)</span><span class='hljl-t'>
+3-element Array{Float64,1}:
+  0.242569  
+ -0.00594272
+  0.00818418
+
+</span><span class='hljl-nB'>julia&gt; </span><span class='hljl-nd'>@rput</span><span class='hljl-t'> </span><span class='hljl-n'>g3th</span><span class='hljl-t'>
+3-element Array{Float64,1}:
+  0.242569  
+ -0.00594272
+  0.00818418
+
+</span><span class='hljl-nB'>julia&gt; </span><span class='hljl-so'>R&quot;&quot;&quot;
+</span><span class='hljl-t'>t3 &lt;- system.time(fit3 &lt;- glmer(cbind(Dead,Alive) ~ (Trt + 0)/x + (x | Rep),
+                        family=binomial(link=&quot;cloglog&quot;),
+                        data=df, start=g3th, nAGQ=0L))
+print(t3)
+summary(fit3)
+&quot;&quot;&quot;
+   user  system elapsed 
+  0.848   0.000   0.850 
+RCall.RObject{RCall.VecSxp}
+Generalized linear mixed model fit by maximum likelihood (Adaptive
+  Gauss-Hermite Quadrature, nAGQ = 0) [glmerMod]
+ Family: binomial  ( cloglog )
+Formula: cbind(Dead, Alive) ~ (Trt + 0)/x + (x | Rep)
+   Data: df
+
+     AIC      BIC   logLik deviance df.resid 
+  2928.6   3182.8  -1413.3   2826.6     1029 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-8.6192 -0.2567  0.0000  0.3327  2.5421 
+
+Random effects:
+ Groups Name        Variance  Std.Dev. Corr 
+ Rep    (Intercept) 0.0588388 0.24257       
+        x           0.0001023 0.01011  -0.59
+Number of obs: 1080, groups:  Rep, 72
+
+Fixed effects:
+        Estimate Std. Error z value Pr(&gt;|z|)    
+TrtA   -3.143661   0.270467 -11.623  &lt; 2e-16 ***
+TrtB   -2.803040   0.213021 -13.159  &lt; 2e-16 ***
+TrtC   -2.581960   0.197763 -13.056  &lt; 2e-16 ***
+TrtD   -2.312249   0.205730 -11.239  &lt; 2e-16 ***
+TrtE   -2.547726   0.220613 -11.548  &lt; 2e-16 ***
+TrtF   -2.120615   0.222264  -9.541  &lt; 2e-16 ***
+TrtG   -2.116955   0.199160 -10.629  &lt; 2e-16 ***
+TrtH   -2.033729   0.185537 -10.961  &lt; 2e-16 ***
+TrtI   -2.239672   0.195561 -11.453  &lt; 2e-16 ***
+TrtJ   -1.811820   0.201949  -8.972  &lt; 2e-16 ***
+TrtK   -1.314749   0.198401  -6.627 3.43e-11 ***
+TrtL   -1.298529   0.202599  -6.409 1.46e-10 ***
+TrtM   -1.097798   0.168795  -6.504 7.84e-11 ***
+TrtN   -0.924785   0.166659  -5.549 2.87e-08 ***
+TrtO   -0.982359   0.180702  -5.436 5.44e-08 ***
+TrtP   -0.816064   0.186234  -4.382 1.18e-05 ***
+TrtQ   -0.615693   0.192594  -3.197 0.001389 ** 
+TrtR   -0.152159   0.187648  -0.811 0.417437    
+TrtS   -0.217569   0.159766  -1.362 0.173261    
+TrtT   -0.283216   0.168112  -1.685 0.092049 .  
+TrtU    0.106323   0.177249   0.600 0.548604    
+TrtV    0.079404   0.187463   0.424 0.671876    
+TrtW    0.427799   0.198571   2.154 0.031210 *  
+TrtX    0.262170   0.194584   1.347 0.177873    
+TrtA:x  0.051320   0.013310   3.856 0.000115 ***
+TrtB:x  0.108349   0.009674  11.200  &lt; 2e-16 ***
+TrtC:x  0.143247   0.009421  15.206  &lt; 2e-16 ***
+TrtD:x  0.197537   0.013127  15.048  &lt; 2e-16 ***
+TrtE:x  0.235773   0.015821  14.903  &lt; 2e-16 ***
+TrtF:x  0.287073   0.021784  13.178  &lt; 2e-16 ***
+TrtG:x  0.055580   0.009405   5.910 3.43e-09 ***
+TrtH:x  0.101309   0.008601  11.779  &lt; 2e-16 ***
+TrtI:x  0.164692   0.010797  15.254  &lt; 2e-16 ***
+TrtJ:x  0.219653   0.016244  13.522  &lt; 2e-16 ***
+TrtK:x  0.241308   0.020555  11.739  &lt; 2e-16 ***
+TrtL:x  0.269954   0.023979  11.258  &lt; 2e-16 ***
+TrtM:x  0.054908   0.007810   7.030 2.06e-12 ***
+TrtN:x  0.091461   0.008302  11.017  &lt; 2e-16 ***
+TrtO:x  0.162726   0.013834  11.762  &lt; 2e-16 ***
+TrtP:x  0.202323   0.019327  10.469  &lt; 2e-16 ***
+TrtQ:x  0.260135   0.029253   8.892  &lt; 2e-16 ***
+TrtR:x  0.234470   0.032125   7.299 2.91e-13 ***
+TrtS:x  0.053007   0.007619   6.957 3.47e-12 ***
+TrtT:x  0.107314   0.011386   9.425  &lt; 2e-16 ***
+TrtU:x  0.148021   0.021010   7.045 1.85e-12 ***
+TrtV:x  0.229408   0.036383   6.305 2.87e-10 ***
+TrtW:x  0.390086   0.098632   3.955 7.65e-05 ***
+TrtX:x  0.317150   0.065143   4.869 1.12e-06 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1</span>
+</pre>
+
+
+
+          <HR/>
+          <div class="footer"><p>
+          Published from <a href="cloglog.jmd">cloglog.jmd</a> using
+          <a href="http://github.com/mpastell/Weave.jl">Weave.jl</a>
+          0.4.4 on 2017-07-24.
+          <p></div>
+
+
+        </div>
+      </div>
+    </div>
+  </BODY>
+</HTML>
