@@ -23,15 +23,15 @@ Some questions to ask yourself first:
 
 ## maximal model
 
-The *maximal model* [@barr_random_2013] is the model that includes all random effect terms that would be identifiable, given the experimental (observational) experimental design, *given arbitrarily large samples* (both of groups and of observations within groups), what I would call satisfying ``strong identifiability''.
+The *maximal model* [@barr_random_2013] is the model that includes all random effect terms that would be identifiable, given the experimental (observational) experimental design, *given arbitrarily large samples* (both of groups and of observations within groups), what I would call satisfying "strong identifiability".
 
 * all categorical variables in the data with exchangeable levels are treated as random effects [@yarkonigeneralizability2022]
 * all terms in the fixed-effect model are included as varying terms where possible, i.e. within every grouping variable where the values of the fixed-effect term vary within (and not just between) groups (*within-subjects* effects in an experimental design)
 * for models where the conditional distribution has an estimated scale parameter (e.g. Gaussian, Gamma) and a varying term with $n$ latent variables per group (e.g. $n=2$ for a random-slopes model, intercept-offset and slope-offset for a particular group), there must be at least $n+1$ observations per group in order for the scale parameter (residual variance in the case of a Gaussian) to be identifiable, e.g. see "starlings" example [here](https://bbolker.github.io/mm_iowa2024/notes/mixed_lab.html). The 'saturated' case (one latent variable per observation) is also problematic for binary responses (but not binomial responses with $N>1$), because the location and scale (dispersion) are not separately identifiable for binary (Bernoulli) distributions. For models with fixed scale/dispersion (e.g. Poisson, binomial with $N>1$) the limitation is $n$ observations per group (unless an observation-level random effect is added, in which case we again need $n+1$). For conditional distributions with estimated dispersion rather than scale (e.g. negative binomial, beta-binomial), the model is *theoretically* identifiable with only $n$ observations per group, but it probably won't work.
 * the previous bullet point may be relaxed for some kinds of structured covariance matrices. For example, an AR1 model has a latent variable for every observation, but the residual variance of a Gaussian AR1 model *is* jointly identifiable with the variance of the AR1 term: it deflates the correlation for lag $n$ by a factor of $\sigma^2_{\textrm{ar1}}/(\sigma^2_{\textrm{ar1}}+(\sigma^2_{\textrm{res}})$
-(called a "nugget effect" in the spatial stats literature: e.g. see https://stats.stackexchange.com/a/670779/2126) . This will be specific to the type of structure; covariance structures with a continuously varying strength (e.g. temporal, spatial) will be jointly identifiable with an observation-level/residual variance term, but others such as compound-symmetric models won't be
+(called a "nugget effect" in the spatial stats literature: e.g. see https://stats.stackexchange.com/a/670779/2126) . This will be specific to the type of structure; covariance structures with a continuously varying strength (e.g. temporal, spatial) will be jointly identifiable with an observation-level/residual variance term, but others such as compound-symmetric models won't be.
 
-For example, working with the built-in `cbpp` data set where `period` is a four-level factor, the random-effects term `(1+period|herd)` would correspond to estimating four variances and $4 \times 3/2 = six covariances. The exact meanings of these parameters (if they matter in your application) depend on the contrasts used to expand the factor into dummy variables, but the overall model fit (and the estimates and standard errors of any fixed effect parameters) will be the same in any case.
+For example, working with the built-in `cbpp` data set where `period` is a four-level factor, the random-effects term `(1+period|herd)` would correspond to estimating four variances and $(4 \times 3)/2$ = six covariances. The exact meanings of these parameters (if they matter in your application) depend on the contrasts used to expand the factor into dummy variables, but the overall model fit (and the estimates and standard errors of any fixed effect parameters) will be the same in any case.
 
 ::: {.callout-caution collapse="true"}
 ## Expand for more details of contrasts etc.
@@ -40,7 +40,7 @@ For example, working with the built-in `cbpp` data set where `period` is a four-
 
 ## model constraint strategies
 
-When we constrain the covariance matrix (i.e. any model for specific than "general positive semi-definite"), the model results and definition depend on the contrasts used. For factor terms, it might make the most sense to specify sum-to-zero contrasts unless there is a clear reference/control level against which all other levels should be compared; for continuous terms, the predictors should probably be zero centered (or at least zeroed at some sensible reference level; see the end of section 2.2 in @bates_fitting_2015).
+When we constrain the covariance matrix (i.e. any covariance model more specific than "general positive semi-definite"), the model results and definition depend on the contrasts used. For factor terms, it might make the most sense to specify sum-to-zero contrasts unless there is a clear reference/control level against which all other levels should be compared; for continuous terms, the predictors should probably be zero centered (or at least zeroed at some sensible reference level; see the end of section 2.2 in @bates_fitting_2015).
 
 ### compound-symmetric models
 
@@ -92,14 +92,14 @@ $\rho$ must be >0)
 :::
 
 
-- The shortcut of using a nested model works in most mixed model frameworks (almost any platform that allows for multiple random effects will allow them to be nested), but is restricted to positive compound-symmetric models (i.e. $\rho>0$). Some packages allow general compound symmetric matrices (i.e. $-1 < \rho < 1$), e.g. using `pdCompSymm` in `nlme`, `cs()` in `glmmTMB`, `cosy` in `brms` (apparently `MCMCglmm` doesn't have a CS struture?) ... 
+- The shortcut of using a nested model works in most mixed model frameworks (almost any platform that allows for multiple random effects will allow them to be nested), but is restricted to positive compound-symmetric models (i.e. $\rho>0$). Some packages allow general compound symmetric matrices (i.e. $-1 < \rho < 1$), e.g. using `pdCompSymm` in `nlme`, `cs()` in `glmmTMB`, `cosy` in `brms` (apparently `MCMCglmm` doesn't have a CS structure?) ... 
 - We also need to distinguish between *heterogeneous* compound symmetry (i.e., variances are the same for every level; $n+1$ parameters for an $n \times n$ covariance matrix) and *homogeneous* compound symmetry (all variances are the same, 2 parameters regardless of the size of the cov matrix). The nesting trick described above only handles homogeneous CS. `cs()` in `glmmTMB` does heterogeneous CS, homogeneous CS could be handled by using the `map` argument to fix all of the standard deviations to be the same (or a `homcs()` structure could be added if there's enough demand for it).
 
 ### independence models
 
 This is probably the best known approach to model simplification (e.g. as recommended by @barr_random_2013). It's actually a special case of CS, with $\rho=0$. Also called "diagonal" for obvious (?) reasons.
 
-- in `lme4` (or `glmmTMB` or `brms`), use `||` in place of `|`; `glmmTMB` allows `diag()` for heterogenous diagonal/independence models (and `homdiag()` for homogeneous); `MCMCglmm` uses `idv()` (homogeneous) and `idh()` (heterogeneous).
+- in `lme4` (or `glmmTMB` or `brms`), use `||` in place of `|`; `glmmTMB` allows `diag()` for heterogeneous diagonal/independence models (and `homdiag()` for homogeneous); `MCMCglmm` uses `idv()` (homogeneous) and `idh()` (heterogeneous).
 - `||` (still) doesn't work in `lme4` for factor-valued terms; use `afex::mixed` or `glmmTMB`, or expand the model in dummies (`(0 + dummy(f, level1)|g) + (0 + dummy(f, level2)|g) + ...`; kind of a pain for large numbers of factors, although you could construct it via string processing if you wanted)
 - 
 
@@ -109,7 +109,7 @@ Especially for vector-valued random effects consisting of variation in multiple 
 
 ### reduced-rank models
 
-*Factor-analytic* or *reduced-rank* models are a more flexible approach to simplifying complex covariance functions, by doing something analogous to computing a principal components analysis on the covariance matrix and keeping a subset of the terms. In `glmmTMB` you can do this with the `rr()` covariance structure; see the relevant section of the [covariance structure vignette](), or [this draft](https://www.math.mcmaster.ca/bolker/misc/mcgillycuddy2024.pdf) by McGillycuddy et al., in press in *J. Stat. Software*.
+*Factor-analytic* or *reduced-rank* models are a more flexible approach to simplifying complex covariance functions, by doing something analogous to computing a principal components analysis on the covariance matrix and keeping a subset of the terms. In `glmmTMB` you can do this with the `rr()` covariance structure; see the relevant section of the [covariance structure vignette](https://cran.r-project.org/web/packages/glmmTMB/vignettes/covstruct.html), or @mcgillycuddyParsimoniouslyFittingLarge2025a. 
 
 ## parameter constraint strategies
 
@@ -136,7 +136,7 @@ It doesn't seem that they considered models with multiple random effects terms (
 They also consider AIC-based selection.
 - @moritzrole2023a used a more complex model than either of the references above: the among-group variation of an intercept and four numeric predictors (i.e., a 5×5 covariance matrix), applied at three different grouping levels. They consider the possibilities of (1) a full (unconstrained) covariance matrix, (2) a diagonal/independent covariance, or (3) an intercept-only random effect, for each grouping variable, i.e. a total of $3^3 = 81$ possible models. They fitted all 81 models and chose the model with the best AIC among only the models with non-singular fits
 - @singmannIntroduction2019 doesn't present any methods beyond those suggested above, but the section on "Specifying the Random Effects Structure" has a clear description
-- several R packages have implemented model selection machinery for the random effects (most of the options, e.g. `MuMIn`, `glmulti`, `glmmLasso`, do model selection only on the fixed effects component)
+- several R packages have implemented model selection machinery for the random effects (most of the options, e.g. `Memling`, `glamoured`, `glmmLasso`, do model selection only on the fixed effects component)
    - The [buildmer](https://cran.r-project.org/package=buildmer)  package is probably the fanciest: it
 
     > [f]inds the largest possible regression model that will still converge for various types of regression analyses ... and then optionally performs stepwise elimination similar to the forward and backward effect-selection methods in SAS, based on the change in log-likelihood or its significance, Akaike's Information Criterion, the Bayesian Information Criterion, the explained deviance, or the F-test of the change in R².
