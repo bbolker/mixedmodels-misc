@@ -1,3 +1,0 @@
-- remember gh-pages setup  and switch over to docs/
-- package table
-- more on varying variance by group

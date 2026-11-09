@@ -1,3 +1,14 @@
+ALL: docs/glmmFAQ.html docs/glmmbib.html
+
+docs/glmmbib.html: glmmbib.html
+	mv glmmbib.html docs/
+
+glmmbib.html: glmm.bib
+	. ./mkbibhtml
+
+docs/glmmFAQ.html: glmmFAQ.html
+	mv glmmFAQ.html docs/
+
 %.html: %.rmd
 	Rscript -e "library(\"rmarkdown\"); render(\"$<\")"
 
